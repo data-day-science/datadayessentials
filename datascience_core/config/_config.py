@@ -35,7 +35,6 @@ class LocalConfig(ILocalConfig):
         if they do not exist. Using the default config.
         """
         self.global_config = GlobalConfig().read()
-        print(self.global_config)
         self.folder = os.path.join(
             str(Path.home()), self.global_config["local_cache_dir"]
         )

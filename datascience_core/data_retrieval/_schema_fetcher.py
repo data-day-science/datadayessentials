@@ -14,7 +14,7 @@ class InvalidSchemaError(Exception):
 
 class SchemaFetcher(ISchemaFetcher):
     """
-    For loading schemas from the schemas folder. The _required_fields indicate the neccessary fields for each field in the schema. See below for an example schema, for data with a single field:
+    For loading schemas from the project dataset manager. The _required_fields indicate the neccessary fields for each field in the schema. See below for an example schema, for data with a single field:
 
     {
         "QCB BAC435": {
@@ -26,13 +26,11 @@ class SchemaFetcher(ISchemaFetcher):
             "dtype": "str"
     }
 
-    Different models versions can have different input schemas and these can be stored in the schemas file as:
-    - 'model_v1.json'
-    - 'model_v2.json'
 
-    To load these schemas, you can pass the schema name (model) and the model_version (v1, v2) as arguments
 
-    In the below example the source and target schemas are loaded using the SchemaFetcher, which looks for a schema of the format (name.json) stored in the schemas folder in the data_retrieval module. Please see the SchemaFetcher class for the format schemas should follow.
+    To load these schemas, you can pass the schema name (model) as an argument
+
+    In the below example the source and target schemas are loaded using the SchemaFetcher, which looks for a schema of the format (name) stored in the ProjectDatasetManager project "datascience_core_schemas" in the data_retrieval module. Please see the SchemaFetcher class for the format schemas should follow.
     ```python
     from datascience_core.data_retrieval import DataFrameTap, TableLoader, SchemaFetcher
     from datascience_core.data_retrieval import TableLoader
@@ -96,7 +94,7 @@ class SchemaFetcher(ISchemaFetcher):
                 **self._load_schema("BSB_schema"),
                 **self._load_schema("QCB_schema"),
             }
-            
+
             return schema
 
         else:

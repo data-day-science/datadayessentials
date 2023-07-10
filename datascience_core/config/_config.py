@@ -35,6 +35,7 @@ class LocalConfig(ILocalConfig):
         if they do not exist. Using the default config.
         """
         self.global_config = GlobalConfig().read()
+        print(self.global_config)
         self.folder = os.path.join(
             str(Path.home()), self.global_config["local_cache_dir"]
         )
@@ -109,7 +110,7 @@ class LocalConfig(ILocalConfig):
         return LocalConfig.get_value_from_config(
             ["azure", "environments", LocalConfig.ENVIRONMENT]
         )
-    
+
     @staticmethod
     @catch_key_error
     def get_environment_from_name(environment_name: str):
@@ -178,14 +179,18 @@ class LocalConfig(ILocalConfig):
             str: Container, path and datalake for the named folder inside the local config
         """
         if use_current_environment:
-            return LocalConfig.get_current_environment_data_lake_folder(named_folder, data_lake)
+            return LocalConfig.get_current_environment_data_lake_folder(
+                named_folder, data_lake
+            )
         else:
             return LocalConfig.get_any_environment_data_lake_folder(named_folder)
 
     @staticmethod
     def get_any_environment_data_lake_folder(named_folder: str):
         # If we dont care about environment, search across all environments and datalakes for the folder details
-        for env in LocalConfig.get_value_from_config(["azure", "data_lake_named_folders"]):
+        for env in LocalConfig.get_value_from_config(
+            ["azure", "data_lake_named_folders"]
+        ):
             for data_lake in LocalConfig.get_value_from_config(
                 ["azure", "data_lake_named_folders", env]
             ):
@@ -198,7 +203,9 @@ class LocalConfig(ILocalConfig):
         raise KeyError(f"Named folder {named_folder} not found in local config")
 
     @staticmethod
-    def get_current_environment_data_lake_folder(named_folder: str, data_lake: str = None):
+    def get_current_environment_data_lake_folder(
+        named_folder: str, data_lake: str = None
+    ):
         env = LocalConfig.get_environment()
         data_lake = data_lake if data_lake else env["data_lake"]
         named_folder_details = LocalConfig.get_value_from_config(

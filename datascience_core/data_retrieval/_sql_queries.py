@@ -5,45 +5,28 @@ from typing import List
 import re
 import logging
 from datetime import date, datetime
+from datascience_core.data_retrieval import ProjectDatasetManager
 
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-DIRNAME = os.path.dirname(os.path.abspath((__file__)))
-QUERY_PATHS = {
-    "default_label": os.path.join(DIRNAME, "sql_queries/default_label.sql"),
-    "app_payload": os.path.join(DIRNAME, "sql_queries/app_sproc.sql"),
-    "allocation_volume": os.path.join(DIRNAME, "sql_queries/allocations.sql"),
-    "policy_check": os.path.join(DIRNAME, "sql_queries/policy_check.sql"),
-    "policy_check_date_range": os.path.join(
-        DIRNAME, "sql_queries/policy_check_date_range.sql"
-    ),
-}
 
 
 class SQLQueryFormatter(ISQLQueryFormatter):
     """Responsible for loading and formatting queries based on the input parameters."""
 
-    def __init__(self, query_path: str, params: dict) -> None:
+    def __init__(self, raw_query: str, params: dict) -> None:
         """Creates a SQLFormatter instance
 
         Args:
             query_path (str): Location of the query to format, containing format strings '{param1}' that can be formatted by the params
             params (dict): Key value pairs of parameters for formatting the query
         """
-        self.query_path = query_path
+        self.raw_query = raw_query
         self.params = params
 
-    def _load_query(self) -> str:
-        """Load in the query from the query_path
-
-        Returns:
-            str: String of the unformatted query
-        """
-        with open(self.query_path, "r") as f:
-            not_formatted_query = f.read()
-        return not_formatted_query
+    
 
     def _format_query(self, not_formatted_query: str) -> str:
         """Formats a query string with the parameter dictionary
@@ -64,8 +47,7 @@ class SQLQueryFormatter(ISQLQueryFormatter):
             str: Formatted query
         """
         logger.debug("Formatting query with parameters")
-        raw_query = self._load_query()
-        formatted_query = self._format_query(raw_query)
+        formatted_query = self._format_query(self.raw_query)
         logger.debug(f"Formatted query: \n {formatted_query}")
         return formatted_query
 
@@ -125,8 +107,9 @@ class QueryFactory:
             "end_date": end_date.strftime("%Y-%m-%d"),
         }
         # Retrieve query path from config:
-        query_path = QUERY_PATHS["default_label"]
-        return SQLQueryFormatter(query_path, params).get_query()
+        query_manager = ProjectDatasetManager("datascience_core_queries")
+        raw_query = query_manager.load_datasets("default_label")["default_label"]
+        return SQLQueryFormatter(raw_query, params).get_query()
 
     @classmethod
     def get_app_payload_query(cls, application_ids: List[str]) -> str:
@@ -148,8 +131,10 @@ class QueryFactory:
             if not isinstance(elem, str):
                 raise TypeError("Argument application_ids must be of List[str] type")
         params = {"application_ids": str(application_ids)}
-        query_path = QUERY_PATHS["app_payload"]
-        return SQLQueryFormatter(query_path, params).get_query()
+
+        query_manager = ProjectDatasetManager("datascience_core_queries")
+        raw_query = query_manager.load_datasets("app_sproc")["app_sproc"]
+        return SQLQueryFormatter(raw_query, params).get_query()
 
     @classmethod
     def get_allocated_volume_query(
@@ -178,8 +163,9 @@ class QueryFactory:
             "start_date": start_date.strftime("%Y-%m-%d"),
             "end_date": end_date.strftime("%Y-%m-%d"),
         }
-        query_path = QUERY_PATHS["allocation_volume"]
-        return SQLQueryFormatter(query_path, params).get_query()
+        query_manager = ProjectDatasetManager("datascience_core_queries")
+        raw_query = query_manager.load_datasets("allocations")["allocations"]
+        return SQLQueryFormatter(raw_query, params).get_query()
 
     @classmethod
     def get_policy_check_query(cls, application_ids: List[str]) -> str:
@@ -199,8 +185,9 @@ class QueryFactory:
             raise TypeError("application_ids must be a list")
 
         params = {"application_ids": f"{str(application_ids)}"}
-        query_path = QUERY_PATHS["policy_check"]
-        return SQLQueryFormatter(query_path, params).get_query()
+        query_manager = ProjectDatasetManager("datascience_core_queries")
+        raw_query = query_manager.load_datasets("policy_check")["policy_check"]
+        return SQLQueryFormatter(raw_query, params).get_query()
 
     @classmethod
     def get_policy_check_date_range_query(
@@ -229,5 +216,6 @@ class QueryFactory:
             "start_date": f"{start_date.strftime('%Y%m%d')}",
             "end_date": f"{end_date.strftime('%Y%m%d')}",
         }
-        query_path = QUERY_PATHS["policy_check_date_range"]
-        return SQLQueryFormatter(query_path, params).get_query()
+        query_manager = ProjectDatasetManager("datascience_core_queries")
+        raw_query = query_manager.load_datasets("policy_check_date_range")["policy_check_date_range"]
+        return SQLQueryFormatter(raw_query, params).get_query()

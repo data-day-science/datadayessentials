@@ -70,7 +70,7 @@ WHERE [Start Date] between '1999-01-01' and '2022-01-01'
         start_date = to_datetime("1999-01-01")
         end_date = to_datetime("2022-01-01")
         formatted_query = QueryFactory.get_allocated_volume_query(start_date, end_date)
-        print(formatted_query)
+
         
         expected_start_date = '1999-01-01'
         expected_end_date = '2022-01-01'

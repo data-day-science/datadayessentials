@@ -11,6 +11,9 @@ class ISchemaFetcher(ABC):
     @abstractmethod
     def get_schema(self, name: str, model_version: str) -> dict:
         pass
+    @abstractmethod
+    def add_schema(self, schema_name: str, schema: dict) -> None:
+        pass
 
 
 class IBlobLocation(ABC):
@@ -57,10 +60,6 @@ class IBlobLocation(ABC):
 class ISQLQueryFormatter(ABC):
     @abstractmethod
     def _format_query(self) -> str:
-        pass
-
-    @abstractmethod
-    def _load_query(self) -> str:
         pass
 
     @abstractmethod
@@ -229,6 +228,7 @@ class IRegisterProjectDataset(ABC):
 
     def create_or_update_dataset(self, data: pd.DataFrame):
         pass
+
 
 class IDataLakeDirectoryDeleter(ABC):
     def __init__(self, authentication: IAuthentication):

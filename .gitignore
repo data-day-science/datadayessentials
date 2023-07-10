@@ -179,6 +179,8 @@ dmypy.json
 !**/test_data/*.csv
 !**/test_data/*.json
 !**/test_data/*.txt
+**/pickled_models/
+/pickled_models/
 
 # credential #
 Development/Model0/Code/demo_source_dir/credentials.py

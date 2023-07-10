@@ -31,13 +31,13 @@ The API documentation is updated automatically on every push/PR into main. Pleas
 
 To use this repo in a CI script or remotely you may need to use the private SSH key found here:
 
-https://portal.azure.com/#@CF247.onmicrosoft.com/resource/subscriptions/6cbe45a0-6565-4c4a-b1a9-0929f276bbcd/resourceGroups/rg-data-science-dev/providers/Microsoft.KeyVault/vaults/kv-ml-dev/overview
+https://example
 
 Once this is done you should be able to install this package by including the following inside a requirements.txt file:
 
 ```
 wheel
-git+https://github.com/Carfinance247/datascience_core@main#egg=datascience-core
+git+https://github.com/data-day-science/datascience_core@main#egg=datascience-core
 ```
 
 Note: The above line uses the main branch to install from. Please adjust if you require a specific commit or version.

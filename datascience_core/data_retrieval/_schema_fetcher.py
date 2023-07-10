@@ -3,6 +3,7 @@ import os
 import json
 import logging
 from typing import List
+from datascience_core.data_retrieval import ProjectDatasetManager
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +14,7 @@ class InvalidSchemaError(Exception):
 
 class SchemaFetcher(ISchemaFetcher):
     """
-    For loading schemas from the schemas folder. The _required_fields indicate the neccessary fields for each field in the schema. See below for an example schema, for data with a single field:
+    For loading schemas from the project dataset manager. The _required_fields indicate the neccessary fields for each field in the schema. See below for an example schema, for data with a single field:
 
     {
         "QCB BAC435": {
@@ -25,13 +26,11 @@ class SchemaFetcher(ISchemaFetcher):
             "dtype": "str"
     }
 
-    Different models versions can have different input schemas and these can be stored in the schemas file as:
-    - 'model_v1.json'
-    - 'model_v2.json'
 
-    To load these schemas, you can pass the schema name (model) and the model_version (v1, v2) as arguments
 
-    In the below example the source and target schemas are loaded using the SchemaFetcher, which looks for a schema of the format (name.json) stored in the schemas folder in the data_retrieval module. Please see the SchemaFetcher class for the format schemas should follow.
+    To load these schemas, you can pass the schema name (model) as an argument
+
+    In the below example the source and target schemas are loaded using the SchemaFetcher, which looks for a schema of the format (name) stored in the ProjectDatasetManager project "datascience_core_schemas" in the data_retrieval module. Please see the SchemaFetcher class for the format schemas should follow.
     ```python
     from datascience_core.data_retrieval import DataFrameTap, TableLoader, SchemaFetcher
     from datascience_core.data_retrieval import TableLoader
@@ -56,15 +55,32 @@ class SchemaFetcher(ISchemaFetcher):
         "dtype",
     ]
 
-    def get_schema(self, name: str, model_version: str = "") -> dict:
+    def __init__(self):
+        self.schema_manager = ProjectDatasetManager("datascience_core_schemas")
+
+    def add_schema(self, schema_name: str, schema: dict) -> None:
+        """Add a schema to the schemas folder
+
+        Arguments:
+            schema_name (str): Name of the schema to be saved
+            schema (dict): Schema to be saved
+        """
+        self._validate_schema(schema)
+        self.schema_manager.register_dataset(schema_name, schema)
+
+    def _load_schema(self, schema_name):
+        return self.schema_manager.load_datasets(get_these_datasets=[schema_name])[
+            schema_name
+        ]
+
+    def get_schema(self, name: str) -> dict:
         """Retrieve a saved schema from the schemas folder in this package
 
         The input nameshould be either the name of the file or one of the following combined schemas:
-        - 'app_and_cra_payload' (combines app + bsb + qcb schemas)
+        - 'app_and_cra_payload' (combines app + qcb schemas)
 
         Arguments:
             name (str): Name of the schema in the schemas folder
-            model_version (str, optional): Model version. Defaults to "".
 
         Raises:
             FileNotFoundError: Raised if the schema requested cannot be found
@@ -73,34 +89,20 @@ class SchemaFetcher(ISchemaFetcher):
             dict: Dictionary with the schema
         """
         if name == "app_and_cra_payload":
-            filenames = ["app_schema.json", "BSB_schema.json", "QCB_schema.json"]
-            schema = dict()
-            for filename in filenames:
-                schema_path = os.path.join(
-                    os.path.dirname(os.path.abspath(__file__)), "schemas", filename
-                )
-                with open(schema_path, "r") as f:
-                    schema = {**schema, **json.loads(f.read())}
-            self._validate_schema(schema)
+            schema = {
+                **self._load_schema("app_schema"),
+                **self._load_schema("BSB_schema"),
+                **self._load_schema("QCB_schema"),
+            }
+
             return schema
+
         else:
-            if model_version:
-                filename = name + "_" + model_version + ".json"
-            else:
-                filename = name + ".json"
-
-            schema_path = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), "schemas", filename
-            )
-            if not os.path.exists(schema_path):
-                raise FileNotFoundError(
-                    f"No schema with name {filename}, are you sure it exists and is in the datascience_core/data_retrieval/schemas folder?"
-                )
-
-            with open(schema_path, "r") as f:
-                schema = json.loads(f.read())
-                logger.debug(f"Loaded in schema {schema}")
+            try:
+                schema = self._load_schema(name)
                 self._validate_schema(schema)
+            except:
+                raise ValueError("no schema found with that name")
             return schema
 
     @classmethod
@@ -110,15 +112,9 @@ class SchemaFetcher(ISchemaFetcher):
         Returns:
             List[str]: List of schema filenames
         """
+        schema_manager = ProjectDatasetManager("datascience_core_schemas")
         extra_schemas = ["app_and_cra_payload"]
-        schemas = [
-            filename.split(".")[0]
-            for filename in os.listdir(
-                os.path.join(os.path.dirname(os.path.abspath(__file__)), "schemas")
-            )
-            if filename[-4:] == "json"
-        ]
-        return schemas + extra_schemas
+        return schema_manager.list_datasets() + extra_schemas
 
     def _validate_schema(self, schema: dict):
         """Validates the schema to ensure all the required fields are present
@@ -132,13 +128,13 @@ class SchemaFetcher(ISchemaFetcher):
                 if key not in schema[field_name].keys():
                     error = f"Schema not in expected format. Field {field_name} is missing {key}.\nMust follow the following example format, with minimum required fields min_val, max_val, unique_categories, dtype, description:\n"
                     error += """{
-    "QCB BAC435": {
-    "Description": "All Credit cards Utilisation (%) last 1 month (live)",
-    "unique_categories": [],
-    "is_date": false,
-    "min_val": "0",
-    "max_val": "999999999",
-    "dtype": "str"
-    }
-}"""
+                        "QCB BAC435": {
+                        "Description": "All Credit cards Utilisation (%) last 1 month (live)",
+                        "unique_categories": [],
+                        "is_date": false,
+                        "min_val": "0",
+                        "max_val": "999999999",
+                        "dtype": "str"
+                        }
+                    }"""
                     raise InvalidSchemaError(error)

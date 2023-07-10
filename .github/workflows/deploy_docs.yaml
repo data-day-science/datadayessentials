@@ -1,0 +1,45 @@
+name: DeployDocs 
+on:
+  push:
+    branches:
+      - main
+    inputs:
+      deploy_environment:
+        description: 'choose the environment to deploy to'
+        required: true
+        default: 'dev'
+jobs:
+  deploy_docs:
+    env:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      DOCS_RESOURCE_GROUP: rg-data-science-dev
+      AZURE_WEBAPP_NAME: ds-core-docs
+    runs-on: ['self-hosted', 'linux', 'new-runner']
+    timeout-minutes: 9
+
+    steps:
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.9"
+      - uses: webfactory/ssh-agent@v0.6.0
+        with:
+            ssh-private-key: ${{ secrets.CORE_REPO_PRIVATE_KEY }}
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: Install pdoc 
+        run: |
+          pip install pdoc
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      - name: Generate the docs
+        run: |
+          pdoc ./datascience_core -o /tmp/docs
+      - name: Push the docs
+        run: |
+          cd /tmp/docs
+          az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID
+          az webapp up --resource-group $DOCS_RESOURCE_GROUP --name $AZURE_WEBAPP_NAME --html

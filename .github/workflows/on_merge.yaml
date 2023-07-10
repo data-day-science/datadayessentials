@@ -1,0 +1,52 @@
+name: Increment version
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+#:
+jobs:
+  determine_version_update_type:
+    # if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Determine version type
+        id: bump_version
+        run: |
+        
+          if [[ "${{ contains(github.event.pull_request.labels.*.name, 'major') }}" == "true" ]]; then
+            echo 'major'
+            echo "name=major" >> $GITHUB_OUTPUT
+          elif [[ "${{ contains(github.event.pull_request.labels.*.name, 'minor') }}" == "true" ]]; then
+            echo 'minor'
+            echo "name=minor" >> $GITHUB_OUTPUT
+          else
+            echo 'patch'
+            echo "name=patch" >> $GITHUB_OUTPUT
+          fi
+    outputs:
+        name: ${{ steps.bump_version.outputs.name }}
+
+  bump_version:
+      needs: determine_version_update_type
+      env:
+        DRY_RUN: false
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        DEFAULT_BUMP: ${{ needs.determine_version_update_type.outputs.name }}
+        WITH_V: true
+        TAG_CONTEXT: repo
+        BRANCH_HISTORY: full
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v3
+          with:
+            ref: ${{ github.sha }}
+            fetch-depth: '0'
+
+        - name: Bump version and push tag
+          uses: anothrNick/github-tag-action@1.61.0 # Don't use @master unless you're happy to test the latest version

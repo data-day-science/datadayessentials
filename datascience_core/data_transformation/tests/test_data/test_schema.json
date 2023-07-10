@@ -1,0 +1,51 @@
+{
+    "col1": {
+        "description": "All Credit cards Utilisation (%) last 1 month (live)",
+        "unique_categories": [],
+        "is_date": true,
+        "min_val": "NaN",
+        "max_val": "NaN",
+        "dtype": "datetime64[ns]"
+    },
+    "col2": {
+        "description": "All cards Number of Cards Supplying New Fields in Last Month",
+        "unique_categories": [
+            "C",
+            "M"
+        ],
+        "is_date": false,
+        "min_val": "NaN",
+        "max_val": "NaN",
+        "dtype": "str"
+    },
+    "col3": {
+        "description": "All cards Number of Cards Supplying New Fields in Last 3 Months",
+        "unique_categories": [],
+        "is_date": false,
+        "min_val": "0",
+        "max_val": "999",
+        "dtype": "float"
+    },
+    "col4": {
+        "description": "All cards Number of Cards Supplying New Fields in Last 6 Months",
+        "unique_categories": [
+            "C",
+            "M"
+        ],
+        "is_date": false,
+        "min_val": "0",
+        "max_val": "999",
+        "dtype": "str"
+    },
+    "col5": {
+        "description": "All cards Number of Cards Supplying New Fields in Last 12 Months",
+        "unique_categories": [
+            "C",
+            "M"
+        ],
+        "is_date": false,
+        "min_val": "0",
+        "max_val": "999",
+        "dtype": "str"
+    }
+}

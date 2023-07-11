@@ -21,7 +21,7 @@ setup(
     name="datascience_core",
     version=version,
     author="Data Science",
-    url="https://github.com/Carfinance247/datascience_core",
+    url="https://github.com/data-day-science/datascience_core",
     description="Common functionality to other datascience tools",
     package_dir={
         "datascience_core": "datascience_core",

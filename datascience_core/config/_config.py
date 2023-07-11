@@ -26,7 +26,7 @@ class LocalConfig(ILocalConfig):
         >>> local_config.read()
     """
 
-    ENVIRONMENT = os.environ.get("ENVIRONMENT", "dev")
+    ENVIRONMENT = os.environ.get("AZURE_ENVIRONMENT_NAME", "dev")
     DEFAULT_CONFIG = {"sync_with_remote": False}
 
     def __init__(self):

@@ -3,41 +3,22 @@ on:
   pull_request:
     branches:
       - main
+env:
+  AZURE_ENVIRONMENT_NAME: ${{ secrets.AZURE_ENVIRONMENT_NAME }}
+  AZURE_DATA_LAKE: ${{ secrets.AZURE_DATA_LAKE }}
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }} 
+  AZURE_ML_WORKSPACE: ${{ secrets.AZURE_ML_WORKSPACE }}
 
 jobs:
-  set_env:
-    runs-on: ['self-hosted', 'linux', 'new-runner']
-    steps:
-      - name: Set env to production
-        id: env_step
-        run: |
-          if [ "${{ github.ref }}" = "refs/heads/deployment_prod_aks" ]; then
-            echo "ENVIRONMENT=prod" >> "$GITHUB_OUTPUT"
-          else
-            echo "ENVIRONMENT=dev" >> "$GITHUB_OUTPUT"
-          fi  
-    outputs:
-      env_name: ${{ steps.env_step.outputs.ENVIRONMENT }}
   test:
-    needs: [set_env]
-    environment: ${{ needs.set_env.outputs.env_name }}
-    env:
-      AZURE_ENVIRONMENT_NAME: ${{ vars.AZURE_ENVIRONMENT_NAME }}
-      AZURE_DATA_LAKE: ${{ vars.AZURE_DATA_LAKE }}
-      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
-      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-      AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
-      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }} 
-      AZURE_ML_WORKSPACE: ${{ vars.AZURE_ML_WORKSPACE }}
-
-    runs-on: ['self-hosted', 'linux', 'new-runner']
+    runs-on: 'ubuntu-latest'
     timeout-minutes: 9
 
     steps:
-      - uses: webfactory/ssh-agent@v0.6.0
-        with:
-            ssh-private-key: ${{ secrets.CORE_REPO_PRIVATE_KEY }}
       - name: Check out repository code
         uses: actions/checkout@v2
 
@@ -56,9 +37,6 @@ jobs:
         run: |
           pytest datascience_core/ 
   build:
-    needs: [set_env]
-    environment:
-      name: ${{ needs.set_env.outputs.env_name }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -66,10 +44,7 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: "3.9"
-      - name: Gain ssh access to this repo
-        uses: webfactory/ssh-agent@v0.6.0
-        with:
-            ssh-private-key: ${{ secrets.CORE_REPO_PRIVATE_KEY }}
+
       - name: Extract branch name
         shell: bash
         run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
@@ -77,7 +52,7 @@ jobs:
       - name: Build using pip
         run: |
           pip install wheel
-          pip install git+https://github.com/Carfinance247/datascience_core@${{ steps.extract_branch.outputs.branch }}#egg=datascience-core
+          pip install git+https://github.com/data-day-science/datascience_core@${{ steps.extract_branch.outputs.branch }}#egg=datascience-core
       - name: Post build tests
         run: |
           python -c "from datascience_core.authentications import DataLakeAuthentication"

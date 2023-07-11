@@ -1,6 +1,5 @@
 name: DeployDocs 
-on:
-  workflow-dispatch:
+on: workflow_dispatch
   # push:
   #   branches:
   #     - main
@@ -10,10 +9,10 @@ on:
     #     required: true
     #     default: 'dev'
 jobs:
-  deploy_docs:
+  build:
     env:
       AZURE_WEBAPP_NAME: ds-core-docs
-    runs-on: ['ubuntu-latest']
+    runs-on: 'ubuntu-latest'
     timeout-minutes: 9
 
     steps:
@@ -34,3 +33,18 @@ jobs:
         run: |
           pdoc ./datascience_core -o /tmp/docs
 
+      - uses: actions/upload-pages-artifact@v1
+        with:
+          path: /tmp/docs/
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v2

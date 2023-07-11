@@ -18,5 +18,5 @@ initialise_core_config(
     machine_learning_workspace=machine_learning_workspace,
     data_lake=data_lake,
     tenant_id=tenant_id,
-    create_new_config=False
+    create_new_config=True
 )

@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Dict, List, Union, Optional, Any
 import os
 import logging
-
+from azure.core.exceptions import ResourceNotFoundError
 
 class ConfigAlreadyExistsError(Exception):
     pass
@@ -48,6 +48,7 @@ class ConfigSetup:
         machine_learning_workspace: str,
         data_lake: str,
         create_new_config: Optional[bool] = False,
+        project_dataset_container: str = "projects",
     ):
         """
         Initialise the core local config. This provides the minimum config required to either load an existing config file that your team has registered in a data lake or create a new config file for your team to use.
@@ -62,6 +63,7 @@ class ConfigSetup:
             "resource_group": resource_group,
             "machine_learning_workspace": machine_learning_workspace,
             "data_lake": data_lake,
+            "project_dataset_container": project_dataset_container
         }
         config_updater.add_environment(**team_env_settings)
         config_updater.add_project_dataset_manager(
@@ -80,4 +82,7 @@ class ConfigSetup:
             except:
                 config_manager.register_new_config()
         else:
-            config_manager.pull_config()
+            try:
+                config_manager.pull_config()
+            except ResourceNotFoundError:
+                config_manager.register_new_config()

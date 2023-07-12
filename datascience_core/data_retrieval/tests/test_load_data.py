@@ -10,8 +10,6 @@ from .._load_data import (
     TableLoader,
     DataFrameTap,
     DataLakeCSVLoader,
-    CreditDataURIGenerator,
-    CreditDataLoader,
     DataCacher,
     DataLakeJsonLoader,
     DataLakePickleLoader,

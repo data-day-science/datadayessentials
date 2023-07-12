@@ -79,8 +79,7 @@ class TestExperimentManager(unittest.TestCase):
             params=params
         )
 
-        ws = setup_workspace()
-        raise ValueError
+        ws = experiment_manager.workspace
 
         run = ws.get_run(run_id)
         assert run.get_metrics()["train_OK_float"] == 1.23

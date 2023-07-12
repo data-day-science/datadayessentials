@@ -18,6 +18,8 @@ from datadayessentials.config import LocalConfig
 
 
 def setup_experiment_manager():
+
+    raise ValueError
     manager = ExperimentManager(
         experiment_name="test_datadayessentials"
     )

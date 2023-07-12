@@ -23,6 +23,7 @@ from azureml.core.authentication import (
     InteractiveLoginAuthentication,
 )
 from azureml.core import Workspace
+import sys
 
 
 def get_workspace() -> Workspace:
@@ -37,7 +38,13 @@ def get_workspace() -> Workspace:
             service_principal_password=os.environ["AZURE_CLIENT_SECRET"],
         )
     except KeyError:
-        auth = InteractiveLoginAuthentication()
+        # Only try this locally
+        if sys.platform == "win32":
+            auth = InteractiveLoginAuthentication()
+        else:
+            raise KeyError(
+                "You must set the following environment variables: AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET"
+            )
 
     env_config = LocalConfig.get_environment_from_name("dev")
     return Workspace.get(

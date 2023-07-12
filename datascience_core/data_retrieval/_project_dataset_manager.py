@@ -31,6 +31,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 
+
 class DatalakeProjectAssetsHelper:
     """A class for interacting with resources in the Data lake.  This class is a helper for
     the ProjectDatasetManager and is not intended to be used as a standalone class
@@ -67,13 +68,20 @@ class DatalakeProjectAssetsHelper:
         Returns:
             list: subdirectories of the Datasets folder for each project.
         """
-
+        container_name = LocalConfig.get_environment()['project_dataset_container']
         blob = BlobLocation(
             account=self.data_lake_name,
-            container="projects",
+            container=container_name,
             filepath=self.project + "/Datasets",
             filename="",
         )
+        # If the container does not exist then try to create it
+        containers = self.datalake_service.list_file_systems()
+        
+        if container_name not in [container.name for container in containers]:
+            self._create_container(container_name)
+
+
         file_system_client = self.datalake_service.get_file_system_client(
             file_system=blob.get_container()
         )
@@ -96,6 +104,10 @@ class DatalakeProjectAssetsHelper:
         )
         project_assets.remove("Datasets")
         return project_assets
+    
+    def _create_container(self, container_name):
+        self.datalake_service.create_file_system(file_system=container_name)
+        
 
     def pull_project_datasets(self, uri_blob_locations: list, skip_datasets=[]) -> dict:
         """Returns all datasets associated with the supplied project name.
@@ -139,9 +151,10 @@ class DatalakeProjectAssetsHelper:
             dataset_name (str): name of the dataset as it appears in mlstudio.
         """
 
+        container_name = LocalConfig.get_environment()['project_dataset_container']
         blob = BlobLocation(
             account=self.data_lake_name,
-            container="projects",
+            container=container_name,
             filepath=self.project + "/Datasets",
             filename="",
         )
@@ -338,9 +351,10 @@ class MLStudioProjectDatasetsHelper:
             BlobLocation: blob location object for file to be saved in the data lake
         """
         file_uuid = uuid.uuid4()
+        container_name = LocalConfig.get_environment()['project_dataset_container']
         return BlobLocation(
             account=self.data_lake_name,
-            container="projects",
+            container=container_name,
             filepath=project + "/Datasets/" + registered_dataset_name,
             filename=str(file_uuid),
         )
@@ -541,6 +555,7 @@ class ProjectDatasetManager(IProjectDataset):
                     :type register_as_pickle: bool
 
                 """
+        # 
         save_blob = self.MLStudio_asset_helper.generate_dataset_path(
             registered_dataset_name=registered_dataset_name, project=self.project)
 

@@ -348,6 +348,7 @@ class ConfigContentUpdater(IConfigManager):
         subscription_id: str,
         resource_group: str,
         tenant_id: str,
+        project_dataset_container: str,
         client_id: Optional[str] = None,
         machine_learning_workspace: Optional[str] = None,
         data_lake: Optional[str] = None,
@@ -362,6 +363,7 @@ class ConfigContentUpdater(IConfigManager):
             resource_group (str): The resource group of the environment.
             client_id (str): The client id of the environment.
             tenant_id (str): The tenant id of the environment.
+            project_dataset_container (str): The container name that will hold all project datasets
             machine_learning_workspace (str): The machine learning workspace of the environment.
             data_lake (str): The data lake of the environment.
 
@@ -374,6 +376,7 @@ class ConfigContentUpdater(IConfigManager):
             "subscription_id": subscription_id,
             "resource_group": resource_group,
             "tenant_id": tenant_id,
+            "project_dataset_container": project_dataset_container
         }
         if client_id is not None:
             entry["client_id"] = (client_id,)

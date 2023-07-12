@@ -7,4 +7,10 @@ from ._config_updater import ConfigContentUpdater
 from ._config_setup import ConfigSetup
 
 
-__all__ = [LocalConfig, GlobalConfig, ConfigManager, ConfigContentUpdater,ConfigSetup]
+__all__ = [
+    'LocalConfig', 
+    'GlobalConfig', 
+    'ConfigManager', 
+    'ConfigContentUpdater',
+    'ConfigSetup'
+]

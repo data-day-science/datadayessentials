@@ -37,7 +37,7 @@ def setup_workspace():
 class TestExperimentManager(unittest.TestCase):
     def test_submit_run(self):
         experiment_manager = setup_experiment_manager()
-
+        raise ValueError
         model_metrics = {
             "metrics": {
                 "train": {

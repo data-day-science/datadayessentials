@@ -14,9 +14,9 @@ import logging
 
 
 __all__ = [
-    IAuthentication,
-    DataLakeAuthentication,
-    DatabaseAuthentication,
-    SQLServerConnection,
-    AzureAuthenticationSingleton,
+    'IAuthentication',
+    'DataLakeAuthentication',
+    'DatabaseAuthentication',
+    'SQLServerConnection',
+    'AzureAuthenticationSingleton',
 ]

@@ -10,8 +10,8 @@ from .model_factory import ModelFactory
 from .sklearn import SklearnModel
 
 __all__ = [
-    SklearnModel,
-    XGBoostClassifierPipeline,
-    CatBoostClassifierPipeline,
-    ModelFactory
+    'SklearnModel',
+    'XGBoostClassifierPipeline',
+    'CatBoostClassifierPipeline',
+    'ModelFactory'
 ]

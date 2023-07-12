@@ -14,9 +14,9 @@ from ._base import IServiceHitter, ServiceHitterCacher
 
 
 __all__ = [
-    IServiceHitter,
-    ScorecardServiceHitter,
-    AffordabilityServiceHitter,
-    ServiceHitterCacher,
-    PrimePredictionsServiceHitter
+    'IServiceHitter',
+    'ScorecardServiceHitter',
+    'AffordabilityServiceHitter',
+    'ServiceHitterCacher',
+    'PrimePredictionsServiceHitter'
 ]

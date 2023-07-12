@@ -12,12 +12,12 @@ from .model_evaluator import ModelEvaluator
 
 
 __all__ = [
-    ModelManager,
-    CatBoostClassifierPipeline,
-    DataSplitter,
-    ModelPipeline,
-    ModelEvaluator,
-    XGBoostClassifierPipeline,
-    ExperimentManager,
-    SklearnModel
+    'ModelManager',
+    'CatBoostClassifierPipeline',
+    'DataSplitter',
+    'ModelPipeline',
+    'ModelEvaluator',
+    'XGBoostClassifierPipeline',
+    'ExperimentManager',
+    'SklearnModel'
 ]

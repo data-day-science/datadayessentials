@@ -20,4 +20,4 @@ IPython
 coverage
 genbadge
 tensorflow
-tensorflow-datasets==4.8.3
+tensorflow-datasets

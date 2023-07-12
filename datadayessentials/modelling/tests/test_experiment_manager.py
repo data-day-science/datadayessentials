@@ -37,7 +37,6 @@ def setup_workspace():
 class TestExperimentManager(unittest.TestCase):
     def test_submit_run(self):
         experiment_manager = setup_experiment_manager()
-        raise ValueError
         model_metrics = {
             "metrics": {
                 "train": {
@@ -80,6 +79,7 @@ class TestExperimentManager(unittest.TestCase):
             params=params
         )
 
+        raise ValueError
         ws = setup_workspace()
 
         run = ws.get_run(run_id)

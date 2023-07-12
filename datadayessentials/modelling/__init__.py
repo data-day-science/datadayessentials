@@ -10,7 +10,6 @@ from .utils import DataSplitter, ModelPipeline
 from .model_manager import ModelManager
 from .model_evaluator import ModelEvaluator
 
-
 __all__ = [
     'ModelManager',
     'CatBoostClassifierPipeline',

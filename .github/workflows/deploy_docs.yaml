@@ -31,7 +31,7 @@ jobs:
           pip install -r requirements.txt
       - name: Generate the docs
         run: |
-          pdoc ./datascience_core -o /tmp/docs
+          pdoc ./datadayessentials -o /tmp/docs
 
       - uses: actions/upload-pages-artifact@v1
         with:

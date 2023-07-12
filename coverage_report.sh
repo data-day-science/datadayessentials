@@ -1,4 +1,4 @@
-coverage run -m pytest datascience_core
+coverage run -m pytest datadayessentials
 coverage report --omit="*/test*","*/_base.py"
 coverage html --omit="*/test*","*/_base.py" -d ./.reports/coverage/ 
 coverage xml --omit="*/test*","*/_base.py" -o ./.reports/coverage/coverage.xml

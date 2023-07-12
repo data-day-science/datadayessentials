@@ -1,6 +1,6 @@
 # Datascience Core [![Coverage Status](./.reports/coverage/coverage-badge.svg)](./.reports/coverage/index.html)
 
-[__API Documentation__](https://ds-core-docs.azurewebsites.net/datascience_core.html) | [__Confluence User Guide__](https://247group.atlassian.net/wiki/spaces/247PROD/pages/2818539589/Data+Science+Core)
+[__API Documentation__](https://ds-core-docs.azurewebsites.net/datadayessentials.html) | [__Confluence User Guide__](https://247group.atlassian.net/wiki/spaces/247PROD/pages/2818539589/Data+Science+Core)
 
 ## Overview Datascience Core
 Datascience Core is a collection of packages that features tools that are common to any data science projects:
@@ -37,7 +37,7 @@ Once this is done you should be able to install this package by including the fo
 
 ```
 wheel
-git+https://github.com/data-day-science/datascience_core@main#egg=datascience-core
+git+https://github.com/data-day-science/datadayessentials@main#egg=datascience-core
 ```
 
 Note: The above line uses the main branch to install from. Please adjust if you require a specific commit or version.

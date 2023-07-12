@@ -17,7 +17,9 @@ logger.setLevel(logging.DEBUG)
 
 class EXAMPLE_DATA:
     def __init__(self):
-        self.name = "datascience_247money_scorecard/Datasets/scorecard_cra_dataset"
+        self.name = (
+            ""  # "datascience_247money_scorecard/Datasets/scorecard_cra_dataset"
+        )
 
 
 class TestDatasetURIGenerator:
@@ -102,9 +104,7 @@ class TestMLStudioProjectDatasetsHelper:
         asset_paths = ml_studio_helper._get_path_to_registered_dataset(
             project_assets=project_assets, versions={}
         )
-        expected = (
-            "https://ds247dldev.blob.core.windows.net/projects/test/Datasets/test/"
-        )
+        expected = ""  # "https://ds247dldev.blob.core.windows.net/projects/test/Datasets/test/"
 
         assert isinstance(asset_paths, list)
         assert isinstance(asset_paths[0], dict)
@@ -258,7 +258,7 @@ class TestProjectDatasetManager(unittest.TestCase):
         mock_data_lake_json_saver.assert_called_once()
 
     def test_list_datasets(self):
-        project = "datascience_prime_predictions"
+        project = "datascience_core"
         dataset_manager = ProjectDatasetManager(project=project)
         assets = dataset_manager.list_datasets()
 
@@ -266,7 +266,7 @@ class TestProjectDatasetManager(unittest.TestCase):
         assert len(assets) > 0
 
     def test_list_dataset_descriptions(self):
-        project = "datascience_prime_predictions"
+        project = "datascience_core"
         dataset_manager = ProjectDatasetManager(project=project)
         assets = dataset_manager.list_dataset_descriptions()
 

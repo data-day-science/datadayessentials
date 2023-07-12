@@ -1,20 +1,16 @@
 import unittest
 
 import pytest
-from ..authentications import DatabaseAuthentication, DataLakeAuthentication
+from ..authentications import DataLakeAuthentication
 import logging
 from ..data_retrieval import (
     DataLakeCSVLoader,
     DataLakeCSVSaver,
     BlobLocation,
-    QueryFactory,
-    TableLoader,
 )
 from ..data_retrieval import IURIGenerator
 import pandas as pd
 from ..config import LocalConfig
-from dateutil.relativedelta import relativedelta
-from datetime import datetime
 
 
 logger = logging.getLogger(__name__)

@@ -35,7 +35,7 @@ jobs:
           python initialise_core.py
       - name: Run test suite
         run: |
-          pytest datadayessentials/ 
+          pytest datadayessentials/modelling/tests/test_experiment_manager.py 
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 10

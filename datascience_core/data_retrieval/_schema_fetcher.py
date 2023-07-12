@@ -88,22 +88,12 @@ class SchemaFetcher(ISchemaFetcher):
         Returns:
             dict: Dictionary with the schema
         """
-        if name == "app_and_cra_payload":
-            schema = {
-                **self._load_schema("app_schema"),
-                **self._load_schema("BSB_schema"),
-                **self._load_schema("QCB_schema"),
-            }
-
-            return schema
-
-        else:
-            try:
-                schema = self._load_schema(name)
-                self._validate_schema(schema)
-            except:
-                raise ValueError("no schema found with that name")
-            return schema
+        try:
+            schema = self._load_schema(name)
+            self._validate_schema(schema)
+        except:
+            raise ValueError("no schema found with that name")
+        return schema
 
     @classmethod
     def list_available_schemas(cls) -> List[str]:
@@ -113,8 +103,7 @@ class SchemaFetcher(ISchemaFetcher):
             List[str]: List of schema filenames
         """
         schema_manager = ProjectDatasetManager("datascience_core_schemas")
-        extra_schemas = ["app_and_cra_payload"]
-        return schema_manager.list_datasets() + extra_schemas
+        return schema_manager.list_datasets() 
 
     def _validate_schema(self, schema: dict):
         """Validates the schema to ensure all the required fields are present

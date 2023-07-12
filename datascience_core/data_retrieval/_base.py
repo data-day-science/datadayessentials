@@ -65,6 +65,10 @@ class ISQLQueryFormatter(ABC):
     @abstractmethod
     def get_query(self) -> str:
         pass
+    
+    @abstractmethod
+    def _load_query(self, query_name: str) -> str:
+        pass
 
 
 class IDataFrameLoader(ABC):
@@ -162,17 +166,6 @@ class IJsonSaver(ABC):
 class IPickleSaver(ABC):
     @abstractmethod
     def save(self, filepath: str, data: Any):
-        pass
-
-
-class ICreditDataFrameLoader(ICSVLoader):
-    def __init__(
-        self, authentication: IAuthentication, start_time: datetime, end_time: datetime
-    ):
-        pass
-
-    @abstractmethod
-    def load(self) -> pd.DataFrame:
         pass
 
 

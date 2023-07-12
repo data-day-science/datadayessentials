@@ -1,111 +1,104 @@
 import unittest
-from ...data_retrieval import QueryFactory
-import pytest
-from datetime import datetime
+from .._base import ISQLQueryFormatter
+import os
+import logging
+import unittest
+from unittest.mock import patch
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
-def to_datetime(str_datetime):
-    return datetime.strptime(str_datetime, "%Y-%m-%d")
 
+class SQLQueryFormatter(ISQLQueryFormatter):
+    """Responsible for loading and formatting queries based on the input parameters."""
 
-class TestQueryFactory(unittest.TestCase):
-    def setUp(self) -> None:
-        return super().setUp()
+    query_folder = os.path.join(os.path.dirname(__file__), "sql_queries")
 
-    def tearDown(self) -> None:
-        return super().tearDown()
+    def __init__(self, query_name: str, params: dict) -> None:
+        """Creates a SQLFormatter instance
 
-    # Need to check validation of input parameters and that the correct query is being returned
-    def test_get_default_label_query(self):
-        start_date = to_datetime("1999-01-01")
-        end_date = to_datetime("2022-01-01")
-        formatted_query = QueryFactory.get_default_label_query(start_date, end_date)
-        print(formatted_query)
-        expected_result = """SELECT 
-[Broker Reference] AS ApplicationId,
-ApplicationDate,
-[Start Date],
-DefaultedInFirst12Months AS [Retro Three_Plus_In_Twleve],
-NumDaysOpen,
-OpenGT370Days
-FROM analyst.DefaultModelling
-WHERE [Start Date] between '1999-01-01' and '2022-01-01'
-"""
-        assert formatted_query.replace("\t", "") == expected_result
+        Args:
+            query_path (str): Location of the query to format, containing format strings '{param1}' that can be formatted by the params
+            params (dict): Key value pairs of parameters for formatting the query
+        """
+        self.query_name = query_name 
+        self.params = params
 
-    def test_get_default_label_query_parameter_validation(self):
-        start_date = "hello"
-        end_date = to_datetime("2022-01-01")
-        with pytest.raises(ValueError):
-            formatted_query = QueryFactory.get_default_label_query(start_date, end_date)
+    
 
-        start_date = to_datetime("2022-01-01")
-        end_date = "hello"
-        with pytest.raises(ValueError):
-            formatted_query = QueryFactory.get_default_label_query(start_date, end_date)
+    def _format_query(self, not_formatted_query: str) -> str:
+        """Formats a query string with the parameter dictionary
 
-        start_date = 20
-        end_date = to_datetime("2022-02-02")
-        with pytest.raises(ValueError):
-            formatted_query = QueryFactory.get_default_label_query(start_date, end_date)
+        Args:
+            not_formatted_query (str): Raw query string with format strings
 
-    def test_get_app_payload_query(self):
-        app_ids = ["123098"]
-        formatted_query = QueryFactory.get_app_payload_query(app_ids)
-        assert (
-            formatted_query
-            == "EXEC [DataScience].[Get_AppPayload_Scorecard] @AppIds = ['123098']\n"
-        )
+        Returns:
+            str: Formatted query with the parameters
+        """
+        formatted_query = not_formatted_query.format(**self.params)
+        return formatted_query
 
-    def test_get_app_payload_query_parameter_validation(self):
-        app_ids = 12809
-        with pytest.raises(TypeError):
-            formatted_query = QueryFactory.get_app_payload_query(app_ids)
+    def get_query(self) -> str:
+        """Function for loading and formatting a query
 
-        app_ids = [235412]
-        with pytest.raises(TypeError):
-            formatted_query = QueryFactory.get_app_payload_query(app_ids)
+        Returns:
+            str: Formatted query
+        """
+        raw_query = self._load_query(self.query_name)
+        logger.debug("Formatting query with parameters")
+        formatted_query = self._format_query(raw_query)
+        logger.debug(f"Formatted query: \n {formatted_query}")
+        return formatted_query
+    
+    def _load_query(self, query_name):
+        """
+        Loads a query from the query folder
+        """
+        query_path = os.path.join(self.query_folder, query_name + ".sql")
+        with open(query_path, "r") as query_file:
+            query = query_file.read()
+        return query
 
-    def test_get_allocated_volume_query(self):
-        start_date = to_datetime("1999-01-01")
-        end_date = to_datetime("2022-01-01")
-        formatted_query = QueryFactory.get_allocated_volume_query(start_date, end_date)
+class MockOpen:
+    def __init__(self, read_data):
+        self.read_data = read_data
 
-        
-        expected_start_date = '1999-01-01'
-        expected_end_date = '2022-01-01'
-        assert expected_start_date in formatted_query
-        assert expected_end_date in formatted_query
+    def __call__(self, *args, **kwargs):
+        return self
 
-    def test_get_allocated_volume_quuery_parameter_validation(self):
-        start_date = "hello"
-        end_date = to_datetime("2022-01-01")
-        with pytest.raises(ValueError):
-            formatted_query = QueryFactory.get_allocated_volume_query(
-                start_date, end_date
-            )
+    def __enter__(self):
+        return self
 
-        start_date = to_datetime("2022-01-01")
-        end_date = "hello"
-        with pytest.raises(ValueError):
-            formatted_query = QueryFactory.get_allocated_volume_query(
-                start_date, end_date
-            )
+    def __exit__(self, *args):
+        pass
 
-        start_date = 20
-        end_date = to_datetime("2022-02-02")
-        with pytest.raises(ValueError):
-            formatted_query = QueryFactory.get_allocated_volume_query(
-                start_date, end_date
-            )
+    def read(self):
+        return self.read_data
 
-    def test_get_policy_check_data_type_err(self):
-        application_ids = "111"
-        with pytest.raises(TypeError):
-            QueryFactory.get_policy_check_query(application_ids=application_ids)
+class TestQueryFormatter(unittest.TestCase):
+    def setUp(self):
+        self.query_name = "test_query"
+        self.params = {"param1": "value1", "param2": "value2"}
+        self.formatter = SQLQueryFormatter(self.query_name, self.params)
 
-    def test_get_policy_check_data(self):
-        application_ids = ["1", "2", "3"]
-        query = QueryFactory.get_policy_check_query(application_ids=application_ids)
-        expected_query = "EXEC DataScience.Get_PolicyCheckByDecision  @AppicationIdCSLList = ['1', '2', '3']"
-        assert expected_query == query
+    @patch("builtins.open", new_callable=MockOpen(), read_data="SELECT * FROM test_table WHERE column1 = '{param1}' AND column2 = '{param2}'") 
+    def test_load_query(self, mock_open):
+        query = self.formatter._load_query(self.query_name)
+        self.assertIsInstance(query, str)
+        self.assertEqual(query, "SELECT * FROM test_table WHERE column1 = '{param1}' AND column2 = '{param2}'")
+
+    @patch("builtins.open", new_callable=MockOpen(), read_data="SELECT * FROM test_table WHERE column1 = '{param1}' AND column2 = '{param2}'") 
+    def test_format_query(self):
+        query = self.formatter._load_query(self.query_name)
+        formatted_query = self.formatter._format_query(query)
+        self.assertIsInstance(formatted_query, str)
+        self.assertEqual(formatted_query, "SELECT * FROM test_table WHERE column1 = 'value1' AND column2 = 'value2'")
+    
+    @patch("builtins.open", new_callable=MockOpen(), read_data="SELECT * FROM test_table WHERE column1 = '{param1}' AND column2 = '{param2}'") 
+    def test_get_query(self):
+        query = self.formatter.get_query()
+        self.assertIsInstance(query, str)
+        self.assertEqual(query, "SELECT * FROM test_table WHERE column1 = 'value1' AND column2 = 'value2'")
+
+     

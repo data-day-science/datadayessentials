@@ -1,10 +1,7 @@
 from .._schema_fetcher import SchemaFetcher, InvalidSchemaError
-from io import StringIO
 import pytest
 from unittest.mock import patch
-import json
 import unittest
-import os
 
 
 class TestSchemaFetcher(unittest.TestCase):
@@ -46,8 +43,3 @@ class TestSchemaFetcher(unittest.TestCase):
         schema_fetcher = SchemaFetcher()
         with pytest.raises(ValueError):
             schema_fetcher.get_schema("no_schema_is_called_this")
-
-    def test_get_app_and_cra_schema(self):
-        schema_fetcher = SchemaFetcher()
-        combined_schema = schema_fetcher.get_schema("app_and_cra_payload")
-        assert len(combined_schema.keys()) == 2122

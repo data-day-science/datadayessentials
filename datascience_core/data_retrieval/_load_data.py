@@ -10,7 +10,6 @@ from ._base import (
     ITableLoader,
     ICSVLoader,
     IURIGenerator,
-    ICreditDataFrameLoader,
     IAuthentication,
     IDataFrameTap,
     IDataFrameLoader,
@@ -26,7 +25,7 @@ from datascience_core.data_transformation._transformers import (
     DataFrameTimeSlicer,
 )
 from ._validate_data import DataFrameValidator
-from ._uri_generators import CreditDataURIGenerator, URIGenerator
+from ._uri_generators import URIGenerator
 import pandas as pd
 import datetime
 import logging
@@ -319,97 +318,6 @@ class DataLakeCSVLoader(ICSVLoader):
             df = pd.read_csv(buffer, **kwargs)
             cacher.save_df_to_cache(df)
             return df
-
-
-class CreditDataLoader(ICreditDataFrameLoader):
-    """
-    Loading class for credit check data stored in the Azure datalake. Uses caching to save epochs locally.
-    Example Use Case:
-    ```python
-    from datascience_core.data_retrieval import CreditDataLoader
-    from datascience_core.authentications import DataLakeAuthentication
-
-    start_date = datetime.strptime('2022-01-01', '%Y-%m-%d')
-    end_date = datetime.strptime('2022-02-01', '%Y-%m-%d')
-
-    authentication = DataLakeAuthentication()
-    loader = CreditDataLoader(authentication, start_date, end_date)
-
-    payload = loader.load()
-    ```
-    
-
-    Load credit data from the data lake
-    Arguments:
-      authentication:
-      start/end_time: Specify the start time, end time of the credit data retrieved
-      use_cache: Disable if you do not want to use cached data or if you want to refresh the cache
-      errors: either 'ignore' or 'raise', this specifically relates to if some of the credit data blobs cannot be found, for instance if the current month is not available yet and would throw an error if requested.
-    """
-
-    def __init__(
-        self,
-        start_time: datetime,
-        end_time: datetime,
-        use_cache: bool = True,
-        authentication: IAuthentication=None,
-        errors: str = "ignore",
-    ):
-        """Creates a CreditDataLoader instance
-
-        Args:
-            authentication (IAuthentication): Authentication instance for retrieving Azure login credentials. Could be `DataLakeAuthentication` instance
-            start_time (datetime): Start date of the credit data to retrieve
-            end_time (datetime): End date of the credit data to retrieve
-            use_cache (bool, optional): Flag to indicate if the cache should be used or not. Defaults to True.
-            errors (str, optional): If one of the CSV files cannot be found and this is set to 'raise' then an error will be raised. Defaults to "ignore".
-        """
-        self.use_cache = use_cache
-        self.uri_generator = CreditDataURIGenerator(start_time, end_time)
-        cra_folder_details = LocalConfig.get_data_lake_folder(
-            "cra_data", use_current_environment=False
-        )
-        if not authentication:
-            authentication = DataLakeAuthentication()
-
-        self.csv_loader = DataLakeCSVLoader(
-            authentication=authentication,
-            use_cache=use_cache,
-            errors=errors,
-        )
-        self.col_name = "App.ApplicationDate"
-        self.dataframe_slicer = DataFrameTimeSlicer(
-            self.col_name,
-            start_time,
-            end_time,
-            convert_to_datetime_format="%Y-%m-%d %H:%M:%S",
-        )
-
-    def load(self) -> pd.DataFrame:
-        """Loads all the credit data stored in the data lake and slices the resulting dataframe based on the required date range
-
-        Raises:
-            ValueError: Raised when the credit data retrieved does not contain the required column to slice on (for date range)
-
-        Returns:
-            pd.DataFrame: Dataframe containing the credit check data
-        """
-        credit_epochs = self.csv_loader.load_from_uri_generator(self.uri_generator)
-        logger.debug(
-            f"Retrieved the credit epochs with columns: {credit_epochs.columns}"
-        )
-        if self.col_name not in credit_epochs.columns:
-            raise ValueError(
-                f"The returned credit data does not contain the column to slice on: {self.col_name}"
-            )
-        logger.debug(
-            f"The shape of the data retrieved from the uri_generator is {credit_epochs.shape}"
-        )
-        logger.debug(
-            f'The datetimes column of this data is {credit_epochs["App.ApplicationDate"].values[0]}'
-        )
-        sliced_epochs = self.dataframe_slicer.process(credit_epochs)
-        return sliced_epochs
 
 
 class DataFrameTap(IDataFrameTap):

@@ -30,14 +30,6 @@ class FakeURIGenerator(IURIGenerator):
 
 
 class TestAzureIntegration(unittest.TestCase):
-    def test_get_dwh_credentials(self):
-        dwh_credentials = DatabaseAuthentication().get_credentials()
-        assert isinstance(dwh_credentials, dict)
-        assert "USERNAME" in dwh_credentials
-        assert "PASSWORD" in dwh_credentials
-        assert dwh_credentials["USERNAME"] is not None
-        assert dwh_credentials["PASSWORD"] is not None
-
     @pytest.mark.skip(reason="Azure issue uploading data with VPN")
     def test_data_lake_connection(self):
         credentials = DataLakeAuthentication()
@@ -56,21 +48,3 @@ class TestAzureIntegration(unittest.TestCase):
         logger.debug(f"The expected_df is {test_df}")
 
 
-class TestDWHIntegration(unittest.TestCase):
-    def test_load_table(self):
-        current_date = datetime.now() - relativedelta(months=1)
-        yesterday = current_date - relativedelta(days=1)
-        one_day_query = QueryFactory.get_allocated_volume_query(yesterday, current_date)
-        table_loader = TableLoader(one_day_query)
-        data = table_loader.load()
-        logger.debug(f"The data retrieved from the warehouse is {data.head()}")
-
-    def test_credit_checks_db(self):
-        current_date = datetime.now() - relativedelta(months=1)
-        yesterday = current_date - relativedelta(days=1)
-        example_query = "SELECT TOP 100 * FROM FACT.ApplicationIdToCreditCheckId"
-        table_loader = TableLoader(
-            example_query, server_name="credit_check_prod"
-        )
-        data = table_loader.load()
-        logger.debug(f"The data retrieved from the warehouse is {data.head()}")

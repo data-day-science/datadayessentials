@@ -23,7 +23,6 @@ from ._validate_data import DataFrameValidator
 from ._load_data import (
     TableLoader,
     DataLakeCSVLoader,
-    CreditDataLoader,
     DataFrameTap,
     AzureBlobLoader,
 )
@@ -33,7 +32,6 @@ from ._project_dataset_manager import (
     DatalakeProjectAssetsHelper,
     MLStudioProjectDatasetsHelper,
 )
-from ._sql_queries import QueryFactory
 from ._save_data import DataLakeCSVSaver, BlobLocation, DataLakeJsonSaver
 from ._base import IURIGenerator, ICSVSaver, IBlobLocation, ICSVLoader, IProjectDataset
 from ._schema_fetcher import SchemaFetcher
@@ -43,7 +41,6 @@ from ._delete_data import DataLakeDirectoryDeleter
 __all__ = [
     DataFrameTap,
     TableLoader,
-    QueryFactory,
     DataLakeCSVLoader,
     ProjectDatasetManager,
     DataLakeCSVSaver,
@@ -51,7 +48,6 @@ __all__ = [
     BlobLocation,
     IBlobLocation,
     ICSVSaver,
-    CreditDataLoader,
     SchemaFetcher,
     DatalakeProjectAssetsHelper,
     MLStudioProjectDatasetsHelper,

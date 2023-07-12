@@ -8,13 +8,16 @@ from unittest.mock import patch
 # This dictionary is used to mock the local_config file so nothing is overwritten during testing.
 LOCAL_CONFIG = {"sync_with_remote": False}
 
+
 # Mock Functions to replace the LocalConfig class functions
 def write(self, new_config):
     global LOCAL_CONFIG
     LOCAL_CONFIG = new_config
 
+
 def read(self):
     return LOCAL_CONFIG
+
 
 @patch.object(LocalConfig, "write", write)
 @patch.object(LocalConfig, "read", read)
@@ -124,6 +127,7 @@ class TestConfigUpdater(unittest.TestCase):
         self.config_updater = ConfigContentUpdater()
         self.config_updater.add_environment(
             environment_name="test_add_remove_env",
+            project_dataset_container="test",
             subscription_id="34567",
             resource_group="rg-test-2",
             client_id="789",

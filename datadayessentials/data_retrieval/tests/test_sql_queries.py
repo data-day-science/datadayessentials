@@ -89,14 +89,14 @@ class TestQueryFormatter(unittest.TestCase):
         self.assertEqual(query, "SELECT * FROM test_table WHERE column1 = '{param1}' AND column2 = '{param2}'")
 
     @patch("builtins.open", new_callable=MockOpen(read_data="SELECT * FROM test_table WHERE column1 = '{param1}' AND column2 = '{param2}'")) 
-    def test_format_query(self):
+    def test_format_query(self, mock_open):
         query = self.formatter._load_query(self.query_name)
         formatted_query = self.formatter._format_query(query)
         self.assertIsInstance(formatted_query, str)
         self.assertEqual(formatted_query, "SELECT * FROM test_table WHERE column1 = 'value1' AND column2 = 'value2'")
     
     @patch("builtins.open", new_callable=MockOpen(read_data="SELECT * FROM test_table WHERE column1 = '{param1}' AND column2 = '{param2}'")) 
-    def test_get_query(self):
+    def test_get_query(self, mock_open):
         query = self.formatter.get_query()
         self.assertIsInstance(query, str)
         self.assertEqual(query, "SELECT * FROM test_table WHERE column1 = 'value1' AND column2 = 'value2'")

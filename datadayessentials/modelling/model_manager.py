@@ -22,7 +22,6 @@ class ModelManager(IModelManager):
     def __init__(
         self
     ) -> None:
-        raise ValueError
         self.workspace = get_workspace()
 
 

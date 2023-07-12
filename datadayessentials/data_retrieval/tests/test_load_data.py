@@ -47,7 +47,7 @@ class TestTableLoader(unittest.TestCase):
     @mock.patch("pandas.read_sql")
     @mock.patch("pyodbc.connect")
     def test_load(self, pyodbc_mock, pd_mock):
-        authentication = DatabaseAuthentication()
+        authentication = mock.MagicMock()
         authentication.get_credentials = mock.MagicMock(
             return_value={"USERNAME": "username", "PASSWORD": "password"}
         )
@@ -101,7 +101,7 @@ class TestDataLakeCSVLoader(unittest.TestCase):
     )
     def test_load_2_file(self, mock_file_properties, mock_download_file):
         # Prepare
-        authentication = DatabaseAuthentication()
+        authentication = mock.MagicMock()
         csv_buffer = BytesIO()
         with open(
             os.path.join(

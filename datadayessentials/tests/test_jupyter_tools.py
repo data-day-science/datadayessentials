@@ -4,7 +4,8 @@ from datadayessentials.jupyter_tools import TableScan
 
 class TestTableScan:
     @patch('datadayessentials.jupyter_tools.TableLoader')
-    def test_table_scan(self, mock_table_loader):
+    @patch('datadayessentials.authentications.DatabaseAuthentication')
+    def test_table_scan(self, database_auth_mock,  mock_table_loader):
         mock_output = 'mock_output'
         mock_table_loader.return_value.load.return_value = mock_output
 

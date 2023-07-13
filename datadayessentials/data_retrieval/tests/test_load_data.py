@@ -157,6 +157,13 @@ class TestDataLakeJsonLoader(unittest.TestCase):
         self.assertDictEqual(expected_dict, output_dict)
 
 
+class MockStorageStreamDownloader:
+    def __init__(self, bytes):
+        self.bytes = bytes
+
+    def readall(self):
+        return self.bytes
+
 class TestDataLakePickleLoader(unittest.TestCase):
     @mock.patch("azure.storage.filedatalake.DataLakeFileClient.download_file")
     @mock.patch(
@@ -167,10 +174,10 @@ class TestDataLakePickleLoader(unittest.TestCase):
         # Prepare
         authentication = DataLakeAuthentication()
         obj = pickle.dumps("Hello World!")
-        obj_buf = BytesIO(obj)
-
-        obj_buf.seek(0)
-        expected_obj = pickle.load(copy.copy(obj_buf))
+        obj_buf = MockStorageStreamDownloader(obj)
+        obj_io = BytesIO(obj)
+        obj_io.seek(0) 
+        expected_obj = pickle.load(obj_io)
         mock_download_file.side_effect = [copy.deepcopy(obj_buf)]
 
         # Test

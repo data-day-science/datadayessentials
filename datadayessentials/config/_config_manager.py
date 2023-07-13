@@ -11,7 +11,7 @@ class ConfigManager(IConfigManager):
     dataset_manager = None
 
     def __init__(self):
-        self.dataset_manager = ProjectDatasetManager("datadayessentials")
+        self.dataset_manager = ProjectDatasetManager("core_config")
         """manager class used to pull and push the local config file to azure as a registered dataset.
         """
 
@@ -23,7 +23,9 @@ class ConfigManager(IConfigManager):
         """
 
         if version:
-            configs = self.dataset_manager.load_datasets(versions={'local_config': version})
+            configs = self.dataset_manager.load_datasets(
+                versions={"local_config": version}
+            )
         else:
             configs = self.dataset_manager.load_datasets()
 

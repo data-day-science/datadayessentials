@@ -35,7 +35,7 @@ jobs:
           python initialise_core.py
       - name: Run test suite
         run: |
-          pytest datascience_core/ 
+          pytest datadayessentials 
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -52,8 +52,8 @@ jobs:
       - name: Build using pip
         run: |
           pip install wheel
-          pip install git+https://github.com/data-day-science/datascience_core@${{ steps.extract_branch.outputs.branch }}#egg=datascience-core
+          pip install git+https://github.com/data-day-science/datadayessentials@${{ steps.extract_branch.outputs.branch }}#egg=datadayessentials
       - name: Post build tests
         run: |
-          python -c "from datascience_core.authentications import DataLakeAuthentication"
+          python -c "from datadayessentials.authentications import DataLakeAuthentication"
         shell: sh

@@ -1,5 +1,5 @@
-from datascience_core import initialise_core_config
-from datascience_core.config import LocalConfig
+from datadayessentials import initialise_core_config
+from datadayessentials.config import LocalConfig
 import os
 
 print(os.environ.keys())

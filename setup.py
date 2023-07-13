@@ -18,30 +18,30 @@ version = 2.0
 requirements = read_requirements("requirements.txt")
 
 setup(
-    name="datascience_core",
+    name="datadayessentials",
     version=version,
     author="Data Science",
-    url="https://github.com/data-day-science/datascience_core",
+    url="https://github.com/data-day-science/datadayessentials",
     description="Common functionality to other datascience tools",
     package_dir={
-        "datascience_core": "datascience_core",
-        "datascience_core.authentications": "datascience_core/authentications",
-        "datascience_core.model_inference": "datascience_core/model_inference",
-        "datascience_core.data_retrieval": "datascience_core/data_retrieval",
-        "datascience_core.data_transformation": "datascience_core/data_transformation",
-        "datascience_core.modelling": "datascience_core/modelling",
+        "datadayessentials": "datadayessentials",
+        "datadayessentials.authentications": "datadayessentials/authentications",
+        "datadayessentials.model_inference": "datadayessentials/model_inference",
+        "datadayessentials.data_retrieval": "datadayessentials/data_retrieval",
+        "datadayessentials.data_transformation": "datadayessentials/data_transformation",
+        "datadayessentials.modelling": "datadayessentials/modelling",
     },
     packages=package_list,  # Don't include test directory in binary distribution
     package_data={
-        "datascience_core.data_retrieval": [
+        "datadayessentials.data_retrieval": [
             "schemas/*.json",
             "sql_queries/*.sql",
             "*.yml",
         ],
-        "datascience_core": ["*.yml"],
-        "datascience_core.authentications": ["*.yml"],
-        "datascience_core.model_inference": ["*.yml"],
-        "datascience_core.data_transformation": ["*.yml"],
+        "datadayessentials": ["*.yml"],
+        "datadayessentials.authentications": ["*.yml"],
+        "datadayessentials.model_inference": ["*.yml"],
+        "datadayessentials.data_transformation": ["*.yml"],
         "": ["*.yml"],
     },
     include_package_data=True,

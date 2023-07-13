@@ -64,7 +64,7 @@ class DataCacher:
         )  # Replace all non-alphanumeric characters with '_'
 
         if last_modified:
-            self.file = file + "__" + last_modified.strftime("Y_m_d")
+            self.file = file + "__" + last_modified.strftime("%Y_%m_%d")
         else:
             self.file = file
 

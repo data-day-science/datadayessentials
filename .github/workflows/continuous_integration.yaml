@@ -52,7 +52,7 @@ jobs:
       - name: Build using pip
         run: |
           pip install wheel
-          pip install git+https://github.com/data-day-science/datadayessentials@${{ steps.extract_branch.outputs.branch }}#egg=datascience-core
+          pip install git+https://github.com/data-day-science/datadayessentials@${{ steps.extract_branch.outputs.branch }}#egg=datadayessentials
       - name: Post build tests
         run: |
           python -c "from datadayessentials.authentications import DataLakeAuthentication"

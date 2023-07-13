@@ -170,7 +170,6 @@ class TestDataLakePickleLoader(unittest.TestCase):
         obj_buf = BytesIO(obj)
 
         obj_buf.seek(0)
-        assert hasattr(obj_buf, 'read_all')
         expected_obj = pickle.load(copy.copy(obj_buf))
         mock_download_file.side_effect = [copy.deepcopy(obj_buf)]
 

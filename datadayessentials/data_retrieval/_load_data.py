@@ -480,6 +480,7 @@ class DataLakePickleLoader(IPickleLoader):
             return cacher.get_pickle_from_cache()
         else:
             download = file_client.download_file()
+
             buffer = BytesIO(download.readall())
             buffer.seek(0)
             obj = pickle.load(buffer)

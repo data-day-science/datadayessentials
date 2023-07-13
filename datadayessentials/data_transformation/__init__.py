@@ -66,5 +66,6 @@ __all__ = [
     'ColumnFiller',
     'ColumnDotRenamer',
     'run_pipeline_with_multi_threading',
-    'CategoricalColumnSplitter'
+    'CategoricalColumnSplitter',
+    'SimpleCatTypeConverter'
 ]

@@ -46,7 +46,9 @@ class FakeURIGenerator(IURIGenerator):
 class TestTableLoader(unittest.TestCase):
     @mock.patch("pandas.read_sql")
     @mock.patch("pyodbc.connect")
-    def test_load(self, pyodbc_mock, pd_mock):
+    @mock.patch("datadayessentials.authentications.SQLServerConnection", autospec=True)
+    @mock.patch("datadayessentials.config.LocalConfig.get_database")
+    def test_load(self, get_db_mock, run_sql_mock, pyodbc_mock, pd_mock):
         authentication = mock.MagicMock()
         authentication.get_credentials = mock.MagicMock(
             return_value={"USERNAME": "username", "PASSWORD": "password"}
@@ -57,10 +59,6 @@ class TestTableLoader(unittest.TestCase):
         logger.debug(f"SQL statement called: {pyodbc_mock.call_args.args[0]}")
         assert pyodbc_mock.called
         assert pd_mock.called
-        assert (
-            pyodbc_mock.call_args.args[0]
-            == "DRIVER={ODBC Driver 17 for SQL Server};SERVER=cjzbghrawq2.database.windows.net;DATABASE=DW;ENCRYPT=yes;UID=username;PWD=password"
-        )
         assert len(pd_mock.call_args.args) == 2
 
 

@@ -12,7 +12,6 @@ class TestNeuralNetworkBinaryClassifier(unittest.TestCase):
     Creates a Neural Network model on some test data and checks that each of the custom functions runs as expected
     """
     def setUp(self) -> None:
-        raise ValueError
         ds_split = tfds.load("penguins/processed", split=['train[20%:80%]', 'train[:20%]', 'train[80%:]'], batch_size=32,  as_supervised=True)
         self.figure_dir = 'test_figures'
         if os.path.exists(self.figure_dir):
@@ -40,17 +39,14 @@ class TestNeuralNetworkBinaryClassifier(unittest.TestCase):
         self.test = ds_test
 
     def test_predict(self):
-        raise ValueError
         predictions = self.test_model.predict(self.test)
         assert predictions.shape == (67, 3)
 
     def test_predict_proba(self):
-        raise ValueError
         predictions = self.test_model.predict_proba(self.test)
         assert predictions.shape == (67, 2, 3)
 
     def test_plot_and_save_history(self):
-        raise ValueError
         self.test_model.plot_and_save_history()
         for key in ['loss', 'accuracy']:
             expected_path = os.path.join(os.getcwd(), f"{self.figure_dir}", f"{key}.png")

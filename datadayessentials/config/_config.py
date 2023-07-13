@@ -96,12 +96,10 @@ class LocalConfig(ILocalConfig):
     @staticmethod
     @catch_key_error
     def get_data_lake():
-        data_lake_ref = LocalConfig.get_value_from_config(
+        data_lake= LocalConfig.get_value_from_config(
             ["azure", "environments", LocalConfig.ENVIRONMENT, "data_lake"]
         )
-        return LocalConfig.get_value_from_config(
-            ["azure", "data_lake_named_folders", LocalConfig.ENVIRONMENT, data_lake_ref]
-        )
+        return data_lake
 
     @staticmethod
     @catch_key_error

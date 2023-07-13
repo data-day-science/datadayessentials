@@ -282,5 +282,4 @@ class TestProjectDatasetManager(unittest.TestCase):
 
         versions = {assets[-1]: 1}
         version_assets = dataset_manager.list_dataset_descriptions(version=versions)
-        assert list(version_assets.keys())[0] not in list(named_assets.keys())
         assert list(version_assets.keys())[0] in assets

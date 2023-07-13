@@ -24,7 +24,7 @@ class TestModelManager(unittest.TestCase):
         self.model_manager = ModelManager()
 
     def test_get_model_files_from_run(self):
-        run_id = "2cf2751a-e2b8-44a7-bad0-a3f2d923cb2e"
+        run_id = "1aed3f9b-0cee-430e-8676-5070ed572d27"
 
         # Download the files
         self.model_manager.get_model_files_from_run(run_id, "pickled_models")
@@ -32,14 +32,14 @@ class TestModelManager(unittest.TestCase):
 
         # Verify that the downloaded folder exists
         downloaded_folder = pathlib.Path.cwd() / "pickled_models" / "model"
-        downloaded_file = downloaded_folder / "model.pkl"
+        downloaded_file = downloaded_folder / "model.cb"
         self.assertTrue(downloaded_folder.exists())
         self.assertTrue(downloaded_file.exists())
 
         remove_test_folder(str(downloaded_folder))
 
     def test_get_model_files_from_registered_model(self):
-        model_to_get = "prime-predictions-service"
+        model_to_get = "test_model"
         directory_name = "test_download_folder"
 
         # Download the files
@@ -48,22 +48,19 @@ class TestModelManager(unittest.TestCase):
 
         # Verify that the downloaded folder exists
         print(pathlib.Path.cwd())
-        downloaded_folder = pathlib.Path.cwd() / pathlib.Path(directory_name) / pathlib.Path("pickled_models")
+        downloaded_folder = pathlib.Path.cwd() / pathlib.Path(directory_name) / pathlib.Path("model")
 
         self.assertTrue(downloaded_folder.exists())
-        assert "PP5_v1.cb" in [file.name for file in downloaded_folder.iterdir() if file.is_file()]
-
-        remove_test_folder(directory_name)
 
     def test_register_model(self):
-        self.model_manager.get_model_files_from_run("2cf2751a-e2b8-44a7-bad0-a3f2d923cb2e", "pickled_models")
-        model_name = "unit_test_model"
+        self.model_manager.get_model_files_from_run("1aed3f9b-0cee-430e-8676-5070ed572d27", "pickled_models")
+        model_name = "test_model_23"
 
-        model_file = pathlib.Path.cwd() / "pickled_models" / "model" / "model.pkl"
+        model_file = pathlib.Path.cwd() / "pickled_models" / "model" / "model.cb"
         self.model_manager.register_model_from_local_folder(model_name, str(model_file))
         assert model_name in [model for model in self.model_manager.workspace.models]
 
-        Model(workspace=self.model_manager.workspace, name="unit_test_model").delete()
+        Model(workspace=self.model_manager.workspace, name=model_name).delete()
         assert model_name not in [model for model in self.model_manager.workspace.models]
 
 

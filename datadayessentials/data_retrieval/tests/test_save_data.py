@@ -82,7 +82,6 @@ class TestDataLakePickleSaver:
 
         mock_authentication = DataLakeAuthentication()
         mock_authentication.get_azure_credentials = mock.MagicMock()
-
         blob_location = BlobLocation(
             account=LocalConfig.get_data_lake(),
             container="test",

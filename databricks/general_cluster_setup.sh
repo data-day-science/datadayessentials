@@ -23,9 +23,7 @@ eval "$COMMAND"
 COMMAND="python -c \"from datadayessentials import initialise_core_config; initialise_core_config(environment_name='$AZURE_ENVIRONMENT_NAME', subscription_id='$AZURE_SUBSCRIPTION_ID', resource_group='$AZURE_RESOURCE_GROUP', machine_learning_workspace='$AZURE_ML_WORKSPACE', data_lake='$AZURE_DATA_LAKE', tenant_id='$AZURE_TENANT_ID', create_new_config=False)\""
 eval "$COMMAND"
 
-# Install the pricing tool
-COMMAND="pip install --no-deps git+https://$TOKEN@github.com/Carfinance247/datascience_pricing_tool.git"
-eval "$COMMAND"
+
 
 sudo apt-get install yes
 

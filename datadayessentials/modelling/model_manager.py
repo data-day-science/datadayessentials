@@ -78,7 +78,7 @@ class ModelManager(IModelManager):
         return folder_to_save_model
 
     def register_model_from_local_folder(
-        self, model_name: str, model_path: str, model_version: int = None
+        self, model_name: str, model_path: str, model_version: int = None, properties: dict = None
     ) -> Model:
         """
         Registers the model in the Azure ML studio
@@ -87,6 +87,7 @@ class ModelManager(IModelManager):
             model_name (str): Name of the model
             model_path (str): Path of the model
             model_version (int): Version of the model
+            properties (dict): Properties to be added to the model
 
         Example:
             mlflow_manager.register_model("model", "/tmp/model", 1)
@@ -97,10 +98,11 @@ class ModelManager(IModelManager):
             model_name=model_name,
             model_path=model_path,
             tags={"version": model_version},
+            properties=properties
         )
 
     def register_model_from_run_id(
-        self, run_id: str, model_name: str, model_path: str = 'model', tags: dict = None
+        self, run_id: str, model_name: str, model_path: str = 'model', tags: dict = None, properties: dict = None
     ) -> Model:
         """
         Registers the model from the run id in the Azure ML studio, without downloading the model files locally
@@ -110,11 +112,12 @@ class ModelManager(IModelManager):
             model_name (str): Name of the model
             model_path (str): Path of the model
             tags (dict): Tags to be added to the model
+            properties (dict): Properties to be added to the model
 
         Example:
             mlflow_manager.register_model_from_run("2cf2751a-e2b8-44a7-bad0-a3f2d923cb2e", "model")
 
         """
         return self.workspace.get_run(run_id).register_model(
-            model_name=model_name, model_path=model_path, tags=tags
+            model_name=model_name, model_path=model_path, tags=tags, properties=properties
         )

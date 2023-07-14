@@ -106,6 +106,21 @@ class ModelManager(IModelManager):
         """
         model = Model(self.workspace, model_name, version=model_version)
         return model.properties
+    
+    def get_model_run_id_from_registered_model(
+        self, model_name: str, model_version: int = None
+    ):
+        """
+        Gets the model job id from the registered model
+
+        Args:
+            model_name (str): Name of the model
+            model_version (int): Version of the model
+
+        Example:
+            mlflow_manager.get_model_job_id_from_registered_model("model", "1")
+        """
+        return Model(self.workspace, model_name, version=model_version).run_id
 
     def register_model_from_local_folder(
         self, model_name: str, model_path: str, model_version: int = None, properties: dict = None

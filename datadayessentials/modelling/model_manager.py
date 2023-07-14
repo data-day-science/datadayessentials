@@ -89,7 +89,7 @@ class ModelManager(IModelManager):
         Example:
             mlflow_manager.get_model_properties_from_run("2cf2751a-e2b8-44a7-bad0-a3f2d923cb2e")
         """
-        return self.workspace.get_run(run_id).get_properties()
+        return self.workspace.get_run(run_id).properties
     
     def get_model_properties_from_registered_model(
         self, model_name: str, model_version: int = None
@@ -105,7 +105,7 @@ class ModelManager(IModelManager):
             mlflow_manager.get_model_properties_from_registered_model("model", "1")
         """
         model = Model(self.workspace, model_name, version=model_version)
-        return model.get_properties()
+        return model.properties
 
     def register_model_from_local_folder(
         self, model_name: str, model_path: str, model_version: int = None, properties: dict = None

@@ -72,10 +72,40 @@ class ModelManager(IModelManager):
             else folder_to_save_model
         )
 
-        Model(self.workspace, model_name, version=model_version).download(
+        model = Model(self.workspace, model_name, version=model_version)
+
+        model.download(
             target_dir=folder_to_save_model, exist_ok=True
         )
         return folder_to_save_model
+    
+    def get_model_properties_from_run(self, run_id: str):
+        """
+        Gets the model properties from the run
+
+        Args:
+            run_id (str): Run id of the model
+
+        Example:
+            mlflow_manager.get_model_properties_from_run("2cf2751a-e2b8-44a7-bad0-a3f2d923cb2e")
+        """
+        return self.workspace.get_run(run_id).get_properties()
+    
+    def get_model_properties_from_registered_model(
+        self, model_name: str, model_version: int = None
+    ):
+        """
+        Gets the model properties from the registered model
+
+        Args:
+            model_name (str): Name of the model
+            model_version (int): Version of the model
+
+        Example:
+            mlflow_manager.get_model_properties_from_registered_model("model", "1")
+        """
+        model = Model(self.workspace, model_name, version=model_version)
+        return model.get_properties()
 
     def register_model_from_local_folder(
         self, model_name: str, model_path: str, model_version: int = None, properties: dict = None

@@ -2,7 +2,7 @@
 
 
 
-## Overview Datascience Core
+## Overview Data-Day-Essentials
 Data-Day-Essentials is a collection of packages that features tools that are common to any data science projects:
 - Loading and saving to azure
 - Loading data from the data warehouse

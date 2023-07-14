@@ -4,7 +4,7 @@
 2. ModelManager class - Responsible for downloading models from the model registry (Azure ml workspace), and for registering models to the model registry (from either experiments or local model files)
 3. models package - Contains model wrappers and a ModelFactory for loading models from either the model registry or the experiment registry
 """
-from .models import CatBoostClassifierPipeline, XGBoostClassifierPipeline, SklearnModel
+from .models import CatBoostClassifierPipeline, XGBoostClassifierPipeline, SklearnModel,ModelFactory
 from .experiment_manager import ExperimentManager
 from .utils import DataSplitter, ModelPipeline
 from .model_manager import ModelManager
@@ -18,5 +18,6 @@ __all__ = [
     'ModelEvaluator',
     'XGBoostClassifierPipeline',
     'ExperimentManager',
-    'SklearnModel'
+    'SklearnModel',
+    'ModelFactory'
 ]

@@ -1,9 +1,9 @@
-# Datascience Core [![Coverage Status](./.reports/coverage/coverage-badge.svg)](./.reports/coverage/index.html)
+# Data-Day-Essentials [![Coverage Status](./.reports/coverage/coverage-badge.svg)](./.reports/coverage/index.html)
 
-[__API Documentation__](https://ds-core-docs.azurewebsites.net/datadayessentials.html) | [__Confluence User Guide__](https://247group.atlassian.net/wiki/spaces/247PROD/pages/2818539589/Data+Science+Core)
+
 
 ## Overview Datascience Core
-Datascience Core is a collection of packages that features tools that are common to any data science projects:
+Data-Day-Essentials is a collection of packages that features tools that are common to any data science projects:
 - Loading and saving to azure
 - Loading data from the data warehouse
 - Transforming pandas dataframes
@@ -12,7 +12,7 @@ Datascience Core is a collection of packages that features tools that are common
 - Jupyter notebook tools
 - Evaluating models (currently just classifiers)
 
-For a user guide please see our confluence page (link above).
+For a user guide please see our [COMING SOON]
 
 For API documentation please also see the relevant link above.
 

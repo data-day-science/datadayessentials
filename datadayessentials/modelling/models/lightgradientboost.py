@@ -83,44 +83,24 @@ class lightgbmClassifierPipeline(IModel, IModelSavingLoadingAttribute):
     def predict(
         self,
         X,
-        raw_score=False,
-        start_iteration=0,
-        num_iteration=None,
-        pred_leaf=False,
-        pred_contrib=False,
-        validate_features=False,
+        *args,
         **kwargs,
     ):
-        return self.predict(
+        return self.model.predict(
             X,
-            raw_score=False,
-            start_iteration=0,
-            num_iteration=None,
-            pred_leaf=False,
-            pred_contrib=False,
-            validate_features=False,
+            *args,
             **kwargs,
         )
 
     def predict_proba(
         self,
         X,
-        raw_score=False,
-        start_iteration=0,
-        num_iteration=None,
-        pred_leaf=False,
-        pred_contrib=False,
-        validate_features=False,
+        *args,
         **kwargs,
     ):
         return self.model.predict_proba(
             X,
-            raw_score,
-            start_iteration,
-            num_iteration,
-            pred_leaf,
-            pred_contrib,
-            validate_features,
+            *args,
             **kwargs,
         )
 

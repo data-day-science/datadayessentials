@@ -5,13 +5,15 @@ This module contains two things:
 2. ModelFactory, this is for loading models stored in the model registry or the experiment registry. Please see the ModelFactory class for an example use case.  
 """
 from .catboost import CatBoostClassifierPipeline
+from .lightgradientboost import lightgbmClassifierPipeline
 from .xgboost import XGBoostClassifierPipeline
 from .model_factory import ModelFactory
 from .sklearn import SklearnModel
 
 __all__ = [
-    'SklearnModel',
-    'XGBoostClassifierPipeline',
-    'CatBoostClassifierPipeline',
-    'ModelFactory'
+    "SklearnModel",
+    "XGBoostClassifierPipeline",
+    "CatBoostClassifierPipeline",
+    "lightgbmClassifierPipeline",
+    "ModelFactory",
 ]

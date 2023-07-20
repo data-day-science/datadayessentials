@@ -341,7 +341,6 @@ class lightgbmClassifierPipeline(IModel, IModelSavingLoadingAttribute):
         plt.title("Feature importance")
 
         return feature_importance_fig.get_figure()
-        # feature_importance_fig.savefig("feature_importance.png")
 
     def _save_model_to_folder(
         self, model_save_path: str, input_example: object = None

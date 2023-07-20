@@ -9,6 +9,7 @@ from .lightgradientboost import lightgbmClassifierPipeline
 from .xgboost import XGBoostClassifierPipeline
 from .model_factory import ModelFactory
 from .sklearn import SklearnModel
+from .patched_auto_ml import PatchedAutoML
 
 __all__ = [
     "SklearnModel",
@@ -16,4 +17,5 @@ __all__ = [
     "CatBoostClassifierPipeline",
     "lightgbmClassifierPipeline",
     "ModelFactory",
+    "PatchedAutoML"
 ]

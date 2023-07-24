@@ -22,5 +22,4 @@ coverage
 genbadge
 tensorflow
 tensorflow-datasets
-
 flaml

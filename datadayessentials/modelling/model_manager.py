@@ -73,8 +73,10 @@ class ModelManager(IModelManager):
         max_retries = 5
         for retries in range(1, max_retries + 1):
             try:
-                model.download(target_dir=folder_to_save_model, exist_ok=True)
-                break
+                download_folder = model.download(target_dir=folder_to_save_model, exist_ok=True)
+                # Check if folder is empty
+                if not os.listdir(download_folder):
+                    raise Exception("Folder is empty")
             except Exception as e:
                 if retries == max_retries:
                     raise e

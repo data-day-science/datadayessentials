@@ -67,8 +67,9 @@ class ModelManager(IModelManager):
         folder_to_save_model = (
             f"{model_name}-{model_version}"
             if folder_to_save_model is None
-            else os.path.join(folder_to_save_model, f"{model_name}-{model_version}")
+            else folder_to_save_model
         )
+
         if os.path.exists(folder_to_save_model):
             shutil.rmtree(folder_to_save_model)
 

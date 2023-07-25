@@ -1,4 +1,5 @@
 import os
+import shutil
 from azureml.core import Workspace, Model, Run
 from azureml.core.authentication import (
     ServicePrincipalAuthentication,
@@ -68,6 +69,8 @@ class ModelManager(IModelManager):
             if folder_to_save_model is None
             else os.path.join(folder_to_save_model, f"{model_name}-{model_version}")
         )
+        if os.path.exists(folder_to_save_model):
+            shutil.rmtree(folder_to_save_model)
 
         model = Model(self.workspace, model_name, version=model_version)
         max_retries = 5
@@ -77,7 +80,7 @@ class ModelManager(IModelManager):
                     target_dir=folder_to_save_model, exist_ok=True
                 )
                 # Check if folder is empty
-                if not "model.pkl" in os.listdir(download_folder):
+                if not os.listdir(folder_to_save_model):
                     raise Exception("model not downloaded")
             except Exception as e:
                 if retries == max_retries:

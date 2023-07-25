@@ -7,6 +7,7 @@ class TestGetLatestRunIdFromExperiment(unittest.TestCase):
         latest_run_id = ModelFactory.get_latest_run_id_from_experiment(
             "Ratesetter_auto_ml_run"
         )
+        print(latest_run_id, "********")
         assert isinstance(latest_run_id, str)
 
     def test_get_latest_run_id_from_false_experiment(self):

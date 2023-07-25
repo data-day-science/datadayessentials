@@ -92,5 +92,6 @@ class ModelFactory(IModelFactory):
         model_manager = ModelManager()
         experiments = Experiment(model_manager.workspace, experiment_name)
         runs = experiments.get_runs()
+        experiment_id = next(runs).experiment_id
 
-        return next(runs).id
+        return experiment_id

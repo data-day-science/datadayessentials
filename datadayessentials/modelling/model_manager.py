@@ -64,19 +64,21 @@ class ModelManager(IModelManager):
         """
 
         folder_to_save_model = (
-            f"{model_name}-{model_version} model files"
+            f"{model_name}-{model_version}"
             if folder_to_save_model is None
-            else folder_to_save_model
+            else os.path.join(folder_to_save_model, f"{model_name}-{model_version}")
         )
 
         model = Model(self.workspace, model_name, version=model_version)
         max_retries = 5
         for retries in range(1, max_retries + 1):
             try:
-                download_folder = model.download(target_dir=folder_to_save_model, exist_ok=True)
+                download_folder = model.download(
+                    target_dir=folder_to_save_model, exist_ok=True
+                )
                 # Check if folder is empty
-                if not os.listdir(download_folder):
-                    raise Exception("Folder is empty")
+                if not "model.pkl" in os.listdir(download_folder):
+                    raise Exception("model not downloaded")
             except Exception as e:
                 if retries == max_retries:
                     raise e

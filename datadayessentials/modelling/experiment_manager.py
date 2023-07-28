@@ -59,7 +59,7 @@ class ExperimentManager(IExperimentManager):
     def submit_run(
         self,
         datasets_used: dict,
-        model: IModelSavingLoadingAttribute,
+        model: IModelSavingLoadingAttribute = None,
         run_name: str = None,
         train_model_metrics: dict = None,
         test_model_metrics: dict = None,
@@ -109,10 +109,11 @@ class ExperimentManager(IExperimentManager):
                 artifacts_folder,
                 datasets_used,
             )
-            self._add_model_to_run(
-                azure_run,
-                model,
-            )
+            if model:
+                self._add_model_to_run(
+                    azure_run,
+                    model,
+                )
         finally:
             azure_run.complete()
         return azure_run.id, azure_run.name

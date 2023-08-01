@@ -22,7 +22,6 @@ Below is a summary of what is available in this module, followed by an example u
 from ._transformers import (
     ColumnRenamer,
     DataFrameTimeSlicer,
-    TierMapper,
     InvalidPayloadDropperByPrefix,
     DataFrameCaster,
     ValueReplacer,
@@ -35,37 +34,40 @@ from ._transformers import (
     ColumnFiller,
     ColumnDotRenamer,
     CategoricalColumnSplitter,
-    SimpleCatTypeConverter
+    SimpleCatTypeConverter,
 )
 
 from ._feature_extraction_helper import FeatureExtractor
-from ._data_pipe import DataFramePipe, CreditDataPreProcessor, run_pipeline_with_multi_threading
+from ._data_pipe import (
+    DataFramePipe,
+    CreditDataPreProcessor,
+    run_pipeline_with_multi_threading,
+)
 from ._base import IDataFrameTransformer, IDataFramePipe, IDataFrameCaster
 
 
 __all__ = [
-    'ColumnRenamer',
-    'DataFrameTimeSlicer',
-    'DataFrameCaster',
-    'DataFramePipe',
-    'TierMapper',
-    'InvalidPayloadDropperByPrefix',
-    'DataFrameCaster',
-    'ValueReplacer',
-    'DominatedColumnDropper',
-    'CatTypeConverter',
-    'ColBasedQuantiler',
-    'MissingColumnReplacer',
-    'GranularColumnDropper',
-    'IDataFrameCaster',
-    'IDataFramePipe',
-    'IDataFrameTransformer',
-    'FeatureExtractor',
-    'CreditDataPreProcessor',
-    'LowerCaseTransformer',
-    'ColumnFiller',
-    'ColumnDotRenamer',
-    'run_pipeline_with_multi_threading',
-    'CategoricalColumnSplitter',
-    'SimpleCatTypeConverter'
+    "ColumnRenamer",
+    "DataFrameTimeSlicer",
+    "DataFrameCaster",
+    "DataFramePipe",
+    "InvalidPayloadDropperByPrefix",
+    "DataFrameCaster",
+    "ValueReplacer",
+    "DominatedColumnDropper",
+    "CatTypeConverter",
+    "ColBasedQuantiler",
+    "MissingColumnReplacer",
+    "GranularColumnDropper",
+    "IDataFrameCaster",
+    "IDataFramePipe",
+    "IDataFrameTransformer",
+    "FeatureExtractor",
+    "CreditDataPreProcessor",
+    "LowerCaseTransformer",
+    "ColumnFiller",
+    "ColumnDotRenamer",
+    "run_pipeline_with_multi_threading",
+    "CategoricalColumnSplitter",
+    "SimpleCatTypeConverter",
 ]

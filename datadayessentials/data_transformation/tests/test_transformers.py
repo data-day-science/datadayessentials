@@ -10,9 +10,21 @@ import pandas.api.types as ptypes
 import pytest
 
 from .test_data import test_path
-from .._transformers import ColumnRenamer, DataFrameTimeSlicer, DataFrameCaster, TierMapper, \
-    InvalidPayloadDropperByPrefix, GranularColumnDropper, ColumnFiller, PreprocessingError, LowerCaseTransformer, \
-    CatTypeConverter, ColumnDotRenamer, CategoricalColumnSplitter, is_data_size_small, SimpleCatTypeConverter
+from .._transformers import (
+    ColumnRenamer,
+    DataFrameTimeSlicer,
+    DataFrameCaster,
+    InvalidPayloadDropperByPrefix,
+    GranularColumnDropper,
+    ColumnFiller,
+    PreprocessingError,
+    LowerCaseTransformer,
+    CatTypeConverter,
+    ColumnDotRenamer,
+    CategoricalColumnSplitter,
+    is_data_size_small,
+    SimpleCatTypeConverter,
+)
 
 
 def to_datetime(str_datetime):
@@ -160,145 +172,6 @@ class TestDataFrameCaster:
             caster.process(input_data)
 
 
-class TestTierMapper:
-    def test_hitting_unmapper(self):
-
-        raw_score_boundaries_dict = {
-            "Tier1": 0.19,
-            "Tier2": 0.26,
-            "Tier3": 0.32,
-            "Tier4": 0.43,
-            "Tier5": 0.48,
-            "Tier6": 0.52,
-        }
-        tier_mapper = TierMapper(raw_score_boundaries_dict, raw_score_boundaries_dict)
-        expected_responses = [
-            0.19,
-            0.26,
-            0.32,
-            0.43,
-            0.48,
-            0.52,
-            0.29,
-            0.45,
-            0.512,
-            0.6928,
-            0.8464,
-            1,
-        ]
-        for idx, tier in enumerate(
-                [0.25, 0.4, 0.5, 0.6, 0.65, 0.75, 0.45, 0.62, 0.73, 0.84, 0.92, 1]
-        ):
-            actual_response = tier_mapper._unmap_score(tier, raw_score_boundaries_dict)
-            print(
-                "checking tier boundary {}, expected {}, got {}".format(
-                    tier, expected_responses[idx], actual_response
-                )
-            )
-            assert isclose(actual_response, expected_responses[idx])
-
-    def test_hitting_remapper(self):
-
-        raw_score_boundaries_dict = {
-            "Tier1": 0.19,
-            "Tier2": 0.26,
-            "Tier3": 0.32,
-            "Tier4": 0.43,
-            "Tier5": 0.48,
-            "Tier6": 0.52,
-        }
-
-        tier_mapper = TierMapper(raw_score_boundaries_dict, raw_score_boundaries_dict)
-        expected_responses = [
-            0,
-            0.25,
-            0.4,
-            0.5,
-            0.6,
-            0.65,
-            0.75,
-            0.45,
-            0.796875,
-            0.859375,
-            0.9166666666666666,
-            0.9583333333333334,
-            1,
-        ]
-        for idx, tier in enumerate(
-                [0, 0.19, 0.26, 0.32, 0.43, 0.48, 0.52, 0.29, 0.61, 0.73, 0.84, 0.92, 1]
-        ):
-            actual_response = tier_mapper.map_score(tier, raw_score_boundaries_dict)
-            print(
-                "checking tier boundary {}, expected {}, got {}".format(
-                    tier, expected_responses[idx], actual_response
-                )
-            )
-            assert isclose(actual_response, expected_responses[idx])
-
-    def test_remap_to_new_boundary(self):
-
-        existing_tier_dict = {
-            "Tier1": 0.19,
-            "Tier2": 0.26,
-            "Tier3": 0.32,
-            "Tier4": 0.43,
-            "Tier5": 0.48,
-            "Tier6": 0.52,
-        }
-        new_tier_dict = {
-            "Tier1": 0.19,
-            "Tier2": 0.26,
-            "Tier3": 0.32,
-            "Tier4": 0.43,
-            "Tier5": 0.48,
-            "Tier6": 0.52,
-        }
-        tier_mapper = TierMapper(existing_tier_dict, new_tier_dict)
-        expected_responses = [
-            0,
-            0.19,
-            0.26,
-            0.32,
-            0.43,
-            0.48,
-            0.52,
-            0.63,
-            0.76,
-            0.83,
-            0.97,
-            1,
-        ]
-        for idx, tier in enumerate(
-                [0, 0.19, 0.26, 0.32, 0.43, 0.48, 0.52, 0.63, 0.76, 0.83, 0.97, 1]
-        ):
-            actual_response = tier_mapper.process(tier)
-            print(
-                "checking tier boundary {}, expected {}, got {}".format(
-                    tier, expected_responses[idx], actual_response
-                )
-            )
-            assert isclose(actual_response, expected_responses[idx])
-
-    def test_score_to_tier(self):
-        example_tiers = {
-            "Tier1": 0.19,
-            "Tier2": 0.26,
-            "Tier3": 0.32,
-            "Tier4": 0.43,
-            "Tier5": 0.48,
-            "Tier6": 0.52,
-        }
-        score1 = 0.1
-        score2 = 0.2
-        score3 = 0.6
-        tier1 = TierMapper.score_to_tier(score1, example_tiers)
-        tier2 = TierMapper.score_to_tier(score2, example_tiers)
-        tier3 = TierMapper.score_to_tier(score3, example_tiers)
-        assert tier1 == "Tier1"
-        assert tier2 == "Tier2"
-        assert tier3 == "Tier7"
-
-
 class TestInvalidPayloadDropperByPrefix:
     def test_drop_invalid_payload(self):
         test_payload = pd.DataFrame(
@@ -337,7 +210,6 @@ class TestGranularColumnDropper:
 
 
 class TestColumnFiller:
-
     @pytest.fixture
     def payload_init(self):
         payload_json = """[
@@ -460,7 +332,6 @@ class TestColumnFiller:
 
 
 class TestLowerCaseTransformer:
-
     @pytest.fixture
     def payload_init(self):
         payload_json = """[
@@ -575,7 +446,6 @@ def payload_init():
 
 
 class TestCatTypeConverters:
-
     def test_cat_type_converter_empty_list(self, payload_init):
         cat_features = []
 
@@ -600,7 +470,9 @@ class TestCatTypeConverters:
         assert processed_payload["App PostcodeEmployment"][0] == "NaN"
 
     def test_simple_cat_type_converter_no_dates_pass(self):
-        test_df = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"], "col3": [True, False, True]})
+        test_df = pd.DataFrame(
+            {"col1": [1, 2, 3], "col2": ["a", "b", "c"], "col3": [True, False, True]}
+        )
         cat_features = ["col2", "col3"]
         simple_converter = SimpleCatTypeConverter(cat_features)
         processed_payload = simple_converter.process(test_df)
@@ -611,8 +483,12 @@ class TestCatTypeConverters:
         pass
 
     def test_simple_cat_type_converter_dates_pass(self):
-        test_df = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"], "col3": [True, False, True]})
-        simple_converter = SimpleCatTypeConverter(categorical_columns=["col2"], date_columns=["col3"])
+        test_df = pd.DataFrame(
+            {"col1": [1, 2, 3], "col2": ["a", "b", "c"], "col3": [True, False, True]}
+        )
+        simple_converter = SimpleCatTypeConverter(
+            categorical_columns=["col2"], date_columns=["col3"]
+        )
         processed_payload = simple_converter.process(test_df)
 
         assert processed_payload["col1"].dtype == "int64"
@@ -621,8 +497,12 @@ class TestCatTypeConverters:
         pass
 
     def test_ensure_categorical_not_passed_converted_to_nan(self):
-        test_df = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"], "col3": [True, False, True]})
-        simple_converter = SimpleCatTypeConverter(categorical_columns=["col1"], date_columns=["col3"])
+        test_df = pd.DataFrame(
+            {"col1": [1, 2, 3], "col2": ["a", "b", "c"], "col3": [True, False, True]}
+        )
+        simple_converter = SimpleCatTypeConverter(
+            categorical_columns=["col1"], date_columns=["col3"]
+        )
         test_df["col1"] = test_df["col1"].astype("str")
 
         processed_payload = simple_converter.process(test_df)
@@ -630,9 +510,7 @@ class TestCatTypeConverters:
         assert processed_payload["col2"].dtype == "float"
 
 
-
 class TestColumnDotRenamer:
-
     def payload_init(self):
         payload_json = """[
             {
@@ -668,26 +546,30 @@ class TestColumnDotRenamer:
                 "0": 54.0
             }]"""
 
-        df_payload_tall = pd.read_json(payload_json, dtype=object).set_index("index").fillna(np.nan).rename(
-            index={"AppIdentifier": "ApplicationId"})
+        df_payload_tall = (
+            pd.read_json(payload_json, dtype=object)
+            .set_index("index")
+            .fillna(np.nan)
+            .rename(index={"AppIdentifier": "ApplicationId"})
+        )
         df_payload_flat = df_payload_tall.T
         return {"test_tall": df_payload_tall, "test_flat": df_payload_flat}
 
     def test_column_dot_renamer(self):
         df = pd.DataFrame({"a b": [1, 2, 3], "c d": [4, 5, 6], "c.b": [7, 8, 9]})
-        df_out = ColumnDotRenamer(fmt='flat', from_name=" ", to_name=".").process(df)
+        df_out = ColumnDotRenamer(fmt="flat", from_name=" ", to_name=".").process(df)
 
         assert df_out.columns.tolist() == ["a.b", "c.d", "c.b"]
 
     def test_column_dot_renamer_speedy(self):
         df = pd.DataFrame([1, 4, 7], index=["a b", "c d", "c.b"])
-        df_out = ColumnDotRenamer(fmt='speedy', from_name=" ", to_name=".").process(df)
+        df_out = ColumnDotRenamer(fmt="speedy", from_name=" ", to_name=".").process(df)
 
         assert df_out.index.tolist() == ["a.b", "c.d", "c.b"]
 
     def test_column_dot_renamer_speedy_json(self, payload_init):
         df = payload_init["test_tall"]
-        df_out = ColumnDotRenamer(fmt='speedy', from_name=" ", to_name=".").process(df)
+        df_out = ColumnDotRenamer(fmt="speedy", from_name=" ", to_name=".").process(df)
 
         assert df_out.index.tolist()[2] == "BSB.BIC"
 
@@ -698,13 +580,17 @@ def test_is_data_size_small():
 
 
 def test_is_data_size_small_false():
-    df = pd.DataFrame(np.random.randint(0, 100, size=(110000, 1000)), columns=list(range(1000)))
+    df = pd.DataFrame(
+        np.random.randint(0, 100, size=(110000, 1000)), columns=list(range(1000))
+    )
     assert is_data_size_small(df) is False
 
 
 class TestDataTransformer:
     def test_split_categorical_column(self):
-        data_transformer = CategoricalColumnSplitter(categorical_columns_to_split=["QCB1", "QCB2"])
+        data_transformer = CategoricalColumnSplitter(
+            categorical_columns_to_split=["QCB1", "QCB2"]
+        )
         df = pd.DataFrame(
             {
                 "QCB1": ["0", "1", "2", "3", "4", "5", "6", "D", "R", "V", "S", "A"],
@@ -720,18 +606,52 @@ class TestDataTransformer:
             pd.Series([5, 6, 6, 0, 2, 0, 1, 2, 3, 4, 5, 6])
         )
         assert df_out["QCB1"].equals(
-            pd.Series([np.nan, np.nan, np.nan, "D", "D", "D", "D", "D", "R", "V", "S", "A"])
+            pd.Series(
+                [np.nan, np.nan, np.nan, "D", "D", "D", "D", "D", "R", "V", "S", "A"]
+            )
         )
         assert df_out["QCB2"].equals(
-            pd.Series(["D", "R", "V", "S", "A", np.nan, np.nan, np.nan, "D", "D", "D", "D"])
+            pd.Series(
+                ["D", "R", "V", "S", "A", np.nan, np.nan, np.nan, "D", "D", "D", "D"]
+            )
         )
 
     def test_split_categorical_column_with_nan(self):
-        data_transformer = CategoricalColumnSplitter(categorical_columns_to_split=["QCB1", "QCB2"])
+        data_transformer = CategoricalColumnSplitter(
+            categorical_columns_to_split=["QCB1", "QCB2"]
+        )
         df = pd.DataFrame(
             {
-                "QCB1": ["0", "1", "2", "3", "4", "5", "6", "D", "R", "V", "S", "A", np.nan],
-                "QCB2": ["D", "R", "V", "S", "A", "0", "1", "2", "3", "4", "5", "6", np.nan],
+                "QCB1": [
+                    "0",
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                    "6",
+                    "D",
+                    "R",
+                    "V",
+                    "S",
+                    "A",
+                    np.nan,
+                ],
+                "QCB2": [
+                    "D",
+                    "R",
+                    "V",
+                    "S",
+                    "A",
+                    "0",
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                    "6",
+                    np.nan,
+                ],
             }
         )
         df_out = data_transformer.process(df)
@@ -743,8 +663,40 @@ class TestDataTransformer:
             pd.Series([5, 6, 6, 0, 2, 0, 1, 2, 3, 4, 5, 6, np.nan])
         )
         assert df_out["QCB1"].equals(
-            pd.Series([np.nan, np.nan, np.nan, "D", "D", "D", "D", "D", "R", "V", "S", "A", np.nan])
+            pd.Series(
+                [
+                    np.nan,
+                    np.nan,
+                    np.nan,
+                    "D",
+                    "D",
+                    "D",
+                    "D",
+                    "D",
+                    "R",
+                    "V",
+                    "S",
+                    "A",
+                    np.nan,
+                ]
+            )
         )
         assert df_out["QCB2"].equals(
-            pd.Series(["D", "R", "V", "S", "A", np.nan, np.nan, np.nan, "D", "D", "D", "D", np.nan])
+            pd.Series(
+                [
+                    "D",
+                    "R",
+                    "V",
+                    "S",
+                    "A",
+                    np.nan,
+                    np.nan,
+                    np.nan,
+                    "D",
+                    "D",
+                    "D",
+                    "D",
+                    np.nan,
+                ]
+            )
         )

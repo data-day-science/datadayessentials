@@ -10,9 +10,21 @@ import pandas.api.types as ptypes
 import pytest
 
 from .test_data import test_path
-from .._transformers import ColumnRenamer, DataFrameTimeSlicer, DataFrameCaster, TierMapper, \
-    InvalidPayloadDropperByPrefix, GranularColumnDropper, ColumnFiller, PreprocessingError, LowerCaseTransformer, \
-    CatTypeConverter, ColumnDotRenamer, CategoricalColumnSplitter, is_data_size_small, SimpleCatTypeConverter
+from .._transformers import (
+    ColumnRenamer,
+    DataFrameTimeSlicer,
+    DataFrameCaster,
+    InvalidPayloadDropperByPrefix,
+    GranularColumnDropper,
+    ColumnFiller,
+    PreprocessingError,
+    LowerCaseTransformer,
+    CatTypeConverter,
+    ColumnDotRenamer,
+    CategoricalColumnSplitter,
+    is_data_size_small,
+    SimpleCatTypeConverter,
+)
 
 
 def to_datetime(str_datetime):
@@ -160,9 +172,6 @@ class TestDataFrameCaster:
             caster.process(input_data)
 
 
-
-
-
 class TestInvalidPayloadDropperByPrefix:
     def test_drop_invalid_payload(self):
         test_payload = pd.DataFrame(
@@ -201,7 +210,6 @@ class TestGranularColumnDropper:
 
 
 class TestColumnFiller:
-
     @pytest.fixture
     def payload_init(self):
         payload_json = """[
@@ -324,7 +332,6 @@ class TestColumnFiller:
 
 
 class TestLowerCaseTransformer:
-
     @pytest.fixture
     def payload_init(self):
         payload_json = """[
@@ -439,7 +446,6 @@ def payload_init():
 
 
 class TestCatTypeConverters:
-
     def test_cat_type_converter_empty_list(self, payload_init):
         cat_features = []
 
@@ -464,7 +470,9 @@ class TestCatTypeConverters:
         assert processed_payload["App PostcodeEmployment"][0] == "NaN"
 
     def test_simple_cat_type_converter_no_dates_pass(self):
-        test_df = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"], "col3": [True, False, True]})
+        test_df = pd.DataFrame(
+            {"col1": [1, 2, 3], "col2": ["a", "b", "c"], "col3": [True, False, True]}
+        )
         cat_features = ["col2", "col3"]
         simple_converter = SimpleCatTypeConverter(cat_features)
         processed_payload = simple_converter.process(test_df)
@@ -475,8 +483,12 @@ class TestCatTypeConverters:
         pass
 
     def test_simple_cat_type_converter_dates_pass(self):
-        test_df = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"], "col3": [True, False, True]})
-        simple_converter = SimpleCatTypeConverter(categorical_columns=["col2"], date_columns=["col3"])
+        test_df = pd.DataFrame(
+            {"col1": [1, 2, 3], "col2": ["a", "b", "c"], "col3": [True, False, True]}
+        )
+        simple_converter = SimpleCatTypeConverter(
+            categorical_columns=["col2"], date_columns=["col3"]
+        )
         processed_payload = simple_converter.process(test_df)
 
         assert processed_payload["col1"].dtype == "int64"
@@ -485,8 +497,12 @@ class TestCatTypeConverters:
         pass
 
     def test_ensure_categorical_not_passed_converted_to_nan(self):
-        test_df = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"], "col3": [True, False, True]})
-        simple_converter = SimpleCatTypeConverter(categorical_columns=["col1"], date_columns=["col3"])
+        test_df = pd.DataFrame(
+            {"col1": [1, 2, 3], "col2": ["a", "b", "c"], "col3": [True, False, True]}
+        )
+        simple_converter = SimpleCatTypeConverter(
+            categorical_columns=["col1"], date_columns=["col3"]
+        )
         test_df["col1"] = test_df["col1"].astype("str")
 
         processed_payload = simple_converter.process(test_df)
@@ -494,9 +510,7 @@ class TestCatTypeConverters:
         assert processed_payload["col2"].dtype == "float"
 
 
-
 class TestColumnDotRenamer:
-
     def payload_init(self):
         payload_json = """[
             {
@@ -532,26 +546,30 @@ class TestColumnDotRenamer:
                 "0": 54.0
             }]"""
 
-        df_payload_tall = pd.read_json(payload_json, dtype=object).set_index("index").fillna(np.nan).rename(
-            index={"AppIdentifier": "ApplicationId"})
+        df_payload_tall = (
+            pd.read_json(payload_json, dtype=object)
+            .set_index("index")
+            .fillna(np.nan)
+            .rename(index={"AppIdentifier": "ApplicationId"})
+        )
         df_payload_flat = df_payload_tall.T
         return {"test_tall": df_payload_tall, "test_flat": df_payload_flat}
 
     def test_column_dot_renamer(self):
         df = pd.DataFrame({"a b": [1, 2, 3], "c d": [4, 5, 6], "c.b": [7, 8, 9]})
-        df_out = ColumnDotRenamer(fmt='flat', from_name=" ", to_name=".").process(df)
+        df_out = ColumnDotRenamer(fmt="flat", from_name=" ", to_name=".").process(df)
 
         assert df_out.columns.tolist() == ["a.b", "c.d", "c.b"]
 
     def test_column_dot_renamer_speedy(self):
         df = pd.DataFrame([1, 4, 7], index=["a b", "c d", "c.b"])
-        df_out = ColumnDotRenamer(fmt='speedy', from_name=" ", to_name=".").process(df)
+        df_out = ColumnDotRenamer(fmt="speedy", from_name=" ", to_name=".").process(df)
 
         assert df_out.index.tolist() == ["a.b", "c.d", "c.b"]
 
     def test_column_dot_renamer_speedy_json(self, payload_init):
         df = payload_init["test_tall"]
-        df_out = ColumnDotRenamer(fmt='speedy', from_name=" ", to_name=".").process(df)
+        df_out = ColumnDotRenamer(fmt="speedy", from_name=" ", to_name=".").process(df)
 
         assert df_out.index.tolist()[2] == "BSB.BIC"
 
@@ -562,13 +580,17 @@ def test_is_data_size_small():
 
 
 def test_is_data_size_small_false():
-    df = pd.DataFrame(np.random.randint(0, 100, size=(110000, 1000)), columns=list(range(1000)))
+    df = pd.DataFrame(
+        np.random.randint(0, 100, size=(110000, 1000)), columns=list(range(1000))
+    )
     assert is_data_size_small(df) is False
 
 
 class TestDataTransformer:
     def test_split_categorical_column(self):
-        data_transformer = CategoricalColumnSplitter(categorical_columns_to_split=["QCB1", "QCB2"])
+        data_transformer = CategoricalColumnSplitter(
+            categorical_columns_to_split=["QCB1", "QCB2"]
+        )
         df = pd.DataFrame(
             {
                 "QCB1": ["0", "1", "2", "3", "4", "5", "6", "D", "R", "V", "S", "A"],
@@ -584,18 +606,52 @@ class TestDataTransformer:
             pd.Series([5, 6, 6, 0, 2, 0, 1, 2, 3, 4, 5, 6])
         )
         assert df_out["QCB1"].equals(
-            pd.Series([np.nan, np.nan, np.nan, "D", "D", "D", "D", "D", "R", "V", "S", "A"])
+            pd.Series(
+                [np.nan, np.nan, np.nan, "D", "D", "D", "D", "D", "R", "V", "S", "A"]
+            )
         )
         assert df_out["QCB2"].equals(
-            pd.Series(["D", "R", "V", "S", "A", np.nan, np.nan, np.nan, "D", "D", "D", "D"])
+            pd.Series(
+                ["D", "R", "V", "S", "A", np.nan, np.nan, np.nan, "D", "D", "D", "D"]
+            )
         )
 
     def test_split_categorical_column_with_nan(self):
-        data_transformer = CategoricalColumnSplitter(categorical_columns_to_split=["QCB1", "QCB2"])
+        data_transformer = CategoricalColumnSplitter(
+            categorical_columns_to_split=["QCB1", "QCB2"]
+        )
         df = pd.DataFrame(
             {
-                "QCB1": ["0", "1", "2", "3", "4", "5", "6", "D", "R", "V", "S", "A", np.nan],
-                "QCB2": ["D", "R", "V", "S", "A", "0", "1", "2", "3", "4", "5", "6", np.nan],
+                "QCB1": [
+                    "0",
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                    "6",
+                    "D",
+                    "R",
+                    "V",
+                    "S",
+                    "A",
+                    np.nan,
+                ],
+                "QCB2": [
+                    "D",
+                    "R",
+                    "V",
+                    "S",
+                    "A",
+                    "0",
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                    "6",
+                    np.nan,
+                ],
             }
         )
         df_out = data_transformer.process(df)
@@ -607,8 +663,40 @@ class TestDataTransformer:
             pd.Series([5, 6, 6, 0, 2, 0, 1, 2, 3, 4, 5, 6, np.nan])
         )
         assert df_out["QCB1"].equals(
-            pd.Series([np.nan, np.nan, np.nan, "D", "D", "D", "D", "D", "R", "V", "S", "A", np.nan])
+            pd.Series(
+                [
+                    np.nan,
+                    np.nan,
+                    np.nan,
+                    "D",
+                    "D",
+                    "D",
+                    "D",
+                    "D",
+                    "R",
+                    "V",
+                    "S",
+                    "A",
+                    np.nan,
+                ]
+            )
         )
         assert df_out["QCB2"].equals(
-            pd.Series(["D", "R", "V", "S", "A", np.nan, np.nan, np.nan, "D", "D", "D", "D", np.nan])
+            pd.Series(
+                [
+                    "D",
+                    "R",
+                    "V",
+                    "S",
+                    "A",
+                    np.nan,
+                    np.nan,
+                    np.nan,
+                    "D",
+                    "D",
+                    "D",
+                    "D",
+                    np.nan,
+                ]
+            )
         )

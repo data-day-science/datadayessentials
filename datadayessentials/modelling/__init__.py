@@ -13,7 +13,7 @@ from .models import (
     PatchedAutoML,
 )
 from .experiment_manager import ExperimentManager
-from .utils import DataSplitter, ModelPipeline
+from .utils import DataSplitter, ModelPipeline, get_workspace
 from .model_manager import ModelManager
 from .model_evaluator import ModelEvaluator
 
@@ -29,4 +29,5 @@ __all__ = [
     "SklearnModel",
     "ModelFactory",
     "PatchedAutoML",
+    "get_workspace"
 ]

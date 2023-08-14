@@ -14,10 +14,21 @@ class GlobalConfig(IGlobalConfig):
 
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "global_config.yml")
 
-    def read(self):
-        global_config = self.load_from_path(self.path)
-        return global_config
+    def __init__(self):
+        self.cache_directory = None
+        self.global_config = None
 
+    def read(self):
+        self.global_config = self.load_from_path(self.path)
+        return self.global_config
+
+    def ensure_local_cache_exists(self):
+        cache_dir = Path.home() / self.global_config["local_cache_dir"]
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        self.cache_directory = cache_dir
+
+    def get_local_cache_dir(self):
+        return self.cache_directory
 
 class LocalConfig(ILocalConfig):
     """Class to manage the local configuration file. THe local configuration file contains any user specific azure resources, including resource groups and storage accounts.
@@ -34,10 +45,12 @@ class LocalConfig(ILocalConfig):
         Initialise the local config, creating the cache directory and config file
         if they do not exist. Using the default config.
         """
-        self.global_config = GlobalConfig().read()
-        self.folder = os.path.join(
-            str(Path.home()), self.global_config["local_cache_dir"]
-        )
+        #Self.global_config = GlobalConfig().read() this returns nothing. Should be deleted.
+
+        global_config = GlobalConfig()
+        global_config.ensure_local_cache_exists()
+        self.folder = global_config.get_local_cache_dir()
+
         self.filename = "local_config.yml"
         self.path = os.path.join(self.folder, self.filename)
 

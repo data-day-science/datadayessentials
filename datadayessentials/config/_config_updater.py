@@ -1,27 +1,14 @@
 from ._base import IConfigManager
 from ._config import LocalConfig, GlobalConfig
-from ._config_manager import ConfigManager
 from typing import Optional
 
 
 class ConfigContentUpdater(IConfigManager):
     """Class to add and delete entities in the local configuration file.
-
-    Example:
-        >>> config_manager = ConfigManager()
-        >>> config_manager.add_environment(
-                "dev",
-                subscription_id = "1234567890",
-                resource_group = "my_resource_group",
-                client_id = "1234567890",
-                tenant_id = "1234567890"
-            )
     """
 
     def __init__(self):
         self.local_config = LocalConfig()
-        if LocalConfig.get_value_from_config(["sync_with_remote"]) is True:
-            self.config_manager = ConfigManager()
 
     def config_update(func):
         """Decorater to pre-load the latest version of the config before making changes, then to push the updated version afterwards."""
@@ -35,19 +22,12 @@ class ConfigContentUpdater(IConfigManager):
         """Syncs the local config with the remote config before making any changes."""
         local_config = LocalConfig()
         if LocalConfig.get_value_from_config(["sync_with_remote"]) is True:
-            # This ensures tha the config manager is initialised
-            if not hasattr(self, "config_manager"):
-                self.config_manager = ConfigManager()
-            self.config_manager.pull_config()
-    
+            pass
+
     def post_update_push(self, new_config: dict):
         """Pushes the updated config to the remote config after making changes."""
         local_config = LocalConfig()
         local_config.write(new_config)
-        if LocalConfig.get_value_from_config(["sync_with_remote"]) is True:
-            if not hasattr(self, "config_manager"):
-                self.config_manager = ConfigManager()
-            self.config_manager.register_new_config()
 
 
     @config_update

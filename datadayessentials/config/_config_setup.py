@@ -1,10 +1,8 @@
 from datadayessentials.config._config import GlobalConfig, LocalConfig
-from datadayessentials.config import ConfigManager, ConfigContentUpdater
 from pathlib import Path
 from typing import Dict, List, Union, Optional, Any
 import os
 import logging
-from azure.core.exceptions import ResourceNotFoundError
 
 class ConfigAlreadyExistsError(Exception):
     pass
@@ -55,7 +53,7 @@ class ConfigSetup:
         """
         
         LocalConfig().create_local_config()
-        config_updater = ConfigContentUpdater()
+
         team_env_settings = {
             "environment_name": environment_name,
             "subscription_id": subscription_id,
@@ -65,24 +63,3 @@ class ConfigSetup:
             "data_lake": data_lake,
             "project_dataset_container": project_dataset_container
         }
-        config_updater.add_environment(**team_env_settings)
-        config_updater.add_project_dataset_manager(
-            team_env_settings["environment_name"]
-        )
-        config_updater.set_sync_with_remote(True)
-
-        config_manager = ConfigManager()
-
-        if create_new_config:
-            try:
-                config_manager.pull_config()
-                raise ConfigAlreadyExistsError(
-                    "There is already a remote config file that exists. This has been pulled, if you want to change the existing config then please use the ConfigContentUpdater."
-                )
-            except:
-                config_manager.register_new_config()
-        else:
-            try:
-                config_manager.pull_config()
-            except ResourceNotFoundError:
-                config_manager.register_new_config()

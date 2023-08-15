@@ -1,4 +1,9 @@
+import dataclasses
+import enum
 import platform
+from typing import Union
+
+from azure.core.exceptions import ServiceRequestError
 from azure.identity import DefaultAzureCredential
 from datascience_core.authentications import DataLakeAuthentication
 from azure.appconfiguration import AzureAppConfigurationClient
@@ -13,7 +18,62 @@ def do_something():
     pass
 
 
-class CloudProviderConfig:
+class ExecutionEnvironment(enum.Enum):
+    DEV = "development"
+    PROD = "production"
+    LOCAL = "local"
+
+
+@dataclasses.dataclass
+class AzureAppConfigValues:
+    client_id: str = ""
+    client_secret: str = ""
+    data_lake: str = ""
+    key_vault: str = ""
+    machine_learning_workspace: str = ""
+    project_dataset_container: str = ""
+    resource_group: str = ""
+    subscription_id: str = ""
+    tenant_id: str = ""
+
+
+class TEMP_AZURE_CONFIG:
+    def __init__(self):
+        self.azure_app_config_connection_client = None
+
+    def create_azure_app_configuration_client_connection(self, environment: str, connection_string: str):
+        """
+        Creates a connection to Azure App Configuration.
+
+        Args:
+            connection_string (str): The connection string for the Azure App Configuration.
+
+        Raises:
+            ConnectionError: If an error occurs while connecting to Azure.
+            :param connection_string:
+            :param environment:
+        """
+        if environment == "production" or environment == "development":
+            try:
+                credential = DefaultAzureCredential()
+                credential = DataLakeAuthentication()
+                azure_app_config_connection_client = (
+                    AzureAppConfigurationClient.from_connection_string(connection_string)
+                )
+
+                # Verify connection by getting a configuration settings.Will throw error if the connection was not
+                # successful.
+                self.azure_app_config_connection_client.list_configuration_settings().next()
+                return azure_app_config_connection_client
+
+            except Exception as e:
+                raise ServiceRequestError("An error occurred while connecting to Azure.") from e
+
+        #manual authentication
+
+
+
+class Config:
     """
     This class facilitates access to environment variables essential for machine learning productionization. If an attempt is made
     to access an environment variable that has not been configured in the local environment, this class retrieves the value
@@ -27,18 +87,15 @@ class CloudProviderConfig:
         """
         self.azure_app_values = None
         self.azure_app_config_connection_client = None
-
+        
+        self.config_values = AzureAppConfigValues()
+        
+        self.environment = self.set_environment()
+        if self.environment.value == "production" or self.environment.value == "development":
+            self.set_environment_variables()
+    
     @staticmethod
-    def in_local_environment():
-        """
-        Determines if the code is running in a local environment.
-
-        Returns:
-            bool: True if running locally, False otherwise.
-        """
-        return platform.system() == 'Windows'
-
-    def in_production_environment(self):
+    def set_environment() -> ExecutionEnvironment:
         """
         Checks whether the environment is set to production.
 
@@ -46,11 +103,9 @@ class CloudProviderConfig:
             bool: True if the environment is production, False otherwise.
         """
 
-        if self.in_local_environment():
-            return False
-        # TODO: Implement checking of local environment variable in GitHub actions
-        env_variable_value = os.getenv("ENV_VARIABLE_NAME")
-        return env_variable_value == "production"
+        if platform.system() == 'Windows':
+            return ExecutionEnvironment.LOCAL
+        return ExecutionEnvironment.PROD if os.getenv("AZURE_ENVIRONMENT_NAME") == "prod" else ExecutionEnvironment.DEV
 
     def get_environment_variable(self, variable_name: str) -> str:
         """
@@ -78,65 +133,19 @@ class CloudProviderConfig:
                     f"Make sure the variable is properly set in your cloud configuration."
                 )
 
-    def set_environment_variables(self):
-        """
-        Sets environment variables based on the cloud configuration.
-        This method fetches values from Azure App Configuration and sets environment variables accordingly.
-        If in production, It will fetch values from Azure App Configuration and set environment variables accordingly.
-        If in development, it will fetch values from Azure App Configuration using manual authentication
-            and set environment variables accordingly.
-        """
-        if self.in_production_environment():
-            # TODO: Implement getting connection string in GitHub actions
-            self.create_azure_app_configuration_client_connection("placeholder")
-            self.set_environment_variables_from_cloud_config()
+    def get_client_connection_from_authentication_object (self):
+       pass
 
-        if not self.in_production_environment():
-            self.client_azure_connection()
-            self.set_environment_variables_from_cloud_config()
-
-    def create_azure_app_configuration_client_connection(self, connection_string: str):
-        """
-        Creates a connection to Azure App Configuration.
-
-        Args:
-            connection_string (str): The connection string for the Azure App Configuration.
-
-        Raises:
-            ConnectionError: If an error occurs while connecting to Azure.
-        """
-        try:
-            credential = DefaultAzureCredential()
-            credential = DataLakeAuthentication()
-            self.azure_app_config_connection_client = (
-                AzureAppConfigurationClient.from_connection_string(connection_string)
-            )
-        except Exception as e:
-            raise ConnectionError("An error occurred while connecting to Azure.") from e
-
-    def client_azure_connection(self):
-        """
-        Manually connects to Azure.
-
-        This method demonstrates a manual connection to Azure services.
-        It is a placeholder and should be replaced with actual implementation.
-        """
-        try:
-            # TODO: Implement function of manual authentication to azure
-            do_something()
-        except Exception as e:
-            raise ConnectionError("An error occurred while connecting to Azure via manual authentication.") from e
-
-    def set_environment_variables_from_cloud_config(self):
+    def populate_config_dataclass_from_app_client_connection(self):
         """
         Retrieves values from Azure App Configuration and sets them as environment variables.
         """
         items = self.azure_app_config_connection_client.list_configuration_settings()
-        [self.set_environment_variable_as_per_environment(item.key, item.label, item.value) for item in items]
+        [self.parse_connection_item(item.key, item.label, item.value) for item in items]
 
-    def set_environment_variable_as_per_environment(self, key, label, value):
+    def parse_connection_item(self, key, label, value):
         """
-        Sets environment variables based on Azure configuration.
+        Populates config variable based on Azure configuration.
         Will only set environment variables if the environment type matches the configuration label.
 
         Args:
@@ -145,17 +154,9 @@ class CloudProviderConfig:
             value (str): The value of the configuration.
 
         Note:
-            This method sets environment variables based on the configuration label,considering the environment type.
-
-        Example:
-        set_environment_variable_as_per_environment("data_lake","prod","lake247")
-
-        This would be saved it as AZURE_APP_DATA_LAKE_PROD=lake247 if the environment is production.
-        This would not be saved if the environment is development.
-
-
+            This method populates config dataclass based on the configuration label,considering the environment type.
         """
-        if (label == "prod" and self.in_production_environment) or (
-                label == "dev" and not self.in_production_environment):
-            env_variable_name = f"AZURE_APP_{key.upper()}_{label.upper()}"
-            os.environ[env_variable_name] = value
+        if (label == "prod" and self.environment.value == "production") or (
+                label == "dev" and self.environment.value != "production"):
+
+            self.config_values.__setattr__(key, value)

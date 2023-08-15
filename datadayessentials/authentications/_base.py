@@ -6,7 +6,6 @@ import yaml
 from pathlib import Path
 from azure.identity import DefaultAzureCredential, EnvironmentCredential
 import logging
-from ..config import LocalConfig
 from azure.identity._internal import interactive
 from azure.keyvault.secrets import SecretClient
 from azure.identity import (
@@ -15,7 +14,6 @@ from azure.identity import (
     ChainedTokenCredential,
 )
 from azure.core.exceptions import ClientAuthenticationError
-from datadayessentials.config import LocalConfig
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)

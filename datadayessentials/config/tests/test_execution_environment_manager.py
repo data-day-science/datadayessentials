@@ -6,7 +6,7 @@ from unittest.mock import patch
 class TestExecutionEnvironmentManager(unittest.TestCase):
 
     @patch('platform.system', return_value="Windows")
-    def test_get_execution_environment_windows_prod(self, mock_platform_system):
+    def test_get_execution_environment_windows_local(self, mock_platform_system):
         result = ExecutionEnvironmentManager.get_execution_environment()
         print(result)
         self.assertEqual(result, ExecutionEnvironment.LOCAL)
@@ -19,7 +19,7 @@ class TestExecutionEnvironmentManager(unittest.TestCase):
 
     @patch('os.getenv', return_value="prod")
     @patch('platform.system', return_value="Linux")
-    def test_get_execution_environment_dev(self, mock_platform_system, mock_os_getenv):
+    def test_get_execution_environment_prod(self, mock_platform_system, mock_os_getenv):
         result = ExecutionEnvironmentManager.get_execution_environment()
         self.assertEqual(result, ExecutionEnvironment.PROD)
 

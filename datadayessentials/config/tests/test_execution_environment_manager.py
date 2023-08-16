@@ -27,15 +27,3 @@ class TestExecutionEnvironmentManager(unittest.TestCase):
     @patch('platform.system', return_value='Linux')
     def test_asser_error_no_environment_variable(self, mock_platform_system, mock_os_getenv):
         self.assertRaises(EnvironmentError, ExecutionEnvironmentManager.get_execution_environment)
-
-if __name__ == '__main__':
-    unittest.main()
-
-
-class TestExecutionManager(unittest.TestCase):
-    def test_something(self):
-        self.assertEqual(True, False)  # add assertion here
-
-
-if __name__ == '__main__':
-    unittest.main()

@@ -37,42 +37,6 @@ class AzureAppConfigValues:
     tenant_id: str = ""
 
 
-class TEMP_AZURE_CONFIG:
-    def __init__(self):
-        self.azure_app_config_connection_client = None
-
-    def create_azure_app_configuration_client_connection(self, environment: str, connection_string: str):
-        """
-        Creates a connection to Azure App Configuration.
-
-        Args:
-            connection_string (str): The connection string for the Azure App Configuration.
-
-        Raises:
-            ConnectionError: If an error occurs while connecting to Azure.
-            :param connection_string:
-            :param environment:
-        """
-        if environment == "production" or environment == "development":
-            try:
-                credential = DefaultAzureCredential()
-                credential = DataLakeAuthentication()
-                azure_app_config_connection_client = (
-                    AzureAppConfigurationClient.from_connection_string(connection_string)
-                )
-
-                # Verify connection by getting a configuration settings.Will throw error if the connection was not
-                # successful.
-                self.azure_app_config_connection_client.list_configuration_settings().next()
-                return azure_app_config_connection_client
-
-            except Exception as e:
-                raise ServiceRequestError("An error occurred while connecting to Azure.") from e
-
-        #manual authentication
-
-
-
 class Config:
     """
     This class facilitates access to environment variables essential for machine learning productionization. If an attempt is made
@@ -81,31 +45,17 @@ class Config:
 
     """
 
-    def __init__(self):
+    def __init__(self, use_local_config: bool = False):
         """
         Initializes the CloudProviderConfig instance.
         """
-        self.azure_app_values = None
-        self.azure_app_config_connection_client = None
-        
-        self.config_values = AzureAppConfigValues()
-        
-        self.environment = self.set_environment()
-        if self.environment.value == "production" or self.environment.value == "development":
-            self.set_environment_variables()
-    
-    @staticmethod
-    def set_environment() -> ExecutionEnvironment:
-        """
-        Checks whether the environment is set to production.
+        self.azure_client_app_client = None
+        self.base_url = None
+        self.environment = self.get_environment()
+        self.use_local_config = use_local_config
 
-        Returns:
-            bool: True if the environment is production, False otherwise.
-        """
-
-        if platform.system() == 'Windows':
-            return ExecutionEnvironment.LOCAL
-        return ExecutionEnvironment.PROD if os.getenv("AZURE_ENVIRONMENT_NAME") == "prod" else ExecutionEnvironment.DEV
+    def set_base_url(self, base_url: str):
+        self.base_url = base_url
 
     def get_environment_variable(self, variable_name: str) -> str:
         """
@@ -121,10 +71,22 @@ class Config:
             ValueError:If the specified environment variable is not found in local or cloud configuration after re-getting
              variables.
         """
+        if self.use_local_config:
+            # search for yaml file in base directory
+            pass
+
         if os.getenv(variable_name):
             return os.getenv(variable_name)
         else:
-            self.set_environment_variables()
+            # authenticate to azure
+
+            # set values to dataclass
+            # set environment variables
+            # return value.
+            azure_client = self.create_azure_app_configuration_client_connection(self.base_url)
+            configuration_settings = self.parse_and_save_client_items_to_azure_dataclass(azure_client)
+            self.set_environment_variables(configuration_settings)
+
             if os.getenv(variable_name):
                 return os.getenv(variable_name)
             else:
@@ -133,30 +95,50 @@ class Config:
                     f"Make sure the variable is properly set in your cloud configuration."
                 )
 
-    def get_client_connection_from_authentication_object (self):
-       pass
+    @staticmethod
+    def create_azure_app_configuration_client_connection(base_url: str = None):
 
-    def populate_config_dataclass_from_app_client_connection(self):
+        azure_app_config_client_connection = AzureAppConfigurationClient(
+            base_url=base_url,
+            credential=DataLakeAuthentication().get_credentials())
+
+        try:
+            azure_app_config_client_connection.list_configuration_settings().next()
+            return azure_app_config_client_connection
+
+        except Exception as e:
+            raise ServiceRequestError("Unable to create connection to AzureAppConfigurationClient with current "
+                                      "base_url attribute") from e
+
+    @staticmethod
+    def get_environment() -> ExecutionEnvironment:
         """
-        Retrieves values from Azure App Configuration and sets them as environment variables.
+        Checks whether the environment is set to production.
+
+        Returns:
+            bool: True if the environment is production, False otherwise.
         """
-        items = self.azure_app_config_connection_client.list_configuration_settings()
-        [self.parse_connection_item(item.key, item.label, item.value) for item in items]
 
-    def parse_connection_item(self, key, label, value):
-        """
-        Populates config variable based on Azure configuration.
-        Will only set environment variables if the environment type matches the configuration label.
+        if platform.system() == 'Windows':
+            return ExecutionEnvironment.LOCAL
+        return ExecutionEnvironment.PROD if os.getenv("AZURE_ENVIRONMENT_NAME") == "prod" else ExecutionEnvironment.DEV
 
-        Args:
-            key (str): The configuration key.
-            label (str): The label associated with the configuration.
-            value (str): The value of the configuration.
+    @staticmethod
+    def parse_and_save_client_items_to_azure_dataclass(client):
+        azure_values = AzureAppConfigValues()
+        local_environment = Config.get_environment()
 
-        Note:
-            This method populates config dataclass based on the configuration label,considering the environment type.
-        """
-        if (label == "prod" and self.environment.value == "production") or (
-                label == "dev" and self.environment.value != "production"):
+        for item in client.list_configuration_settings():
+            config_key = item.key
+            environment_flag = item.label
+            config_value = item.value
 
-            self.config_values.__setattr__(key, value)
+            if environment_flag == local_environment:
+                setattr(azure_values, config_key, config_value)
+
+        return azure_values
+
+    @staticmethod
+    def set_environment_variables(azure_dataclass):
+        for key, value in vars(azure_dataclass).items():
+            os.environ[key.upper()] = value

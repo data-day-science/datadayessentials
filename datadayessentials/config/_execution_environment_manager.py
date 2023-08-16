@@ -1,6 +1,6 @@
 import enum
 import os
-from sys import platform
+import platform
 
 
 class ExecutionEnvironment(enum.Enum):
@@ -15,4 +15,6 @@ class ExecutionEnvironmentManager:
     def get_execution_environment() -> ExecutionEnvironment:
         if platform.system() == 'Windows':
             return ExecutionEnvironment.LOCAL
+        elif os.getenv("AZURE_ENVIRONMENT_NAME") is None:
+            raise EnvironmentError("AZURE_ENVIRONMENT_NAME not set")
         return ExecutionEnvironment.PROD if os.getenv("AZURE_ENVIRONMENT_NAME") == "prod" else ExecutionEnvironment.DEV

@@ -1,5 +1,4 @@
 import logging
-from datadayessentials.config._config import LocalConfig
 import os
 
 def set_global_loggers_to_warning():

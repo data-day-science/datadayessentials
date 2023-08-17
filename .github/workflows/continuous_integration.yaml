@@ -32,7 +32,11 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          python initialise_core.py
+
+      - name: export environment variables
+        run: |
+          python -c "from datascience_core.config import Config; Config().set_default_variables()')"
+          
       - name: Run test suite
         run: |
           pytest datadayessentials 

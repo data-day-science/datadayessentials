@@ -16,7 +16,7 @@ COMMAND="pip install git+https://$TOKEN@github.com/Carfinance247/datadayessentia
 eval "$COMMAND"
 
 
-COMMAND="python -c \"from datadayessentials.config import config; config_manager=config(); config_manager.set_default_variables()\""
+COMMAND="python -c \"from datadayessentials.config import Config; config_manager=Config(); config_manager.set_default_variables()\""
 eval "$COMMAND"
 
 

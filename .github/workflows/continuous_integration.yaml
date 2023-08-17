@@ -4,6 +4,7 @@ on:
     branches:
       - main
 env:
+  AZURE_APP_CONFIG_CONNECTION_STRING: ${{ secrets.AZURE_APP_CONFIG_CONNECTION_STRING }}
   AZURE_ENVIRONMENT_NAME: ${{ secrets.AZURE_ENVIRONMENT_NAME }}
   AZURE_DATA_LAKE: ${{ secrets.AZURE_DATA_LAKE }}
   AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -36,7 +37,7 @@ jobs:
       - name: export environment variables
         run: |
           python -c "from datascience_core.config import Config; Config().set_default_variables()')"
-          
+
       - name: Run test suite
         run: |
           pytest datadayessentials 

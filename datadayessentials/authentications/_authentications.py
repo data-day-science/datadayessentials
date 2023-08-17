@@ -7,7 +7,6 @@ import logging
 import os
 from azure.keyvault.secrets import SecretClient
 
-from ..config import LocalConfig
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)

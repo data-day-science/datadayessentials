@@ -1,26 +1,18 @@
 from abc import ABC, abstractmethod
-import pandas as pd
-from typing import Optional, List
-import os
-import yaml
-from pathlib import Path
-from azure.identity import DefaultAzureCredential, EnvironmentCredential
 import logging
-from azure.identity._internal import interactive
-from azure.keyvault.secrets import SecretClient
 from azure.identity import (
     EnvironmentCredential,
     InteractiveBrowserCredential,
     ChainedTokenCredential,
 )
-from azure.core.exceptions import ClientAuthenticationError
-
+import datadayessentials.utils
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
 class AzureAuthenticationSingleton(object):
-    """Creates a single azure credential chain so that authentication only needs to happen once. Singleton design pattern."""
+    """Creates a single azure credential chain so that authentication only needs to happen once. Singleton design
+    pattern."""
 
     _instance = None
 
@@ -29,8 +21,15 @@ class AzureAuthenticationSingleton(object):
             print("Creating authenticator")
             cls._instance = super(AzureAuthenticationSingleton, cls).__new__(cls)
             environment_credentials = EnvironmentCredential()
+
+            try:
+                tenant_id = datadayessentials.utils.ConfigCacheReader().get_value_from_config("tenant_id")
+            except KeyError:
+                print(f"tenant_id' does not exist in the core_cache config. Please set tenant_id using"
+                      " ConfigCacheWriter.add_key_value_to_config('tenant_id', 'Your id value'")
+
             interactive_credentials = InteractiveBrowserCredential(
-                tenant_id=LocalConfig.get_environment()["tenant_id"]
+                tenant_id=tenant_id
             )
             cls._instance.credential_chain = ChainedTokenCredential(
                 environment_credentials, interactive_credentials
@@ -42,7 +41,8 @@ class AzureAuthenticationSingleton(object):
 class IAuthentication(ABC):
     """Abstract base class for all authentication classes"""
 
-    def get_azure_credentials(self):
+    @staticmethod
+    def get_azure_credentials():
         """Retrieves the single instance of AzureAuthenticationSingleton
 
         Returns:

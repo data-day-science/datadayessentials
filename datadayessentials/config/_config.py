@@ -27,10 +27,11 @@ class AzureConfigManager:
     def get_config_variable_from_cloud(self, key: str):
         execution_env = ExecutionEnvironmentManager.get_execution_environment()
     
-        print(f"we are in {execution_env.value}")
+        print(f"we are in {execution_env}")
         if execution_env == ExecutionEnvironment.PROD:
             client = self.get_client_from_connection_string()
         elif execution_env == ExecutionEnvironment.DEV:
+            print("trying to run with connection string")
             client = self.get_client_from_connection_string()
         elif execution_env == ExecutionEnvironment.LOCAL:
             raise EnvironmentError("Trying to run local")

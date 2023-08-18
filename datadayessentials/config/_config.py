@@ -35,8 +35,6 @@ class AzureConfigManager:
             client = AzureAppConfigurationClient(
                 base_url=self.get_base_url(),
                 credential=DataLakeAuthentication().get_credentials())
-            return self.get_variable_value_from_client(client, key, execution_env)
-
         else:
             raise ValueError(f"Environment {execution_env} not recognised")
 
@@ -44,36 +42,6 @@ class AzureConfigManager:
 
         return variable_value.next().value
 
-    @staticmethod
-    def get_variable_value_from_client(azure_app_config_client: AzureAppConfigurationClient,
-                                       variable_name,
-                                       execution_env) -> dict:
-        """
-        Create a dictionary of all the values from an Azure App Configuration iterator
-        """
-        azure_values = {}
-
-        label_look_up = AzureConfigManager.get_app_config_environment_code(execution_env)
-
-        items = azure_app_config_client.list_configuration_settings()
-        for item in items:
-            key = item.key
-            label = item.label
-            value = item.value
-
-            if key not in azure_values:
-                azure_values[key] = {}
-
-            azure_values[key][label] = value
-
-        return azure_values[variable_name][label_look_up]
-
-    @staticmethod
-    def get_app_config_environment_code(execution_env):
-
-        if execution_env == ExecutionEnvironment.PROD:
-            return "prod"
-        return "dev"
 
 
 @dataclasses.dataclass

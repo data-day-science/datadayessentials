@@ -54,6 +54,10 @@ class AzureConfigManager:
         client = AzureAppConfigurationClient.from_connection_string(
             connection_string=os.getenv("AZURE_APP_CONFIG_CONNECTION_STRING"))
         return client
+<<<<<<< HEAD
+=======
+
+>>>>>>> projectDataSetManager_refactor_DATAS-1046
 
 
 @dataclasses.dataclass

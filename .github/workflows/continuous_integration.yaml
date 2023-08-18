@@ -36,7 +36,7 @@ jobs:
 
       - name: export environment variables
         run: |
-          python -c "from datascience_core.config import Config; Config().set_default_variables()')"
+          python -c "from datascience_core.config import Config; Config().set_default_variables()"
 
       - name: Run test suite
         run: |

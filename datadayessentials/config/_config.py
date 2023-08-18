@@ -88,7 +88,6 @@ class Config:
              variables.
         """
 
-        raise ValueError("im not working")
         if os.getenv(variable_name):
             return os.getenv(variable_name)
         else:

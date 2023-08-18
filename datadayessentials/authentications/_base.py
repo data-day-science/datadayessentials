@@ -25,8 +25,9 @@ class AzureAuthenticationSingleton(object):
             try:
                 tenant_id = datadayessentials.utils.ConfigCacheReader().get_value_from_config("tenant_id")
             except KeyError:
-                print(f"tenant_id' does not exist in the core_cache config. Please set tenant_id using"
-                      " ConfigCacheWriter.add_key_value_to_config('tenant_id', 'Your id value'")
+                print(f"'tenant_id' does not exist in the core_cache config. Please set tenant_id using"
+                      " datadayessentials.utils.ConfigCacheWriter().add_key_value_to_config(key = 'tenant_id',"
+                      " value = '736f9f09-0fa9-4930-86b0-bc4e9631f407')")
 
             interactive_credentials = InteractiveBrowserCredential(
                 tenant_id=tenant_id

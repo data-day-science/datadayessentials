@@ -1,6 +1,4 @@
 import dataclasses
-import enum
-import platform
 from typing import Union
 from datascience_core.authentications import DataLakeAuthentication
 from azure.appconfiguration import AzureAppConfigurationClient
@@ -13,6 +11,9 @@ class AzureConfigManager:
     def __init__(self, use_local_config: bool = False, base_url: str = None):
         self.use_local_config = use_local_config
         self.base_url = base_url
+
+    def get_base_url(self):
+        return self.base_url
 
     def get_config_variable(self, key: str):
         if self.use_local_config:
@@ -34,7 +35,7 @@ class AzureConfigManager:
                 connection_string=os.getenv("AZURE_APP_CONFIG_CONNECTION_STRING"))
         elif execution_env == ExecutionEnvironment.LOCAL:
             client = AzureAppConfigurationClient(
-                base_url=self.base_url,
+                base_url=self.get_base_url(),
                 credential=DataLakeAuthentication().get_credentials())
         else:
             raise ValueError(f"Environment {execution_env} not recognised")
@@ -87,6 +88,7 @@ class Config:
              variables.
         """
 
+        raise ValueError("im not working")
         if os.getenv(variable_name):
             return os.getenv(variable_name)
         else:
@@ -95,4 +97,4 @@ class Config:
             return variable_value
 
     def set_default_variables(self, list_of_variables: list = AzureAppConfigValues.__dataclass_fields__.keys()):
-        map(self.get_environment_variable, list_of_variables)
+        list(map(self.get_environment_variable, list_of_variables))

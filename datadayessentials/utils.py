@@ -101,7 +101,7 @@ class CoreCacheManager:
 
 
 class ConfigCacheWriter:
-    config_path = cache_directory / "config.yaml"
+    config_path = cache_directory / "local_config.yml"
 
     def add_key_value_to_config(self, key, value):
         existing_data = self._read_yaml()
@@ -112,7 +112,7 @@ class ConfigCacheWriter:
         self._dump_yaml(existing_data)
 
     def _dump_yaml(self, existing_data):
-        with open(self.config_path, "r") as yaml_file:
+        with open(self.config_path, "w") as yaml_file:
             yaml.dump(existing_data, yaml_file, default_flow_style=False)
 
     def _read_yaml(self):
@@ -122,7 +122,7 @@ class ConfigCacheWriter:
 
 
 class ConfigCacheReader:
-    config_path = cache_directory / "config.yaml"
+    config_path = cache_directory / "local_config.yml"
 
     def _read_yaml(self):
         with open(self.config_path, "r") as yaml_file:

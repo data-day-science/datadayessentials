@@ -26,23 +26,53 @@ class AzureConfigManager:
 
     def get_config_variable_from_cloud(self, key: str):
         execution_env = ExecutionEnvironmentManager.get_execution_environment()
-        print(execution_env)
-        if execution_env == ExecutionEnvironment.PROD:
+
+        if execution_env == ExecutionEnvironment.PROD or execution_env == ExecutionEnvironment.DEV:
             client = AzureAppConfigurationClient.from_connection_string(
                 connection_string=os.getenv("AZURE_APP_CONFIG_CONNECTION_STRING"))
-        elif execution_env == ExecutionEnvironment.DEV:
-            client = AzureAppConfigurationClient.from_connection_string(
-                connection_string=os.getenv("AZURE_APP_CONFIG_CONNECTION_STRING"))
+
         elif execution_env == ExecutionEnvironment.LOCAL:
             client = AzureAppConfigurationClient(
                 base_url=self.get_base_url(),
                 credential=DataLakeAuthentication().get_credentials())
+            return self.get_variable_value_from_client(client, key, execution_env)
+
         else:
             raise ValueError(f"Environment {execution_env} not recognised")
 
         variable_value = client.get_configuration_setting(key=key, label=execution_env.value)
 
         return variable_value.next().value
+
+    @staticmethod
+    def get_variable_value_from_client(azure_app_config_client: AzureAppConfigurationClient,
+                                       variable_name,
+                                       execution_env) -> dict:
+        """
+        Create a dictionary of all the values from an Azure App Configuration iterator
+        """
+        azure_values = {}
+
+        label_look_up = AzureConfigManager.get_app_config_environment_code(execution_env)
+
+        items = azure_app_config_client.list_configuration_settings()
+        for item in items:
+            key = item.key
+            label = item.label
+            value = item.value
+
+            if key not in azure_values:
+                azure_values[key] = {}
+
+            azure_values[key][label] = value
+
+        return azure_values[variable_name][label_look_up]
+
+    @staticmethod
+    def get_app_config_environment_code(execution_env):
+        if execution_env == ExecutionEnvironment.PROD:
+            return "prod"
+        return "dev"
 
 
 @dataclasses.dataclass

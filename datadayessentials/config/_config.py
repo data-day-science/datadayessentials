@@ -27,7 +27,6 @@ class AzureConfigManager:
     def get_config_variable_from_cloud(self, key: str):
         execution_env = ExecutionEnvironmentManager.get_execution_environment()
     
-        print(f"we are in {execution_env}")
         if execution_env == ExecutionEnvironment.PROD:
             label=execution_env.value
             client = self.get_client_from_connection_string()
@@ -40,7 +39,6 @@ class AzureConfigManager:
         else:
             raise ValueError(f"Environment {execution_env} not recognised")
 
-        print(f"Getting config variable {key} from {execution_env.value}")
         variable_value = client.get_configuration_setting(key=key, label=label)
 
         return variable_value.value

@@ -26,20 +26,22 @@ class AzureConfigManager:
 
     def get_config_variable_from_cloud(self, key: str):
         execution_env = ExecutionEnvironmentManager.get_execution_environment()
-
-
+    
         if execution_env == ExecutionEnvironment.PROD:
+            label=execution_env.value
             client = self.get_client_from_connection_string()
         elif execution_env == ExecutionEnvironment.DEV:
+            label=execution_env.value
             client = self.get_client_from_connection_string()
         elif execution_env == ExecutionEnvironment.LOCAL:
+            label='dev'
             client = self.get_client_via_authenticator()
         else:
             raise ValueError(f"Environment {execution_env} not recognised")
 
-        variable_value = client.get_configuration_setting(key=key, label=execution_env.value)
+        variable_value = client.get_configuration_setting(key=key, label=label)
 
-        return variable_value.next().value
+        return variable_value.value
 
     def get_client_via_authenticator(self):
         client = AzureAppConfigurationClient(
@@ -52,7 +54,6 @@ class AzureConfigManager:
         client = AzureAppConfigurationClient.from_connection_string(
             connection_string=os.getenv("AZURE_APP_CONFIG_CONNECTION_STRING"))
         return client
-
 
 
 @dataclasses.dataclass

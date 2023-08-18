@@ -29,7 +29,7 @@ from ._uri_generators import URIGenerator
 import pandas as pd
 import datetime
 import logging
-from ..config import LocalConfig
+from ..config import Config
 from azure.storage.filedatalake import DataLakeServiceClient
 from azure.storage.blob import StorageStreamDownloader, BlobServiceClient, BlobClient
 from datetime import datetime, date

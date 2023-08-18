@@ -29,20 +29,21 @@ class AzureConfigManager:
     
         print(f"we are in {execution_env}")
         if execution_env == ExecutionEnvironment.PROD:
+            label=execution_env.value
             client = self.get_client_from_connection_string()
         elif execution_env == ExecutionEnvironment.DEV:
-            print("trying to run with connection string")
+            label=execution_env.value
             client = self.get_client_from_connection_string()
         elif execution_env == ExecutionEnvironment.LOCAL:
-            raise EnvironmentError("Trying to run local")
+            label='dev'
             client = self.get_client_via_authenticator()
         else:
             raise ValueError(f"Environment {execution_env} not recognised")
 
         print(f"Getting config variable {key} from {execution_env.value}")
-        variable_value = client.get_configuration_setting(key=key, label=execution_env.value)
+        variable_value = client.get_configuration_setting(key=key, label=label)
 
-        return variable_value.next().value
+        return variable_value.value
 
     def get_client_via_authenticator(self):
         client = AzureAppConfigurationClient(

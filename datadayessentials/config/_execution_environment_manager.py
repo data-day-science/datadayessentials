@@ -4,10 +4,10 @@ import platform
 
 
 class ExecutionEnvironment(enum.Enum):
-    DEV = "development"
-    PROD = "production"
-    LOCAL = "local"
-    STAGING = "staging"
+    DEV = "dev"
+    PROD = "prod"
+    LOCAL = "dev"
+    STAGING = "dev"
 
 
 class ExecutionEnvironmentManager:

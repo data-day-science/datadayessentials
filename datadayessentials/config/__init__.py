@@ -8,6 +8,8 @@ from ._config_setup import ConfigSetup
 
 __all__ = [
     'Config',
-    'ExecutionEnvironmentManager',
     'ConfigSetup'
+    "AzureConfigManager",
+    'ExecutionEnvironmentManager',
+    'ExecutionEnvironment'
 ]

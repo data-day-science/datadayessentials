@@ -28,21 +28,29 @@ class AzureConfigManager:
         execution_env = ExecutionEnvironmentManager.get_execution_environment()
         print(execution_env)
         if execution_env == ExecutionEnvironment.PROD:
-            client = AzureAppConfigurationClient.from_connection_string(
-                connection_string=os.getenv("AZURE_APP_CONFIG_CONNECTION_STRING"))
+            client = self.get_client_from_connection_string()
         elif execution_env == ExecutionEnvironment.DEV:
-            client = AzureAppConfigurationClient.from_connection_string(
-                connection_string=os.getenv("AZURE_APP_CONFIG_CONNECTION_STRING"))
+            client = self.get_client_from_connection_string()
         elif execution_env == ExecutionEnvironment.LOCAL:
-            client = AzureAppConfigurationClient(
-                base_url=self.get_base_url(),
-                credential=DataLakeAuthentication().get_credentials())
+            client = self.get_client_via_authenticator()
         else:
             raise ValueError(f"Environment {execution_env} not recognised")
 
         variable_value = client.get_configuration_setting(key=key, label=execution_env.value)
 
         return variable_value.next().value
+
+    def get_client_via_authenticator(self):
+        client = AzureAppConfigurationClient(
+            base_url=self.get_base_url(),
+            credential=DataLakeAuthentication().get_credentials())
+        return client
+
+    @staticmethod
+    def get_client_from_connection_string():
+        client = AzureAppConfigurationClient.from_connection_string(
+            connection_string=os.getenv("AZURE_APP_CONFIG_CONNECTION_STRING"))
+        return client
 
 
 @dataclasses.dataclass

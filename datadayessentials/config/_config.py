@@ -6,7 +6,6 @@ import os
 from datadayessentials.config._execution_environment_manager import ExecutionEnvironmentManager, ExecutionEnvironment
 
 
-
 class AzureConfigManager:
 
     def __init__(self, use_local_config: bool = False, base_url: str = ""):

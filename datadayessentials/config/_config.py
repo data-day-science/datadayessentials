@@ -70,6 +70,7 @@ class AzureConfigManager:
 
     @staticmethod
     def get_app_config_environment_code(execution_env):
+
         if execution_env == ExecutionEnvironment.PROD:
             return "prod"
         return "dev"

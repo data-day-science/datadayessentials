@@ -2,7 +2,7 @@ import dataclasses
 import enum
 import platform
 from typing import Union
-from datascience_core.authentications import DataLakeAuthentication
+from datadayessentials.authentications import DataLakeAuthentication
 from azure.appconfiguration import AzureAppConfigurationClient
 import os
 from datadayessentials.config._execution_environment_manager import ExecutionEnvironmentManager, ExecutionEnvironment

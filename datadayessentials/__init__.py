@@ -90,8 +90,10 @@ from pathlib import Path
 from typing import Dict, List, Union, Optional, Any
 import os
 from pathlib import Path
-from datadayessentials.utils import set_global_loggers_to_warning, ConfigCacheReader,ConfigCacheWriter,CoreCacheManager
+from datadayessentials.utils import set_global_loggers_to_warning
+from datadayessentials.config import ConfigSetup
 
 
 set_global_loggers_to_warning()
 
+initialise_core_config= ConfigSetup.initialise_core_config

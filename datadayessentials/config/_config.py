@@ -8,7 +8,7 @@ from datadayessentials.config._execution_environment_manager import ExecutionEnv
 
 class AzureConfigManager:
 
-    def __init__(self, use_local_config: bool = False, base_url: str = None):
+    def __init__(self, use_local_config: bool = False, base_url: str = ""):
         self.use_local_config = use_local_config
         self.base_url = base_url
 
@@ -26,7 +26,7 @@ class AzureConfigManager:
 
     def get_config_variable_from_cloud(self, key: str):
         execution_env = ExecutionEnvironmentManager.get_execution_environment()
-
+        print(execution_env)
         if execution_env == ExecutionEnvironment.PROD:
             client = AzureAppConfigurationClient.from_connection_string(
                 connection_string=os.getenv("AZURE_APP_CONFIG_CONNECTION_STRING"))
@@ -67,7 +67,7 @@ class Config:
 
     """
 
-    def __init__(self, use_local_config: bool = False, base_url: str = None):
+    def __init__(self, use_local_config: bool = False, base_url: str = ""):
         """
         Initializes the CloudProviderConfig instance.
         """

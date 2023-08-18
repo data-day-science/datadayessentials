@@ -38,53 +38,9 @@ def log_decorator(func, *args, **kwargs):
 class CoreCacheManager:
     cache_directory = pathlib.Path.home() / ".core_cache"
 
-    def clean_core_cache(self):
-        """
-        Removes any files in the core cache folder that are older than 60 days.
-        """
-
-        cached_files = list(filter(self._get_cache_file_names, os.listdir(self.core_cache_path)))
-        files_flagged_old = list(filter(self._is_old_file, cached_files))
-        list(map(self._remove_file, files_flagged_old))
-
-    def _get_cache_file_names(self, path: str) -> list:
-        """
-        Returns True if the specified path is a file in the cache directory, False otherwise.
-
-        Args:
-            path (str): The path to check.
-
-        Returns:
-            bool: True if the specified path is a file in the cache directory, False otherwise.
-        """
-        file_path = os.path.join(self.core_cache_path, path)
-        return os.path.isfile(file_path)
-
-    def _is_old_file(self, file_name: str) -> bool:
-        """
-        Returns True if the specified file is older than 60 days, False otherwise.
-
-        Args:
-            file_name (str): The name of the file to check.
-
-        Returns:
-            bool: True if the specified file is older than 60 days, False otherwise.
-        """
-        file_path = os.path.join(self.core_cache_path, file_name)
-        return (time.time() - os.stat(file_path).st_mtime) // (24 * 3600) >= 60
-
-    def _remove_file(self, file_name: str):
-        """
-        Removes the specified file.
-
-        Args:
-            file_name (str): The name of the file to remove.
-
-        Raises:
-            OSError: If the specified file does not exist or is not accessible.
-        """
-        file_path = os.path.join(self.core_cache_path, file_name)
-        os.remove(file_path)
+    def __init__(self):
+        if not self.cache_directory.exists():
+            self.create_core_cache_directory()
 
     def create_core_cache_directory(self):
         """
@@ -98,6 +54,14 @@ class CoreCacheManager:
             str: Path to the created cache file.
         """
         self.cache_directory.mkdir(parents=True, exist_ok=True)
+
+    @staticmethod
+    def get_value_from_config(key):
+        return ConfigCacheReader().get_value_from_config(key)
+
+    @staticmethod
+    def add_key_value_to_config(key, value):
+        ConfigCacheWriter().add_key_value_to_config(key, value)
 
 
 class ConfigCacheWriter:

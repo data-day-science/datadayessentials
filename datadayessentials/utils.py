@@ -63,6 +63,10 @@ class CoreCacheManager:
     def add_key_value_to_config(key, value):
         ConfigCacheWriter().add_key_value_to_config(key, value)
 
+    @staticmethod
+    def remove_value_from_config(key):
+        ConfigCacheRemover().remove_value_from_config(key)
+
 
 class ConfigCacheWriter:
     config_path = cache_directory / "local_config.yml"
@@ -96,3 +100,21 @@ class ConfigCacheReader:
     def get_value_from_config(self, key):
         existing_data = self._read_yaml()
         return existing_data.get(key)
+
+
+class ConfigCacheRemover:
+    config_path = cache_directory / "local_config.yml"
+
+    def remove_value_from_config(self, key):
+        existing_data = self._read_yaml()
+        existing_data.pop(key, None)
+        self._dump_yaml(existing_data)
+
+    def _read_yaml(self):
+        with open(self.config_path, "r") as yaml_file:
+            existing_data = yaml.safe_load(yaml_file)
+        return existing_data
+
+    def _dump_yaml(self, existing_data):
+        with open(self.config_path, "w") as yaml_file:
+            yaml.dump(existing_data, yaml_file, default_flow_style=False)

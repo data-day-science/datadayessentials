@@ -6,7 +6,7 @@ from azureml.core.authentication import (
     InteractiveLoginAuthentication,
 )
 from datadayessentials.modelling._base import IModelManager
-from datadayessentials.config import LocalConfig
+from datadayessentials.config import Config
 from .utils import get_workspace
 
 

@@ -17,7 +17,7 @@ from datadayessentials.modelling._base import IExperimentManager
 
 # from datadayessentials.modelling.experiment_manager import ExperimentManager
 
-from datadayessentials.config import LocalConfig
+from datadayessentials.config import Config
 from azureml.core.authentication import (
     ServicePrincipalAuthentication,
     InteractiveLoginAuthentication,
@@ -46,13 +46,16 @@ def get_workspace() -> Workspace:
                 "You must set the following environment variables: AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET"
             )
 
-    env_config = LocalConfig.get_environment_from_name("dev")
+    
     return Workspace.get(
-        name=env_config["machine_learning_workspace"],
-        subscription_id=env_config["subscription_id"],
-        resource_group=env_config["resource_group"],
+        name=Config().get_environment_variable("machine_learning_workspace"),
+        subscription_id=Config().get_environment_variable("subscription_id"),
+        resource_group_name=Config().get_environment_variable("resource_group"),
         auth=auth,
     )
+
+            
+ 
 
 
 class DataSplitter:

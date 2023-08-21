@@ -1,6 +1,6 @@
 from datadayessentials.authentications import DataLakeAuthentication 
 from unittest import mock
-from datadayessentials.config import LocalConfig
+from datadayessentials.config import Config
 from datadayessentials.data_retrieval import BlobLocation
 from datadayessentials.data_retrieval._delete_data import DataLakeDirectoryDeleter
 
@@ -12,7 +12,7 @@ class TestDataLakeDirectoryDeleter:
         mock_authentication.get_azure_credentials = mock.MagicMock()
 
         blob_location = BlobLocation(
-            account=LocalConfig.get_data_lake(),
+            account=Config().get_environment_variable("data_lake"),
             container="test",
             filename="",
             filepath="folder",

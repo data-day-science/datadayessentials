@@ -28,7 +28,7 @@ import shutil
 import json
 from pathlib import Path, PurePosixPath
 import time
-from ..config import LocalConfig
+from ..config import Config
 from azure.ai.ml.entities import AzureDataLakeGen2Datastore, AzureBlobDatastore, BatchJob 
 
 

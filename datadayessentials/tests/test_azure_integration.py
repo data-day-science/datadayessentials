@@ -10,7 +10,7 @@ from ..data_retrieval import (
 )
 from ..data_retrieval import IURIGenerator
 import pandas as pd
-from ..config import LocalConfig
+from ..config import Config
 
 
 logger = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ class TestAzureIntegration(unittest.TestCase):
 
         test_df = pd.DataFrame({"col2": [2, 3, 4, 5], "col2": [1, 2, 3, 4]})
         blob_location = BlobLocation(
-            LocalConfig.get_data_lake(), "test", "folder1", "test.csv"
+            Config().get_environment_variable("data_lake"), "test", "folder1", "test.csv"
         )
         uri_generator = FakeURIGenerator(blob_location)
         saver.save(blob_location, test_df)

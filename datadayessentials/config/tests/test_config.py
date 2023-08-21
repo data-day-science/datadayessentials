@@ -56,10 +56,6 @@ class TestAzureConfigManager(unittest.TestCase):
         # Assert that get_configuration_setting was called once
         mock_config_client.get_configuration_setting.assert_called_once()
 
-    def test_get_config_variable_from_local(self):
-        config_manager = AzureConfigManager(use_local_config=True)
-        with self.assertRaises(NotImplementedError):
-            config_manager.get_config_variable("config_key")
 
     @patch('datadayessentials.config.ExecutionEnvironmentManager.get_execution_environment',
            return_value=ExecutionEnvironment.LOCAL)
@@ -72,7 +68,7 @@ class TestAzureConfigManager(unittest.TestCase):
         mock_client.get_configuration_setting.return_value = mock_configuration_setting
 
         # Create an instance of AzureConfigManager
-        config_manager = AzureConfigManager(base_url="temp")
+        config_manager = AzureConfigManager()
 
         # Call the method
         variable_value = config_manager.get_config_variable("test_key")

@@ -1,6 +1,6 @@
 from datadayessentials.modelling.models._base import IModelSavingLoadingAttribute
 from datadayessentials.modelling.model_manager import ModelManager
-from datadayessentials.config import LocalConfig
+from datadayessentials.config import Config
 import os
 from datadayessentials.modelling.models._base import IModelFactory
 
@@ -34,7 +34,7 @@ class ModelFactory(IModelFactory):
             IModelSavingLoadingAttribute: Model loaded from the run id, the type of model is specified in the __init__ method of the ModelFactory class
         """
         model_manager = ModelManager() 
-        model_files_download_location = os.path.join(LocalConfig.get_local_cache_dir(), 'temp_model_files')
+        model_files_download_location = os.path.join(Config().get_environment_variable("local_cache_dir"), 'temp_model_files')
         model_location = os.path.join(model_files_download_location, model_path_in_job)
 
         model_manager.get_model_files_from_run(
@@ -56,7 +56,7 @@ class ModelFactory(IModelFactory):
             IModelSavingLoadingAttribute: Model loaded from the model registry, the type of model is specified in the __init__ method of the ModelFactory class
         """
         model_manager = ModelManager() 
-        model_files_download_location = os.path.join(LocalConfig.get_local_cache_dir(), 'temp_model_files')
+        model_files_download_location = os.path.join(Config().get_environment_variable("local_cache_dir"), 'temp_model_files')
         model_location = os.path.join(model_files_download_location, model_path_in_job)
 
         model_manager.get_model_files_from_registered_model(

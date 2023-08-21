@@ -11,7 +11,7 @@ from typing import Union, List
 from types import ModuleType
 from pathlib import Path
 
-from datadayessentials.config import LocalConfig
+from datadayessentials.config import Config
 from datadayessentials.data_retrieval import SchemaFetcher
 from datadayessentials.modelling.models._base import IModel, IModelSavingLoadingAttribute
 from datadayessentials.modelling._base import IModelEvaluator

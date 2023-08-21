@@ -95,4 +95,4 @@ class ConfigCacheReader:
 
     def get_value_from_config(self, key):
         existing_data = self._read_yaml()
-        return existing_data[key]
+        return existing_data.get(key)

@@ -14,7 +14,7 @@ import mlflow
 
 from azureml.core import Workspace
 from azureml.core.authentication import ServicePrincipalAuthentication, InteractiveLoginAuthentication
-from datadayessentials.config import LocalConfig
+from datadayessentials.config import Config
 
 @pytest.fixture
 def model_params():

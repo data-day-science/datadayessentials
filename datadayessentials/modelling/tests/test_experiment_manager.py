@@ -14,7 +14,7 @@ from ..experiment_manager import ExperimentManager
 from azureml.core import Workspace, Experiment
 import datetime
 import mlflow
-from datadayessentials.config import LocalConfig
+from datadayessentials.config import Config, ExecutionEnvironmentManager
 
 
 def setup_experiment_manager():
@@ -25,11 +25,11 @@ def setup_experiment_manager():
     return manager
 
 def setup_workspace():
-    env_config = LocalConfig().get_environment_from_name("dev")
+
     ws = Workspace.get(
-        name=env_config["machine_learning_workspace"],
-        subscription_id=env_config["subscription_id"],
-        resource_group=env_config["resource_group"],
+        name= Config.get_environment_variable("machine_learning_workspace"), 
+        subscription_id= Config.get_environment_variable("subscription_id"), 
+        resource_group= Config.get_environment_variable("resource_group"), 
     )
     return ws
 

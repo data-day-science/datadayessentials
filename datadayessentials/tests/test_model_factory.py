@@ -4,7 +4,7 @@ import unittest
 from datadayessentials.modelling.experiment_manager import ExperimentManager
 from datadayessentials.modelling.model_manager import ModelManager
 from datadayessentials.modelling.models import CatBoostClassifierPipeline, ModelFactory
-from datadayessentials.config import LocalConfig
+from datadayessentials.config import Config, ExecutionEnvironmentManager
 
 class TestModelFactory(unittest.TestCase):
     """
@@ -60,7 +60,7 @@ class TestModelFactory(unittest.TestCase):
         cls.test_model = CatBoostClassifierPipeline(cat_features=["col4"], **model_params)
         cls.test_model.fit(X, y)
 
-        environment_config = LocalConfig().get_environment()
+        environment_config = ExecutionEnvironmentManager().get_execution_environment()
 
         experiment_manager = ExperimentManager('test_experiment_name')   
 

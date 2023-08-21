@@ -1,25 +1,29 @@
 import dataclasses
 from typing import Union
-from datadayessentials.authentications import DataLakeAuthentication
 from azure.appconfiguration import AzureAppConfigurationClient
 import os
-from datadayessentials.config._execution_environment_manager import ExecutionEnvironmentManager, ExecutionEnvironment
+from ._execution_environment_manager import ExecutionEnvironmentManager, ExecutionEnvironment
+from ._base import IAuthentication
+from ..utils import CoreCacheManager
 
+
+class AzureConfigAuthentication(IAuthentication):
+     def get_credentials(self):
+        """Retrieves azure credentials, for using cloud resources. This object is needed by many other parts of core that rely on cloud services.
+
+        Returns:
+            __type__: Azure credential chain (ethods for authenticating login)
+        """
+        credentials = super().get_azure_credentials()
+        return credentials
 
 class AzureConfigManager:
 
-    def __init__(self, use_local_config: bool = False, base_url: str = ""):
-        self.use_local_config = use_local_config
-        self.base_url = base_url
-
-    def get_base_url(self):
-        return self.base_url
+    def __init__(self):
+        pass
 
     def get_config_variable(self, key: str):
-        if self.use_local_config:
-            return self.get_config_variable_from_local(key)
-        else:
-            return self.get_config_variable_from_cloud(key)
+        self.get_config_variable_from_cloud(key)
 
     def get_config_variable_from_local(self, key: str) -> Union[str, None]:
         raise NotImplementedError("Local config not implemented yet")
@@ -34,6 +38,20 @@ class AzureConfigManager:
             label=execution_env.value
             client = self.get_client_from_connection_string()
         elif execution_env == ExecutionEnvironment.LOCAL:
+            label='dev' #limtation of enum class, means that ExecutionEnvironment.LOCAL.value need to be set to dev in this instance. 
+            tenent_id = CoreCacheManager.get_value_from_config("tenant_id")
+            base_url = CoreCacheManager.get_value_from_config("base_url")
+            if not tenent_id or not base_url:
+                msg = """
+                    To configure the core settings, use the 'initialise_core_config' function.
+                    Example usage:
+                      from config._config_setup import ConfigSetup
+                      tenant_id = 'your_tenant_id'
+                      base_url = 'your_base_url'
+                      ConfigSetup.initialise_core_config(tenant_id, base_url)"
+                """
+                raise ValueError(msg)
+                    
             label='dev'
             client = self.get_client_via_authenticator()
         else:
@@ -46,7 +64,7 @@ class AzureConfigManager:
     def get_client_via_authenticator(self):
         client = AzureAppConfigurationClient(
             base_url=self.get_base_url(),
-            credential=DataLakeAuthentication().get_credentials())
+            credential=AzureConfigAuthentication().get_credentials())
         return client
 
     @staticmethod
@@ -77,12 +95,11 @@ class Config:
     from the provided cloud provider.
 
     """
-
-    def __init__(self, use_local_config: bool = False, base_url: str = ""):
+    def __init__(self):
         """
         Initializes the CloudProviderConfig instance.
         """
-        self.azure_config_manager = AzureConfigManager(use_local_config=use_local_config, base_url=base_url)
+        self.azure_config_manager = AzureConfigManager()
 
     def get_environment_variable(self, variable_name: str) -> str:
         """
@@ -90,7 +107,7 @@ class Config:
 
         Args:
             variable_name (str): The name of the environment variable to retrieve.
-
+   
         Returns:
             str: The value of the requested environment variable.
 
@@ -102,6 +119,7 @@ class Config:
         if os.getenv(variable_name):
             return os.getenv(variable_name)
         else:
+
             variable_value = self.azure_config_manager.get_config_variable(variable_name)
             os.environ[variable_name] = variable_value
             return variable_value

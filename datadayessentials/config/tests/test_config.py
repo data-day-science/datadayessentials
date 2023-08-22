@@ -64,6 +64,7 @@ class TestAzureConfigManager(unittest.TestCase):
     @patch.object(AzureConfigManager, 'get_client_via_authenticator', return_value=Mock())
     def test_get_config_variable_from_cloud_local(self, mock_get_client, mock_env):
         # Arrange
+        config_manager = CoreCacheManager()
         cache_writer = ConfigCacheWriter()
         cache_exists = True
         if not os.path.exists(cache_writer.config_path):

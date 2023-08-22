@@ -4,6 +4,8 @@ from azure.identity import EnvironmentCredential
 import datadayessentials.utils
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+import os
+from datadayessentials.config import Config
 
 
 class IAuthentication(ABC):
@@ -16,6 +18,8 @@ class IAuthentication(ABC):
         Returns:
             EnvironmentCredential: Credential chain for authenticating with azure that looks for environment credentials first and then tries to use the browser to authenticate.
         """
+        # Need to call config to ensure that the environment variables have been downloaded
+        config = Config()
         return EnvironmentCredential()
 
     @abstractmethod

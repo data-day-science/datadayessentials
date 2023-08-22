@@ -18,52 +18,32 @@ class AzureConfigAuthentication(IAuthentication):
         return credentials
 
 class AzureConfigManager:
-
     def __init__(self):
-        pass
+        self.execution_environment = ExecutionEnvironmentManager.get_execution_environment()
+        if self.execution_environment == ExecutionEnvironment.PROD:
+            self.label = self.execution_environment.value
+            self.client = self.get_client_from_connection_string()
+        elif self.execution_environment == ExecutionEnvironment.DEV:
+            self.label = self.execution_environment.value
+            self.client = self.get_client_from_connection_string()
+        elif self.execution_environment == ExecutionEnvironment.LOCAL:
+            self.label = 'dev'
+            self.client = self.get_client_via_authenticator()
+        else:
+            raise ValueError(f"Environment {self.execution_environment} not recognised")
 
     def get_config_variable(self, key: str):
-        self.get_config_variable_from_cloud(key)
+        return self.get_config_variable_from_cloud(key)
 
     def get_config_variable_from_local(self, key: str) -> Union[str, None]:
         raise NotImplementedError("Local config not implemented yet")
 
     def get_config_variable_from_cloud(self, key: str):
-        execution_env = ExecutionEnvironmentManager.get_execution_environment()
-    
-        if execution_env == ExecutionEnvironment.PROD:
-            label=execution_env.value
-            client = self.get_client_from_connection_string()
-        elif execution_env == ExecutionEnvironment.DEV:
-            label=execution_env.value
-            client = self.get_client_from_connection_string()
-        elif execution_env == ExecutionEnvironment.LOCAL:
-            label='dev' #limtation of enum class, means that ExecutionEnvironment.LOCAL.value need to be set to dev in this instance. 
-            tenent_id = CoreCacheManager.get_value_from_config("tenant_id")
-            base_url = CoreCacheManager.get_value_from_config("base_url")
-            if not tenent_id or not base_url:
-                msg = """
-                    To configure the core settings, use the 'initialise_core_config' function.
-                    Example usage:
-                      from config._config_setup import ConfigSetup
-                      tenant_id = 'your_tenant_id'
-                      base_url = 'your_base_url'
-                      ConfigSetup.initialise_core_config(tenant_id, base_url)"
-                """
-                raise ValueError(msg)
-                    
-            label='dev'
-            client = self.get_client_via_authenticator()
-        else:
-            raise ValueError(f"Environment {execution_env} not recognised")
-
-        variable_value = client.get_configuration_setting(key=key, label=label)
-
+        variable_value = self.client.get_configuration_setting(key=key, label=self.label)
         return variable_value.value
 
     def get_client_via_authenticator(self):
-        client = AzureAppConfigurationClient(
-            base_url=self.get_base_url(),
+        client = AzureAppConfigurationClient(base_url=CoreCacheManager.get_value_from_config("base_url"),
             credential=AzureConfigAuthentication().get_credentials())
         return client
 
@@ -99,7 +79,36 @@ class Config:
         """
         Initializes the CloudProviderConfig instance.
         """
+        if self.check_environent_available():
+            return
+        self.execution_env = ExecutionEnvironmentManager.get_execution_environment()
+        self.validate_local_config()
+        if self.execution_env == ExecutionEnvironment.LOCAL:
+            os.environ["AZURE_TENANT_ID"] = CoreCacheManager.get_value_from_config("tenant_id")  
+            os.environ["base_url"] = CoreCacheManager.get_value_from_config("base_url")  
         self.azure_config_manager = AzureConfigManager()
+        self.set_default_variables()
+
+    def validate_local_config(self):
+        msg = """
+            No means of downloading the config from Azure App Configuration found. Please include AZURE_APP_CONFIG_CONNECTION_STRING for use in a remote server or initialise datadayessentials using the initialise_core_config fuction as below:
+
+                from datadayessentials import initialise_core_config
+                tenant_id = 'your_tenant_id'
+                base_url = 'your_base_url for an Azure App Configuration service'
+                initialise_core_config(tenant_id, base_url)
+        """
+        available_environment_variables = os.environ.keys()
+        if self.execution_env == ExecutionEnvironment.LOCAL:
+            tenant_id = CoreCacheManager.get_value_from_config("tenant_id")  
+            base_url = CoreCacheManager.get_value_from_config("base_url")
+            if (tenant_id is None) or (base_url is None):
+                raise EnvironmentError(msg)
+        elif self.execution_env in [ExecutionEnvironment.DEV, ExecutionEnvironment.PROD, ExecutionEnvironment.STAGING]:
+            if "AZURE_APP_CONFIG_CONNECTION_STRING" not in os.environ.keys():
+                raise EnvironmentError(
+                    "'AZURE_APP_CONFIG_CONNECTION_STRING' environment variable not set for remote access to Azure Application Configuration"
+                )
 
     def get_environment_variable(self, variable_name: str) -> str:
         """
@@ -125,4 +134,11 @@ class Config:
             return variable_value
 
     def set_default_variables(self, list_of_variables: list = AzureAppConfigValues.__dataclass_fields__.keys()):
-        list(map(self.get_environment_variable, list_of_variables))
+        if not self.check_environent_available():
+            list(map(self.get_environment_variable, list_of_variables))
+
+    def check_environent_available(self):
+        for variable in AzureAppConfigValues.__dataclass_fields__.keys():
+            if variable not in os.environ.keys():
+                return False
+        return True

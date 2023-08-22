@@ -50,16 +50,16 @@ class DatalakeProjectAssetsHelper:
         """
 
         self.credential = credentials
-        dataset_manager_env = Config().get_environment_variable("data_lake")
+        self.data_lake_name = Config().get_environment_variable("data_lake")
 
-        self.account_url = f"https://{dataset_manager_env['data_lake']}.dfs.core.windows.net/"
+        self.account_url = f"https://{self.data_lake_name}.dfs.core.windows.net/"
         self.datalake_service = DataLakeServiceClient(
             account_url=self.account_url,
             credential=self.credential.get_azure_credentials(),
         )
 
         self.project = project
-        self.data_lake_name = dataset_manager_env['data_lake']
+      
 
     def _get_project_assets(self) -> list:
         """for the specified project, identifies what datasets are available in the datalake that are associated with this project.

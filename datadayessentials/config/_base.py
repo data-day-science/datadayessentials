@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
 import yaml
 from typing import Optional, List
-
 from azure.identity import (
     EnvironmentCredential,
     InteractiveBrowserCredential,
     ChainedTokenCredential,
 )
 import datadayessentials.utils
+import os
 
 
 class IConfig(ABC):
@@ -76,12 +76,7 @@ class IAuthentication(ABC):
         """
         environment_credentials = EnvironmentCredential()
 
-        try:
-            tenant_id = datadayessentials.utils.ConfigCacheReader().get_value_from_config("tenant_id")
-        except KeyError:
-            print(f"'tenant_id' does not exist in the core_cache config. Please set tenant_id using"
-                    " datadayessentials.utils.ConfigCacheWriter().add_key_value_to_config(key = 'tenant_id',"
-                    " value = 'your_tenant_id')")
+        tenant_id = os.environ.get('AZURE_TENANT_ID')
 
         interactive_credentials = InteractiveBrowserCredential(
             tenant_id=tenant_id

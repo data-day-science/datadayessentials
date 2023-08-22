@@ -13,5 +13,5 @@ flavors:
     loader_module: mlflow.catboost
     python_version: 3.9.0
 mlflow_version: 2.3.2
-model_uuid: f1dcf8169e13451e8178ff5d118bb7bf
-utc_time_created: '2023-08-22 13:21:21.621833'
+model_uuid: 76957b55dd7145a0a723d2c638db79fd
+utc_time_created: '2023-08-22 15:37:13.314378'

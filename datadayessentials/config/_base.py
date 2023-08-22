@@ -20,7 +20,7 @@ class IConfig(ABC):
         """Get a specific value from the config file.
         Example:
             >>> config = Config()
-            >>> config.get_config_value(["storage_account"])
+            >>> config.get_environment_variable("value")
         """
         instance = cls()
         config = instance.read()

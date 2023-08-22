@@ -100,7 +100,7 @@ class TestConfig(unittest.TestCase):
         config = Config()
 
         # Act
-        result = config.get_environment_variable("variable_name")
+        result = Config().get_environment_variable("variable_name")
 
         # Assert
         self.assertEqual(result, "cloud_value", "Environment variable should match cloud_value")
@@ -113,8 +113,8 @@ class TestConfig(unittest.TestCase):
 
         # Act
         config.set_default_variables(["variable_1", "variable_2"])
-        result_variable_1 = config.get_environment_variable("variable_1")
-        result_variable_2 = config.get_environment_variable("variable_2")
+        result_variable_1 = Config().get_environment_variable("variable_1")
+        result_variable_2 = Config().get_environment_variable("variable_2")
 
         # Assert
         self.assertEqual(result_variable_1, "cloud_value", "variable_1 should match cloud_value")

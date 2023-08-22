@@ -104,11 +104,12 @@ class SQLServerConnection(ISQLServerConnection):
             f"Connecting to database"
         )  
 
-        database = Config.get_environment_variable(f"databases_{self.database_reference}")
-        server = database["server"]
-        database = database["database"]
-        
+        database_info = Config().get_environment_variable(f"databases_{self.database_reference}")
 
+        server = database_info["server"]
+        database = database_info["database"]
+        
+   
         self.cnxn = pyodbc.connect(
             "DRIVER={ODBC Driver 17 for SQL Server};SERVER="
             + server

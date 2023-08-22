@@ -5,6 +5,7 @@ import os
 from ._execution_environment_manager import ExecutionEnvironmentManager, ExecutionEnvironment
 from ._base import IAuthentication
 from ..utils import CoreCacheManager
+import json
 
 
 class AzureConfigAuthentication(IAuthentication):
@@ -129,11 +130,17 @@ class Config:
         env_variable_name = "AZURE_" + variable_name.upper()
 
         if os.getenv(env_variable_name):
-            return os.getenv(env_variable_name)
+            try:
+                return json.loads(os.getenv(env_variable_name))
+            except:
+                return os.getenv(env_variable_name)
         else:
             variable_value = self.azure_config_manager.get_config_variable(variable_name)
             os.environ[env_variable_name] = variable_value
-            return variable_value
+            try:
+                return json.loads(variable_value)
+            except:
+                return variable_value
         
     def set_default_variables(self, list_of_variables: list = AzureAppConfigValues.__dataclass_fields__.keys()):
         list(map(self.get_environment_variable, list_of_variables))

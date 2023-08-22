@@ -3,9 +3,20 @@ from unittest.mock import patch, Mock
 import datadayessentials
 from datadayessentials.config._execution_environment_manager import ExecutionEnvironment
 from datadayessentials.config._config import Config, AzureConfigManager
+from datadayessentials.utils import CoreCacheManager, ConfigCacheWriter,ConfigCacheReader
+import os
 
+def cleanup_environment_variables():
+    # Delete all envrionment variables that begin with AZURE
+        for key in os.environ.keys():
+            if key.startswith("AZURE_"):
+                del os.environ[key]
 
 class TestAzureConfigManager(unittest.TestCase):
+
+    def tearDown(self) -> None:
+        cleanup_environment_variables()
+        return super().tearDown()
 
     @patch('datadayessentials.config.ExecutionEnvironmentManager.get_execution_environment')
     @patch('azure.appconfiguration.AzureAppConfigurationClient.from_connection_string')
@@ -48,7 +59,11 @@ class TestAzureConfigManager(unittest.TestCase):
     @patch.object(AzureConfigManager, 'get_client_via_authenticator', return_value=Mock())
     def test_get_config_variable_from_cloud_local(self, mock_get_client, mock_env):
         # Arrange
-        datadayessentials.initialise_core_config("tenant_id", "base_url")
+        cache_writer = ConfigCacheWriter()
+        cache_exists = True
+        if not os.path.exists(cache_writer.config_path):
+            cache_exists = False
+            datadayessentials.initialise_core_config("tenant_id", "base_url")
         mock_client = mock_get_client.return_value
         mock_configuration_setting = Mock()
         mock_configuration_setting.value = "config_value_1"
@@ -64,11 +79,16 @@ class TestAzureConfigManager(unittest.TestCase):
         mock_client.get_configuration_setting.assert_called_once_with(
             key="test_key", label="dev"
         )
-        datadayessentials.utils.CoreCacheManager().remove_value_from_config("tenant_id")
-        datadayessentials.utils.CoreCacheManager().remove_value_from_config("base_url")
+        if not cache_exists:
+            datadayessentials.utils.CoreCacheManager().remove_value_from_config("tenant_id")
+            datadayessentials.utils.CoreCacheManager().remove_value_from_config("base_url")
 
 
 class TestConfig(unittest.TestCase):
+
+    def tearDown(self) -> None:
+        cleanup_environment_variables()
+        return super().tearDown()
 
     @patch('datadayessentials.config._config.AzureConfigManager.get_config_variable', return_value="cloud_value")
     def test_get_environment_variable_cloud_or_var(self, mock_get_config_var):

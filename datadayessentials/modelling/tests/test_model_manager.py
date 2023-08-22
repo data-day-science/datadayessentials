@@ -7,7 +7,7 @@ from azureml.core import Model
 from datadayessentials.modelling.model_manager import ModelManager
 import unittest
 from unittest.mock import patch
-
+from .utils import trigger_test_run
 
 def remove_test_folder(folder_to_delete: str = None):
     folder_to_delete = pathlib.Path(folder_to_delete)
@@ -22,12 +22,12 @@ class TestModelManager(unittest.TestCase):
 
     def setUp(self):
         self.model_manager = ModelManager()
+        self.run_id, self.run_instance = trigger_test_run()
+        
 
     def test_get_model_files_from_run(self):
-        run_id = "1aed3f9b-0cee-430e-8676-5070ed572d27"
-
         # Download the files
-        self.model_manager.get_model_files_from_run(run_id, "pickled_models")
+        self.model_manager.get_model_files_from_run(self.run_id, "pickled_models")
         assert self.model_manager.workspace is not None
 
         # Verify that the downloaded folder exists
@@ -53,7 +53,7 @@ class TestModelManager(unittest.TestCase):
         self.assertTrue(downloaded_folder.exists())
 
     def test_register_model(self):
-        self.model_manager.get_model_files_from_run("1aed3f9b-0cee-430e-8676-5070ed572d27", "pickled_models")
+        self.model_manager.get_model_files_from_run(self.run_id, "pickled_models")
         model_name = "test_model_23"
 
         model_file = pathlib.Path.cwd() / "pickled_models" / "model" / "model.cb"

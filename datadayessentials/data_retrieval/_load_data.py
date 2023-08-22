@@ -69,7 +69,7 @@ class DataCacher:
             self.file = file
 
         home = str(Path.home())
-        self.file_dir = os.path.join(home, Config.get_value_from_config(["local_cache_dir"]))
+        self.file_dir = os.path.join(home, Config().get_environment_variable(variable_name="local_cache_dir"))
         self.file_path = os.path.join(self.file_dir, self.file)
         if not os.path.exists(self.file_dir):
             os.makedirs(self.file_dir)

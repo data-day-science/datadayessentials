@@ -50,7 +50,7 @@ def get_workspace() -> Workspace:
     return Workspace.get(
         name=Config().get_environment_variable("machine_learning_workspace"),
         subscription_id=Config().get_environment_variable("subscription_id"),
-        resource_group_name=Config().get_environment_variable("resource_group"),
+        resource_group=Config().get_environment_variable("resource_group"),
         auth=auth,
     )
 

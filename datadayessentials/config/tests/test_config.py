@@ -70,7 +70,7 @@ class TestAzureConfigManager(unittest.TestCase):
 
 class TestConfig(unittest.TestCase):
 
-    @patch('datadayessentials.config.Config.get_environment_variable', return_value="cloud_value")
+    @patch('datadayessentials.config._config.AzureConfigManager.get_config_variable', return_value="cloud_value")
     def test_get_environment_variable_cloud_or_var(self, mock_get_config_var):
         # Arrange
         config = Config()

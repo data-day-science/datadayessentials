@@ -37,6 +37,7 @@ class TestCoreCacheManager(unittest.TestCase):
 class TestConfigCacheWriter(unittest.TestCase):
 
     def test_add_key_value_to_config(self):
+        cache_manager = datadayessentials.utils.CoreCacheManager()
         cache_writer = datadayessentials.utils.ConfigCacheWriter()
         cache_writer.add_key_value_to_config("test_key", "test_value")
         self.assertTrue(cache_writer.config_path.exists())

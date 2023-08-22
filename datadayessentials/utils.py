@@ -70,6 +70,9 @@ class CoreCacheManager:
 
 class ConfigCacheWriter:
     config_path = cache_directory / "local_config.yml"
+    def __init__(self):
+        if not self.config_path.exists():
+            self._dump_yaml({})
 
     def add_key_value_to_config(self, key, value):
         existing_data = self._read_yaml()

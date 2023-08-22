@@ -6,18 +6,21 @@ from datadayessentials.config._config import Config, AzureConfigManager
 from datadayessentials.utils import CoreCacheManager, ConfigCacheWriter,ConfigCacheReader
 import os
 
-def cleanup_environment_variables():
-    # Delete all envrionment variables that begin with AZURE
-        for key in os.environ.keys():
-            if key.startswith("AZURE_"):
-                del os.environ[key]
+
+def preserve_environment_variables(func, *args, **kwargs):
+    """
+    Decorator that returns the environment variables to their initial state at the end of the function call
+    """
+    def wrapper(*args, **kwargs):
+        initial_environment_variables = os.environ.copy()
+        func(*args, **kwargs)
+        os.environ = initial_environment_variables
+    return wrapper
+    
+     
 
 class TestAzureConfigManager(unittest.TestCase):
-
-    def tearDown(self) -> None:
-        cleanup_environment_variables()
-        return super().tearDown()
-
+    @preserve_environment_variables
     @patch('datadayessentials.config.ExecutionEnvironmentManager.get_execution_environment')
     @patch('azure.appconfiguration.AzureAppConfigurationClient.from_connection_string')
     def test_get_config_variable_from_cloud_prod(self, mock_client, mock_env):
@@ -36,6 +39,7 @@ class TestAzureConfigManager(unittest.TestCase):
         # Assert
         mock_config_client.get_configuration_setting.assert_called_once()
 
+    @preserve_environment_variables
     @patch('datadayessentials.config.ExecutionEnvironmentManager.get_execution_environment')
     @patch('azure.appconfiguration.AzureAppConfigurationClient.from_connection_string')
     def test_get_config_variable_from_cloud_dev(self, mock_client, mock_env):
@@ -53,7 +57,8 @@ class TestAzureConfigManager(unittest.TestCase):
 
         # Assert
         mock_config_client.get_configuration_setting.assert_called_once()
-
+    
+    @preserve_environment_variables
     @patch('datadayessentials.config.ExecutionEnvironmentManager.get_execution_environment',
            return_value=ExecutionEnvironment.LOCAL)
     @patch.object(AzureConfigManager, 'get_client_via_authenticator', return_value=Mock())
@@ -86,10 +91,8 @@ class TestAzureConfigManager(unittest.TestCase):
 
 class TestConfig(unittest.TestCase):
 
-    def tearDown(self) -> None:
-        cleanup_environment_variables()
-        return super().tearDown()
 
+    @preserve_environment_variables
     @patch('datadayessentials.config._config.AzureConfigManager.get_config_variable', return_value="cloud_value")
     def test_get_environment_variable_cloud_or_var(self, mock_get_config_var):
         # Arrange
@@ -101,6 +104,7 @@ class TestConfig(unittest.TestCase):
         # Assert
         self.assertEqual(result, "cloud_value", "Environment variable should match cloud_value")
 
+    @preserve_environment_variables
     @patch('datadayessentials.config.Config.get_environment_variable', return_value="cloud_value")
     def test_set_default_variables(self, mock_get_env_var):
         # Arrange

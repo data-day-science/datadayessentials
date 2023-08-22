@@ -8,7 +8,7 @@ from ..utils import CoreCacheManager
 
 
 class AzureConfigAuthentication(IAuthentication):
-     def get_credentials(self):
+    def get_credentials(self):
         """Retrieves azure credentials, for using cloud resources. This object is needed by many other parts of core that rely on cloud services.
 
         Returns:
@@ -16,6 +16,7 @@ class AzureConfigAuthentication(IAuthentication):
         """
         credentials = super().get_azure_credentials()
         return credentials
+
 
 class AzureConfigManager:
     def __init__(self):
@@ -75,6 +76,7 @@ class Config:
     from the provided cloud provider.
 
     """
+
     def __init__(self):
         """
         Initializes the CloudProviderConfig instance.
@@ -129,7 +131,6 @@ class Config:
         if os.getenv(env_variable_name):
             return os.getenv(env_variable_name)
         else:
-
             variable_value = self.azure_config_manager.get_config_variable(variable_name)
             os.environ[env_variable_name] = variable_value
             return variable_value

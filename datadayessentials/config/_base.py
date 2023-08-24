@@ -1,12 +1,7 @@
 from abc import ABC, abstractmethod
 import yaml
 from typing import Optional, List
-from azure.identity import (
-    EnvironmentCredential,
-    InteractiveBrowserCredential,
-    ChainedTokenCredential,
-)
-import datadayessentials.utils
+
 import os
 
 
@@ -64,26 +59,5 @@ class IConfigManager:
     def register_new_config(self):
         pass
 
-class IAuthentication(ABC):
-    """Abstract base class for all authentication classes"""
-
-    @staticmethod
-    def get_azure_credentials():
-        """
-
-        Returns:
-            ChainedTokenCredential: Credential chain for authenticating with azure that looks for environment credentials first and then tries to use the browser to authenticate.
-        """
-        environment_credentials = EnvironmentCredential()
-
-        tenant_id = os.environ.get('AZURE_TENANT_ID')
-
-        interactive_credentials = InteractiveBrowserCredential(
-            tenant_id=tenant_id
-        )
-        credential_chain = ChainedTokenCredential(
-            environment_credentials, interactive_credentials
-        )
-        return credential_chain
 
 

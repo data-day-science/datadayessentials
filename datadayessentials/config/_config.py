@@ -7,17 +7,25 @@ from ._base import IAuthentication
 from ..utils import CoreCacheManager
 import json
 
+from azure.identity import (
+    EnvironmentCredential,
+    InteractiveBrowserCredential,
+    ChainedTokenCredential,
+)
 
-class AzureConfigAuthentication(IAuthentication):
-    def get_credentials(self):
-        """Retrieves azure credentials, for using cloud resources. This object is needed by many other parts of core that rely on cloud services.
 
-        Returns:
-            __type__: Azure credential chain (ethods for authenticating login)
-        """
-        credentials = super().get_azure_credentials()
-        return credentials
+def get_azure_credentials():
+    environment_credentials = EnvironmentCredential()
 
+    tenant_id = os.environ.get('AZURE_TENANT_ID')
+
+    interactive_credentials = InteractiveBrowserCredential(
+        tenant_id=tenant_id
+    )
+    credential_chain = ChainedTokenCredential(
+        environment_credentials, interactive_credentials
+    )
+    return credential_chain
 
 class AzureConfigManager:
     def __init__(self):
@@ -46,7 +54,7 @@ class AzureConfigManager:
 
     def get_client_via_authenticator(self):
         client = AzureAppConfigurationClient(base_url=CoreCacheManager.get_value_from_config("base_url"),
-            credential=AzureConfigAuthentication().get_credentials())
+            credential=get_azure_credentials())
         return client
 
     @staticmethod

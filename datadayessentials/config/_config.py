@@ -3,7 +3,6 @@ from typing import Union
 from azure.appconfiguration import AzureAppConfigurationClient
 import os
 from ._execution_environment_manager import ExecutionEnvironmentManager, ExecutionEnvironment
-from ._base import IAuthentication
 from ..utils import CoreCacheManager
 import json
 

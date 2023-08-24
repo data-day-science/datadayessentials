@@ -29,7 +29,7 @@ from ._uri_generators import URIGenerator
 import pandas as pd
 import datetime
 import logging
-from ..config import LocalConfig
+from ..config._config import Config
 from azure.storage.filedatalake import DataLakeServiceClient
 from azure.storage.blob import StorageStreamDownloader, BlobServiceClient, BlobClient
 from datetime import datetime, date
@@ -69,7 +69,7 @@ class DataCacher:
             self.file = file
 
         home = str(Path.home())
-        self.file_dir = os.path.join(home, LocalConfig.get_local_cache_dir())
+        self.file_dir = os.path.join(home, Config().get_environment_variable(variable_name="local_cache_dir"))
         self.file_path = os.path.join(self.file_dir, self.file)
         if not os.path.exists(self.file_dir):
             os.makedirs(self.file_dir)

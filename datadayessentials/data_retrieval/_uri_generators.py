@@ -2,7 +2,7 @@ from datetime import datetime, date
 from ._save_data import BlobLocation
 from ._base import IURIGenerator, IBlobLocation, IAuthentication
 from typing import List
-from ..config import LocalConfig
+from ..config import Config
 from azure.storage.filedatalake import DataLakeServiceClient
 from azure.storage.blob import BlobServiceClient
 import logging

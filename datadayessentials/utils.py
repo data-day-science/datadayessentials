@@ -1,6 +1,11 @@
 import logging
-from datadayessentials.config._config import LocalConfig
 import os
+import pathlib
+
+import yaml
+
+cache_directory = pathlib.Path.home() / ".core_cache"
+
 
 def set_global_loggers_to_warning():
     """
@@ -19,8 +24,6 @@ def set_global_loggers_to_warning():
     )
 
 
-
-
 def log_decorator(func, *args, **kwargs):
     def wrapper_with_logs(*args, **kwargs):
         logger = logging.getLogger(func.__name__)
@@ -33,54 +36,88 @@ def log_decorator(func, *args, **kwargs):
 
 
 class CoreCacheManager:
+    cache_directory = pathlib.Path.home() / ".core_cache"
+
     def __init__(self):
-        self.config = LocalConfig().read()
-        self.core_cache_path = self.config["core_cache_path"]
+        if not self.cache_directory.exists():
+            self.create_core_cache_directory()
 
-    def clean_core_cache(self):
+    def create_core_cache_directory(self):
         """
-        Removes any files in the core cache folder that are older than 60 days.
-        """
+        Create a cache file in the user's .core_cache directory.
 
-        cached_files = list(filter(self._get_cache_file_names, os.listdir(self.core_cache_path)))
-        files_flagged_old = list(filter(self._is_old_file, cached_files))
-        list(map(self._remove_file, files_flagged_old))
-
-    def _get_cache_file_names(self, path: str) -> list:
-        """
-        Returns True if the specified path is a file in the cache directory, False otherwise.
-
-        Args:
-            path (str): The path to check.
+        This function retrieves the current user's username, constructs the path to
+        the .core_cache directory, creates the directory if it doesn't exist,
+        and then creates a cache file inside the directory with some content.
 
         Returns:
-            bool: True if the specified path is a file in the cache directory, False otherwise.
+            str: Path to the created cache file.
         """
-        file_path = os.path.join(self.core_cache_path, path)
-        return os.path.isfile(file_path)
+        self.cache_directory.mkdir(parents=True, exist_ok=True)
 
-    def _is_old_file(self, file_name: str) -> bool:
-        """
-        Returns True if the specified file is older than 60 days, False otherwise.
+    @staticmethod
+    def get_value_from_config(key):
+        return ConfigCacheReader().get_value_from_config(key)
 
-        Args:
-            file_name (str): The name of the file to check.
+    @staticmethod
+    def add_key_value_to_config(key, value):
+        ConfigCacheWriter().add_key_value_to_config(key, value)
 
-        Returns:
-            bool: True if the specified file is older than 60 days, False otherwise.
-        """
-        file_path = os.path.join(self.core_cache_path, file_name)
-        return (time.time() - os.stat(file_path).st_mtime) // (24 * 3600) >= 60
+    @staticmethod
+    def remove_value_from_config(key):
+        ConfigCacheRemover().remove_value_from_config(key)
 
-    def _remove_file(self, file_name: str):
-        """
-        Removes the specified file.
 
-        Args:
-            file_name (str): The name of the file to remove.
+class ConfigCacheWriter:
+    config_path = cache_directory / "local_config.yml"
+    def __init__(self):
+        if not self.config_path.exists():
+            self._dump_yaml({})
 
-        Raises:
-            OSError: If the specified file does not exist or is not accessible.
-        """
-        file_path = os.path.join(self.core_cache_path, file_name)
-        os.remove(file_path)
+    def add_key_value_to_config(self, key, value):
+        existing_data = self._read_yaml()
+
+        data = {key: value}
+        existing_data.update(data)
+
+        self._dump_yaml(existing_data)
+
+    def _dump_yaml(self, existing_data):
+        with open(self.config_path, "w") as yaml_file:
+            yaml.dump(existing_data, yaml_file, default_flow_style=False)
+
+    def _read_yaml(self):
+        with open(self.config_path, "r") as yaml_file:
+            existing_data = yaml.safe_load(yaml_file)
+        return existing_data
+
+
+class ConfigCacheReader:
+    config_path = cache_directory / "local_config.yml"
+
+    def _read_yaml(self):
+        with open(self.config_path, "r") as yaml_file:
+            existing_data = yaml.safe_load(yaml_file)
+        return existing_data
+
+    def get_value_from_config(self, key):
+        existing_data = self._read_yaml()
+        return existing_data.get(key)
+
+
+class ConfigCacheRemover:
+    config_path = cache_directory / "local_config.yml"
+
+    def remove_value_from_config(self, key):
+        existing_data = self._read_yaml()
+        existing_data.pop(key, None)
+        self._dump_yaml(existing_data)
+
+    def _read_yaml(self):
+        with open(self.config_path, "r") as yaml_file:
+            existing_data = yaml.safe_load(yaml_file)
+        return existing_data
+
+    def _dump_yaml(self, existing_data):
+        with open(self.config_path, "w") as yaml_file:
+            yaml.dump(existing_data, yaml_file, default_flow_style=False)

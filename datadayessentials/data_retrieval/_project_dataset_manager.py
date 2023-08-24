@@ -3,7 +3,7 @@ from azureml.core.authentication import ServicePrincipalAuthentication, Interact
 
 from ._load_data import DataLakeCSVLoader, DataLakePickleLoader, DataLakeJsonLoader
 from ._base import IBlobLocation, IURIGenerator, ICSVLoader
-from ..config import LocalConfig
+from ..config import Config
 from azure.storage.filedatalake import DataLakeServiceClient
 from ._save_data import (
     BlobLocation,
@@ -50,15 +50,16 @@ class DatalakeProjectAssetsHelper:
         """
 
         self.credential = credentials
-        dataset_manager_env = LocalConfig.get_dataset_manager_environment()
-        self.account_url = f"https://{dataset_manager_env['data_lake']}.dfs.core.windows.net/"
+        self.data_lake_name = Config().get_environment_variable("data_lake")
+
+        self.account_url = f"https://{self.data_lake_name}.dfs.core.windows.net/"
         self.datalake_service = DataLakeServiceClient(
             account_url=self.account_url,
             credential=self.credential.get_azure_credentials(),
         )
 
         self.project = project
-        self.data_lake_name = dataset_manager_env['data_lake']
+      
 
     def _get_project_assets(self) -> list:
         """for the specified project, identifies what datasets are available in the datalake that are associated with this project.
@@ -68,7 +69,7 @@ class DatalakeProjectAssetsHelper:
         Returns:
             list: subdirectories of the Datasets folder for each project.
         """
-        container_name = LocalConfig.get_environment()['project_dataset_container']
+        container_name = Config().get_environment_variable("project_dataset_container")
         blob = BlobLocation(
             account=self.data_lake_name,
             container=container_name,
@@ -151,7 +152,7 @@ class DatalakeProjectAssetsHelper:
             dataset_name (str): name of the dataset as it appears in mlstudio.
         """
 
-        container_name = LocalConfig.get_environment()['project_dataset_container']
+        container_name = Config().get_environment_variable("project_dataset_container")
         blob = BlobLocation(
             account=self.data_lake_name,
             container=container_name,
@@ -184,14 +185,13 @@ class MLStudioProjectDatasetsHelper:
             credentials (DataLakeAuthentication): DWHAuthentication instance for retrieving login credentials
         """
         self.credential = credentials
-        dataset_manager_env = LocalConfig.get_dataset_manager_environment()
-        self.data_lake_name = dataset_manager_env['data_lake']
+        self.data_lake_name = Config().get_environment_variable("data_lake")
 
         self.ml_client = MLClient(
             credential=self.credential.get_azure_credentials(),
-            subscription_id=dataset_manager_env["subscription_id"],
-            resource_group_name=dataset_manager_env["resource_group"],
-            workspace_name=dataset_manager_env["machine_learning_workspace"],
+            subscription_id=Config().get_environment_variable("subscription_id"), 
+            resource_group_name=Config().get_environment_variable("resource_group"),
+            workspace_name=Config().get_environment_variable("machine_learning_workspace"),
         )
 
     def _get_asset_overview(self, project_assets: List[str], version=None) -> Dict:
@@ -351,7 +351,7 @@ class MLStudioProjectDatasetsHelper:
             BlobLocation: blob location object for file to be saved in the data lake
         """
         file_uuid = uuid.uuid4()
-        container_name = LocalConfig.get_environment()['project_dataset_container']
+        container_name = Config().get_environment_variable("project_dataset_container")
         return BlobLocation(
             account=self.data_lake_name,
             container=container_name,

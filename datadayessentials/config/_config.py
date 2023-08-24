@@ -1,233 +1,168 @@
-import pandas as pd
+import dataclasses
+from typing import Union
+from azure.appconfiguration import AzureAppConfigurationClient
 import os
-import yaml
-from pathlib import Path
-from ._base import ILocalConfig, IGlobalConfig
+from ._execution_environment_manager import ExecutionEnvironmentManager, ExecutionEnvironment
+from ..utils import CoreCacheManager
+import json
+
+from azure.identity import (
+    EnvironmentCredential,
+    InteractiveBrowserCredential,
+    ChainedTokenCredential,
+)
 
 
-class GlobalConfig(IGlobalConfig):
-    """Class to manage the global configuration file. Which cannot be edited by the user, and is for storing any settings that any user should be able to access.
-    Example:
-        >>> global_config = GlobalConfig()
-        >>> global_config.read()
+def get_azure_credentials():
+    environment_credentials = EnvironmentCredential()
+
+    tenant_id = os.environ.get('AZURE_TENANT_ID')
+
+    interactive_credentials = InteractiveBrowserCredential(
+        tenant_id=tenant_id
+    )
+    credential_chain = ChainedTokenCredential(
+        environment_credentials, interactive_credentials
+    )
+    return credential_chain
+
+class AzureConfigManager:
+    def __init__(self):
+        self.execution_environment = ExecutionEnvironmentManager.get_execution_environment()
+        if self.execution_environment == ExecutionEnvironment.PROD:
+            self.label = self.execution_environment.value
+            self.client = self.get_client_from_connection_string()
+        elif self.execution_environment == ExecutionEnvironment.DEV:
+            self.label = self.execution_environment.value
+            self.client = self.get_client_from_connection_string()
+        elif self.execution_environment == ExecutionEnvironment.LOCAL:
+            self.label = 'dev'
+            self.client = self.get_client_via_authenticator()
+        else:
+            raise ValueError(f"Environment {self.execution_environment} not recognised")
+
+    def get_config_variable(self, key: str):
+        return self.get_config_variable_from_cloud(key)
+
+    def get_config_variable_from_local(self, key: str) -> Union[str, None]:
+        raise NotImplementedError("Local config not implemented yet")
+
+    def get_config_variable_from_cloud(self, key: str):
+        variable_value = self.client.get_configuration_setting(key=key, label=self.label)
+        return variable_value.value
+
+    def get_client_via_authenticator(self):
+        client = AzureAppConfigurationClient(base_url=CoreCacheManager.get_value_from_config("base_url"),
+            credential=get_azure_credentials())
+        return client
+
+    @staticmethod
+    def get_client_from_connection_string():
+        client = AzureAppConfigurationClient.from_connection_string(
+            connection_string=os.getenv("AZURE_APP_CONFIG_CONNECTION_STRING"))
+        return client
+
+
+@dataclasses.dataclass
+class AzureAppConfigValues:
+    __dataclass_fields__ = None
+    client_id: str = "",
+    client_secret: str = "",
+    data_lake: str = "",
+    key_vault: str = "",
+    machine_learning_workspace: str = "",
+    project_dataset_container: str = "",
+    resource_group: str = "",
+    subscription_id: str = "",
+    tenant_id: str = "",
+
+
+class Config:
     """
+    This class facilitates access to environment variables essential for machine learning productionization. If an attempt is made
+    to access an environment variable that has not been configured in the local environment, this class retrieves the value
+    from the provided cloud provider.
 
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "global_config.yml")
-
-    def read(self):
-        global_config = self.load_from_path(self.path)
-        return global_config
-
-
-class LocalConfig(ILocalConfig):
-    """Class to manage the local configuration file. THe local configuration file contains any user specific azure resources, including resource groups and storage accounts.
-    Example:
-        >>> local_config = LocalConfig()
-        >>> local_config.read()
     """
-
-    ENVIRONMENT = os.environ.get("AZURE_ENVIRONMENT_NAME", "dev")
-    DEFAULT_CONFIG = {"sync_with_remote": False}
 
     def __init__(self):
         """
-        Initialise the local config, creating the cache directory and config file
-        if they do not exist. Using the default config.
+        Initializes the CloudProviderConfig instance.
         """
-        self.global_config = GlobalConfig().read()
-        self.folder = os.path.join(
-            str(Path.home()), self.global_config["local_cache_dir"]
-        )
-        self.filename = "local_config.yml"
-        self.path = os.path.join(self.folder, self.filename)
+        if self.check_environent_available():
+            return
+        self.execution_env = ExecutionEnvironmentManager.get_execution_environment()
+        self.validate_local_config()
+        if self.execution_env == ExecutionEnvironment.LOCAL:
+            os.environ["AZURE_TENANT_ID"] = CoreCacheManager.get_value_from_config("tenant_id")  
+            os.environ["BASE_URL"] = CoreCacheManager.get_value_from_config("base_url")  
+        self.azure_config_manager = AzureConfigManager()
+        self.set_default_variables()
 
-        path_exists = os.path.exists(self.path)
-        if not path_exists:
-            self.create_local_config()
+    def validate_local_config(self):
+        msg = """
+            No means of downloading the config from Azure App Configuration found. Please include AZURE_APP_CONFIG_CONNECTION_STRING for use in a remote server or initialise datadayessentials using the initialise_core_config fuction as below:
 
-    def catch_key_error(func):
-        def wrapper(*args, **kwargs):
-            try:
-                return func(*args, **kwargs)
-            except KeyError as e:
-                raise KeyError(
-                    f"Keys {args} not found in local config. See full error:\n{e}"
+                from datadayessentials import initialise_core_config
+                tenant_id = 'your_tenant_id'
+                base_url = 'your_base_url for an Azure App Configuration service'
+                initialise_core_config(tenant_id, base_url)
+        """
+        available_environment_variables = os.environ.keys()
+        if self.execution_env == ExecutionEnvironment.LOCAL:
+            tenant_id = CoreCacheManager.get_value_from_config("tenant_id")  
+            base_url = CoreCacheManager.get_value_from_config("base_url")
+            if (tenant_id is None) or (base_url is None):
+                raise EnvironmentError(msg)
+        elif self.execution_env in [ExecutionEnvironment.DEV, ExecutionEnvironment.PROD, ExecutionEnvironment.STAGING]:
+            if "AZURE_APP_CONFIG_CONNECTION_STRING" not in os.environ.keys():
+                raise EnvironmentError(
+                    "'AZURE_APP_CONFIG_CONNECTION_STRING' environment variable not set for remote access to Azure Application Configuration"
                 )
 
-        return wrapper
-
-    def set_environment(self, environment: str):
-        valid_environments = self.get_value_from_config(["env"]).keys()
-        if environment not in valid_environments:
-            raise ValueError(f"Environment {environment} not found in local config")
-        LocalConfig.ENVIRONMENT = environment
-
-    def read(self) -> dict:
-        local_config = self.load_from_path(self.path)
-        return local_config
-
-    def create_local_config(self):
-        os.makedirs(self.folder, exist_ok=True)
-        self.write(self.DEFAULT_CONFIG)
-
-    def write(self, config: dict):
-        with open(self.path, "w") as ymlfile:
-            yaml.dump(config, ymlfile, default_flow_style=False)
-
-    @staticmethod
-    @catch_key_error
-    def get_key_vault():
-        # checked
-        key_vault_ref = LocalConfig.get_value_from_config(
-            ["azure", "environments", LocalConfig.ENVIRONMENT, "key_vault"]
-        )
-        return LocalConfig.get_value_from_config(["azure", "key_vaults", key_vault_ref])
-
-    @staticmethod
-    @catch_key_error
-    def get_storage_account():
-        storage_account_ref = LocalConfig.get_value_from_config(
-            ["azure", "environments", LocalConfig.ENVIRONMENT, "storage_account"]
-        )
-        return LocalConfig.get_value_from_config(
-            ["azure", "storage_accounts", storage_account_ref]
-        )
-
-    @staticmethod
-    @catch_key_error
-    def get_data_lake():
-        data_lake= LocalConfig.get_value_from_config(
-            ["azure", "environments", LocalConfig.ENVIRONMENT, "data_lake"]
-        )
-        return data_lake
-
-    @staticmethod
-    @catch_key_error
-    def get_environment():
-        return LocalConfig.get_value_from_config(
-            ["azure", "environments", LocalConfig.ENVIRONMENT]
-        )
-
-    @staticmethod
-    @catch_key_error
-    def get_environment_from_name(environment_name: str):
-        return LocalConfig.get_value_from_config(
-            ["azure", "environments", environment_name]
-        )
-
-    @staticmethod
-    @catch_key_error
-    def get_machine_learning_workspace():
-        machine_learning_workspace_ref = LocalConfig.get_value_from_config(
-            [
-                "azure",
-                "environments",
-                LocalConfig.ENVIRONMENT,
-                "machine_learning_workspace",
-            ]
-        )
-        return LocalConfig.get_value_from_config(
-            ["azure", "machine_learning_workspaces", machine_learning_workspace_ref]
-        )
-
-    @staticmethod
-    @catch_key_error
-    def get_database_credentials(credentials_reference: str) -> dict:
-        key_vault = LocalConfig.get_environment()["key_vault"]
-        return LocalConfig.get_value_from_config(
-            [
-                "azure",
-                "key_vaults",
-                key_vault,
-                "database_credentials",
-                credentials_reference,
-            ]
-        )
-
-    @staticmethod
-    @catch_key_error
-    def get_database(database_reference: str) -> dict:
-        return LocalConfig.get_value_from_config(["databases", database_reference])
-
-    @staticmethod
-    @catch_key_error
-    def list_available_databases() -> list:
-        return list(LocalConfig.get_value_from_config(["databases"]).keys())
-
-    @staticmethod
-    @catch_key_error
-    def get_local_cache_dir() -> str:
-        return os.path.join(Path.home(), LocalConfig().global_config["local_cache_dir"])
-
-    @staticmethod
-    @catch_key_error
-    def get_data_lake_folder(
-        named_folder: str, data_lake: str = None, use_current_environment: bool = True
-    ) -> str:
-        """Retrieve a folder inside the data lake for the current environment, if use_current_environment is False then search across all envorinments for this named folder. The reason for this additional argument is because there are two use cases:
-
-        1. A folder that is environment specific (dev and prod have different locations for data storage)
-        2. A folder that is consistent across all environments
+    def get_environment_variable(self, variable_name: str) -> str:
+        """
+        Retrieves the value of an environment variable.
 
         Args:
-            named_folder (str): Folder reference in the LocalConfig
-            data_lake (str, optional): Uses the environment default data lake unless this argument is passed
+            variable_name (str): The name of the environment variable to retrieve.
+   
         Returns:
-            str: Container, path and datalake for the named folder inside the local config
+            str: The value of the requested environment variable.
+
+        Raises:
+            ValueError:If the specified environment variable is not found in local or cloud configuration after re-getting
+             variables.
         """
-        if use_current_environment:
-            return LocalConfig.get_current_environment_data_lake_folder(
-                named_folder, data_lake
-            )
+        env_variable_name = "AZURE_" + variable_name.upper()
+
+        if os.getenv(env_variable_name):
+            try:
+                return json.loads(os.getenv(env_variable_name))
+            except:
+                return os.getenv(env_variable_name)
         else:
-            return LocalConfig.get_any_environment_data_lake_folder(named_folder)
+            variable_value = self.azure_config_manager.get_config_variable(variable_name)
+            os.environ[env_variable_name] = variable_value
+            try:
+                return json.loads(variable_value)
+            except:
+                return variable_value
+        
+    def set_default_variables(self, list_of_variables: list = AzureAppConfigValues.__dataclass_fields__.keys()):
+        list(map(self.get_environment_variable, list_of_variables))
+        
 
-    @staticmethod
-    def get_any_environment_data_lake_folder(named_folder: str):
-        # If we dont care about environment, search across all environments and datalakes for the folder details
-        for env in LocalConfig.get_value_from_config(
-            ["azure", "data_lake_named_folders"]
-        ):
-            for data_lake in LocalConfig.get_value_from_config(
-                ["azure", "data_lake_named_folders", env]
-            ):
-                for key, value in LocalConfig.get_value_from_config(
-                    ["azure", "data_lake_named_folders", env, data_lake]
-                ).items():
-                    if named_folder == str(key):
-                        named_folder_details = value
-                        return {**named_folder_details, **{"data_lake": data_lake}}
-        raise KeyError(f"Named folder {named_folder} not found in local config")
+    # def set_default_variables(self, variables : AzureAppConfigValues)-> AzureAppConfigValues:
+    #     if not self.check_environent_available():
 
-    @staticmethod
-    def get_current_environment_data_lake_folder(
-        named_folder: str, data_lake: str = None
-    ):
-        env = LocalConfig.get_environment()
-        data_lake = data_lake if data_lake else env["data_lake"]
-        named_folder_details = LocalConfig.get_value_from_config(
-            [
-                "azure",
-                "data_lake_named_folders",
-                LocalConfig.ENVIRONMENT,
-                data_lake,
-                named_folder,
-            ]
-        )
-        return {**named_folder_details, **{"data_lake": data_lake}}
 
-    @staticmethod
-    @catch_key_error
-    def get_batch_endpoint(endpoint_reference: str) -> str:
-        return LocalConfig.get_value_from_config(
-            ["azure", "batch_endpoints", endpoint_reference]
-        )
+    #         fields = variables.__annotations__
+    #         updated_fields = {field_name: self.get_environment_variable(getattr(variables, field_name)) for field_name in fields.keys()}
+    #         return AzureAppConfigValues(**updated_fields)
 
-    @staticmethod
-    def get_dataset_manager_environment():
-        settings = LocalConfig.get_value_from_config(
-            ["azure", "project_dataset_manager"]
-        )
-        return LocalConfig.get_value_from_config(
-            ["azure", "environments", settings["environment"]]
-        )
+    def check_environent_available(self):
+        for variable in AzureAppConfigValues.__dataclass_fields__.keys():
+            if variable not in os.environ.keys():
+                return False
+        return True

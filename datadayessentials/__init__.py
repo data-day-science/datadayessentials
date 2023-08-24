@@ -73,13 +73,9 @@ team_env_settings = {
 ## Scenario 3: Creating a new config file for personal use (no registered dataset in the machine learning workspace)
 ```python
 
-from datadayessentials.config import ConfigContentUpdater
 
-config_updater = ConfigContentUpdater()
-config_updater.add_environment(
-    environment_name='your_environment_name', 
-    subscription_id='12345', 
-    resource_group='rg-your-resource-group', 
+
+
     machine_learning_workspace='mlw-your-ml-workspace', 
     data_lake='your-data-lake', 
 )
@@ -92,21 +88,12 @@ Scenarios 1 and 2 are recommended as they allow you to share your config setting
 import logging
 from pathlib import Path
 from typing import Dict, List, Union, Optional, Any
-from datadayessentials.config import (
-    LocalConfig,
-    GlobalConfig,
-    ConfigManager,
-    ConfigContentUpdater,
-)
 import os
 from pathlib import Path
 from datadayessentials.utils import set_global_loggers_to_warning
-from datadayessentials.config import ConfigSetup
+from datadayessentials.config._config_setup import ConfigSetup
 
 
 set_global_loggers_to_warning()
-ConfigSetup.create_core_cache_dir_if_not_exists()
-ConfigSetup.create_local_config_if_not_exists()
 
-initialise_core_config = ConfigSetup.initialise_core_config
-
+initialise_core_config= ConfigSetup.initialise_core_config

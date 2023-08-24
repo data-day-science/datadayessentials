@@ -197,3 +197,4 @@ docs
 
 coverage.lcov
 .databricks
+.core_cache

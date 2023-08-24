@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 import yaml
 from typing import Optional, List
 
+import os
+
 
 class IConfig(ABC):
     def load_from_path(self, path) -> dict:
@@ -13,7 +15,7 @@ class IConfig(ABC):
         """Get a specific value from the config file.
         Example:
             >>> config = Config()
-            >>> config.get_config_value(["storage_account"])
+            >>> config.get_environment_variable("value")
         """
         instance = cls()
         config = instance.read()
@@ -29,15 +31,6 @@ class IConfig(ABC):
 class IGlobalConfig(IConfig):
     pass
 
-
-class ILocalConfig(IConfig):
-    @abstractmethod
-    def create_local_config(self):
-        pass
-
-    @abstractmethod
-    def write(self, config: dict):
-        pass
 
 
 class IConfigManager:
@@ -65,3 +58,6 @@ class IConfigManager:
 
     def register_new_config(self):
         pass
+
+
+

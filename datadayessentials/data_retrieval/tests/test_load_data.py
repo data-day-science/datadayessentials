@@ -23,7 +23,7 @@ import copy
 from dateutil.relativedelta import relativedelta
 import pytest
 from datetime import datetime
-from ...config import LocalConfig
+from ...config import Config
 import pickle
 import json
 from types import SimpleNamespace
@@ -47,7 +47,7 @@ class TestTableLoader(unittest.TestCase):
     @mock.patch("pandas.read_sql")
     @mock.patch("pyodbc.connect")
     @mock.patch("datadayessentials.authentications.SQLServerConnection", autospec=True)
-    @mock.patch("datadayessentials.config.LocalConfig.get_database")
+    @mock.patch("datadayessentials.config.Config.get_environment_variable")
     def test_load(self, get_db_mock, run_sql_mock, pyodbc_mock, pd_mock):
         authentication = mock.MagicMock()
         authentication.get_credentials = mock.MagicMock(

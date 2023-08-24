@@ -11,7 +11,7 @@ from azureml.core.authentication import (
 )
 from datadayessentials.modelling.models._base import IModelSavingLoadingAttribute
 from datadayessentials.modelling._base import IExperimentManager
-from datadayessentials.config import LocalConfig
+from datadayessentials.config import Config
 import os
 from azure.ai.ml import MLClient
 from azure.ai.ml.entities import Model
@@ -180,7 +180,7 @@ class ExperimentManager(IExperimentManager):
             azure_run (Run): azure experiment run
             model (IModelSendingAttribute): model object
         """
-        local_cache_dir = LocalConfig.get_local_cache_dir()
+        local_cache_dir = Config().get_environment_variable("local_cache_dir")
         model_save_folder = os.path.join(local_cache_dir, "temp_model")
         shutil.rmtree(model_save_folder, ignore_errors=True)
 

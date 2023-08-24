@@ -11,7 +11,7 @@ from .._save_data import (
 )
 import logging
 from .test_data import test_path
-from ...config import LocalConfig
+from ...config import Config
 from azure.storage.filedatalake import DataLakeServiceClient, DataLakeFileClient
 
 logger = logging.getLogger()
@@ -40,7 +40,7 @@ class TestDataLakeCSVSaver:
         mock_authentication.get_azure_credentials = mock.MagicMock()
 
         blob_location = BlobLocation(
-            account=LocalConfig.get_data_lake(),
+            account=Config().get_environment_variable("data_lake"),
             container="test",
             filename="test2.csv",
             filepath=".",
@@ -62,7 +62,7 @@ class TestDataLakeJsonSaver:
         mock_authentication.get_azure_credentials = mock.MagicMock()
         
         blob_location = BlobLocation(
-            account=LocalConfig.get_data_lake(),
+            account=Config().get_environment_variable("data_lake"),
             container="test",
             filename="test2.json",
             filepath=".",
@@ -83,7 +83,7 @@ class TestDataLakePickleSaver:
         mock_authentication = DataLakeAuthentication()
         mock_authentication.get_azure_credentials = mock.MagicMock()
         blob_location = BlobLocation(
-            account=LocalConfig.get_data_lake(),
+            account=Config().get_environment_variable("data_lake"),
             container="test",
             filename="test2.json",
             filepath=".",

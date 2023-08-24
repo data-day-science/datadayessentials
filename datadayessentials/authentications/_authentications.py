@@ -6,8 +6,8 @@ import pandas as pd
 import logging
 import os
 from azure.keyvault.secrets import SecretClient
+from datadayessentials.config._config import Config
 
-from ..config import LocalConfig
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -30,10 +30,9 @@ class DatabaseAuthentication(IAuthentication):
         """Creates a DatabaseAuthentication object
 
         Args:
-            database_reference (str, optional): The reference of the database to connect to that maps to the login details in the LocalConfig. Defaults to "dwh".
+            database_reference (str, optional): The reference of the database to connect to that maps to the login details in the Config. Defaults to "dwh".
         """
-        self.database_reference = database_reference
-        self.database_credential_keys = LocalConfig.get_database_credentials(self.database_reference)
+
 
     def get_credentials(self) -> dict:
         """Fetches username and password for connecting to a database
@@ -45,13 +44,10 @@ class DatabaseAuthentication(IAuthentication):
         """
         logger.debug("Fetching Credentials")
         credentials = super().get_azure_credentials()
-        key_vault = LocalConfig.get_key_vault()
-        KVUri = f"https://{key_vault['key_vault_name']}.vault.azure.net"
 
-        client = SecretClient(vault_url=KVUri, credential=credentials)
-        username = client.get_secret(self.database_credential_keys["username_key"]).value
-        password = client.get_secret(self.database_credential_keys["password_key"]).value
-        logger.debug(f"Retrieved database Credentials for {self.database_reference}")
+        username = Config().get_environment_variable("data-science-username")
+        password = Config().get_environment_variable("data-science-password")
+
         return {"USERNAME": username, "PASSWORD": password}
 
 
@@ -81,10 +77,10 @@ class SQLServerConnection(ISQLServerConnection):
         self.credentials = credentials
         
         try:
-            LocalConfig.get_database(database_reference)
+            Config().get_environment_variable(f"databases_{database_reference}")
         except KeyError:
             raise ValueError(
-                f"The server name must be one of {LocalConfig.list_available_databases()}"
+                f"The server was not recognised"
             )
         self.database_reference = database_reference
         self.connect()
@@ -107,11 +103,13 @@ class SQLServerConnection(ISQLServerConnection):
         logger.debug(
             f"Connecting to database"
         )  
-        database = LocalConfig.get_database(self.database_reference)
-        server = database["server"]
-        database = database["database"]
-        
 
+        database_info = Config().get_environment_variable(f"databases_{self.database_reference}")
+
+        server = database_info["server"]
+        database = database_info["database"]
+        
+   
         self.cnxn = pyodbc.connect(
             "DRIVER={ODBC Driver 17 for SQL Server};SERVER="
             + server

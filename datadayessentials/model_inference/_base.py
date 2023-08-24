@@ -13,7 +13,7 @@ from datadayessentials.data_retrieval import (
     DataLakeCSVSaver,
 )
 from datadayessentials.data_retrieval import DataLakeDirectoryDeleter
-from ..config import LocalConfig, GlobalConfig
+from ..config import Config
 from pandas.util import hash_pandas_object
 import os
 import hashlib
@@ -53,7 +53,7 @@ class ServiceHitterCacher:
         self.model_versions = model_versions
         home = str(Path.home())
         self.cache_dir = os.path.join(
-            home, LocalConfig.get_local_cache_dir(), "service_hitter_cache"
+            home, Config().get_environment_variable("local_cache_dir"), "service_hitter_cache"
         )
         if not os.path.exists(self.cache_dir):
             os.makedirs(self.cache_dir)
@@ -289,26 +289,20 @@ class IServiceHitter(ABC):
     def _load_config(self):
         """Loads in config needed for the batch endpoint invocation"""
         logger.debug("loading configs for batch endpoint inference")
-        batch_endpoint_settings = LocalConfig.get_batch_endpoint(self.endpoint_reference)
-        env_settings = LocalConfig.get_environment()
-        payload_storage = LocalConfig.get_data_lake_folder(batch_endpoint_settings["payload_storage"])
-        self.subscription_id = env_settings[
-            "subscription_id"
-        ]
-        self.resource_group = env_settings[
-            "resource_group"
-        ]
-        self.workspace = env_settings["machine_learning_workspace"]
-        self.account = payload_storage["data_lake"]
-        self.container = payload_storage["container"]
-        self.filepath = payload_storage["path"]
-        self.inference_results_local_save_path = os.path.join(Path.home(), GlobalConfig().read()['local_cache_dir'], batch_endpoint_settings["inference_results_local_save"]["full_path"])
-        self.batch_endpoint = batch_endpoint_settings[
-            "endpoint_name"
-        ]
-        self.deployment_name = batch_endpoint_settings[
-            "deployment_name"
-        ]
+        batch_endpoint_settings = Config().get_environment_variable(self.endpoint_reference)
+        
+        
+        payload_storage = Config().get_environment_variable(batch_endpoint_settings["payload_storage"])
+        self.subscription_id = Config().get_environment_variable('subscription_id')
+        self.workspace = Config().get_environment_variable('machine_learning_workspace') 
+        self.account = Config().get_environment_variable('data_lake') 
+        self.container = Config().get_environment_variable('container')  
+        self.filepath = Config().get_environment_variable(payload_storage["path"]) 
+        self.inference_results_local_save_path = os.path.join(Path.home(), Config().get_environment_variable('local_cache_dir'), batch_endpoint_settings["inference_results_local_save"]["full_path"])
+        
+        self.batch_endpoint = batch_endpoint_settings["endpoint_name"]
+        self.deployment_name = batch_endpoint_settings["deployment_name"] #Config.get_environment_variable("deployment_name")
+
 
     def _save_files_to_location(
         self,

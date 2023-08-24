@@ -1,14 +1,11 @@
 name: Increment version
 on: 
-  #trigger on workflow dispatch or pull request type closed on branch main
-  workflow_dispatch:
   pull_request:
     types:
       - closed
     branches:
       - main
 
-#:
 jobs:
   determine_version_update_type:
     # if: github.event.pull_request.merged == true

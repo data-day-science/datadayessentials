@@ -34,9 +34,9 @@ def get_workspace() -> Workspace:
 
     try:
         auth = ServicePrincipalAuthentication(
-            tenant_id=Config.get_environment_variable("AZURE_TENANT_ID"),
-            service_principal_id=Config.get_environment_variable("AZURE_CLIENT_ID"),
-            service_principal_password=Config.get_environment_variable("AZURE_CLIENT_SECRET"),
+            tenant_id=Config().get_environment_variable("AZURE_TENANT_ID"),
+            service_principal_id=Config().get_environment_variable("AZURE_CLIENT_ID"),
+            service_principal_password=Config().get_environment_variable("AZURE_CLIENT_SECRET"),
         )
     except KeyError:
         # Only try this locally

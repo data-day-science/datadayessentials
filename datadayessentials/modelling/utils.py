@@ -26,6 +26,7 @@ from azureml.core import Workspace
 import sys
 
 
+
 def get_workspace() -> Workspace:
     """
     Initialises the Azure ML workspace
@@ -33,9 +34,9 @@ def get_workspace() -> Workspace:
 
     try:
         auth = ServicePrincipalAuthentication(
-            tenant_id=os.environ["AZURE_TENANT_ID"],
-            service_principal_id=os.environ["AZURE_CLIENT_ID"],
-            service_principal_password=os.environ["AZURE_CLIENT_SECRET"],
+            tenant_id=Config().get_environment_variable("tenant_id"),
+            service_principal_id=Config().get_environment_variable("client_id"),
+            service_principal_password=Config().get_environment_variable("client_secret"),
         )
     except KeyError:
         # Only try this locally

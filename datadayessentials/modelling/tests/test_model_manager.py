@@ -51,6 +51,8 @@ class TestModelManager(unittest.TestCase):
         downloaded_folder = pathlib.Path.cwd() / pathlib.Path(directory_name) / pathlib.Path("model")
 
         self.assertTrue(downloaded_folder.exists())
+        #delete the test_download_folder at the end of the test
+        remove_test_folder(directory_name)
 
     def test_register_model(self):
         self.model_manager.get_model_files_from_run(self.run_id, "pickled_models")

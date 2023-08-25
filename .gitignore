@@ -198,3 +198,4 @@ docs
 coverage.lcov
 .databricks
 .core_cache
+**/.test_download_folder

@@ -92,11 +92,11 @@ class TestModelCacher(unittest.TestCase):
     
 
     @patch("datadayessentials.modelling.model_manager.Config")
-    def test_cache_model(self, mock_config):
+    def test_copy_model_to_cache(self, mock_config):
         self._clean_up()
         mock_config.return_value = MagicMock(cache_directory=self.cache_directory)
         self.model_path.mkdir()
-        self.model_cacher.cache_model(self.model_path)
+        self.model_cacher.copy_model_folder_to_cache(self.model_path)
         self.assertTrue((self.model_cache_path).exists())
         self._clean_up()
 
@@ -105,7 +105,7 @@ class TestModelCacher(unittest.TestCase):
         self._clean_up()
         mock_config.return_value = MagicMock(cache_directory=self.cache_directory)
         self.model_cache_path.mkdir()
-        self.model_cacher.copy_model_from_cache(self.model_path)
+        self.model_cacher.copy_model_folder_from_cache(self.model_path)
         self.assertTrue(Path(self.model_path).exists())
         self._clean_up()
 

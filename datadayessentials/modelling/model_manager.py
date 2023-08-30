@@ -8,7 +8,37 @@ from azureml.core.authentication import (
 from datadayessentials.modelling._base import IModelManager
 from datadayessentials.config import Config
 from .utils import get_workspace
+from pathlib import Path
 
+
+class ModelCacher:
+    """
+    Class to cache the model files in the core cache.
+
+    Example Use Case:
+        model_cacher = ModelCacher("model", 1)
+        if not model_cacher.is_model_cached():
+            model_cacher.cache_model("/tmp/model")
+        else:
+            ... download model to /tmp/model
+            model_cacher.copy_model_from_cache("/tmp/model")
+    """
+    def __init__(self, model_name: str, model_version: int, cache_location):
+        self.model_name = model_name
+        self.model_version = model_version
+        self.cache_location = Path(cache_location)
+
+    def is_model_cached(self):
+        return self._get_model_cache_path().exists()
+    
+    def _get_model_cache_path(self):
+        return self.cache_location / f"{self.model_name}-{self.model_version}"
+    
+    def copy_model_folder_to_cache(self, model_path: str):
+        shutil.copytree(model_path, self._get_model_cache_path())
+
+    def copy_model_folder_from_cache(self, model_path: str):
+        shutil.copytree(self._get_model_cache_path(), model_path)
 
 class ModelManager(IModelManager):
     """
@@ -74,6 +104,11 @@ class ModelManager(IModelManager):
             shutil.rmtree(folder_to_save_model)
 
         model = Model(self.workspace, model_name, version=model_version)
+        cache_location = Config().get_environment_variable("local_cache_dir")
+        model_cacher = ModelCacher(model_name, model_version, cache_location)
+        if model_cacher.is_model_cached():
+            model_cacher.copy_model_folder_from_cache(folder_to_save_model)
+            return folder_to_save_model
         max_retries = 5
         for retries in range(1, max_retries + 1):
             try:
@@ -87,7 +122,7 @@ class ModelManager(IModelManager):
                 if retries == max_retries:
                     raise e
                 print(f"failed to download model: attempt {retries}. Error was {e}")
-
+        model_cacher.copy_model_folder_to_cache(folder_to_save_model)
         return folder_to_save_model
 
     def get_model_properties_from_run(self, run_id: str):

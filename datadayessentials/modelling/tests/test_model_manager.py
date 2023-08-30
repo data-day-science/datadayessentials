@@ -4,10 +4,13 @@ import shutil
 import pytest
 from azureml.core import Model
 
-from datadayessentials.modelling.model_manager import ModelManager
+from datadayessentials.modelling.model_manager import ModelManager, ModelCacher
+from pathlib import Path
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from .utils import trigger_test_run
+import sys
+import os
 
 def remove_test_folder(folder_to_delete: str = None):
     folder_to_delete = pathlib.Path(folder_to_delete)
@@ -66,3 +69,44 @@ class TestModelManager(unittest.TestCase):
         assert model_name not in [model for model in self.model_manager.workspace.models]
 
 
+class TestModelCacher(unittest.TestCase):
+    def setUp(self):
+        self.model_name = "model"
+        self.model_version = 1
+        if sys.platform != "win32":
+            home_dir = Path('/tmp/')
+        else:
+            home_dir = Path.home()
+        self.cache_directory = home_dir / "cache"
+        self.model_path = home_dir / "model"
+        self.model_cache_path = self.cache_directory / f"{self.model_name}-{self.model_version}"
+        self.model_cacher = ModelCacher(self.model_name, self.model_version, self.cache_directory)
+        self._clean_up()
+
+    def tearDown(self) -> None:
+        return self._clean_up()
+
+    def test_get_model_cache_path(self):
+        self.assertEqual(self.model_cache_path, self.model_cacher._get_model_cache_path())
+
+    def test_is_model_cached(self):
+        self.assertFalse(self.model_cacher.is_model_cached())
+        os.makedirs(self.model_cache_path)
+        self.assertTrue(self.model_cacher.is_model_cached())
+    
+
+    def test_copy_model_to_cache(self):
+        self.model_path.mkdir()
+        self.model_cacher.copy_model_folder_to_cache(self.model_path)
+        self.assertTrue((self.model_cache_path).exists())
+
+    def test_copy_model_from_cache(self):
+        os.makedirs(self.model_cache_path)
+        self.model_cacher.copy_model_folder_from_cache(self.model_path)
+        self.assertTrue(Path(self.model_path).exists())
+
+    def _clean_up(self):
+        if self.model_path.exists():
+            shutil.rmtree(self.model_path)
+        if self.model_cache_path.exists():
+            shutil.rmtree(self.model_cache_path)

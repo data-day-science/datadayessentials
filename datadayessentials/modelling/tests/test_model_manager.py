@@ -4,9 +4,10 @@ import shutil
 import pytest
 from azureml.core import Model
 
-from datadayessentials.modelling.model_manager import ModelManager
+from datadayessentials.modelling.model_manager import ModelManager, ModelCacher
+from pathlib import Path
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from .utils import trigger_test_run
 
 def remove_test_folder(folder_to_delete: str = None):
@@ -66,3 +67,50 @@ class TestModelManager(unittest.TestCase):
         assert model_name not in [model for model in self.model_manager.workspace.models]
 
 
+class TestModelCacher(unittest.TestCase):
+    def setUp(self):
+        self.model_name = "model"
+        self.model_version = 1
+        self.cache_directory = Path.home() / "cache"
+        self.model_path = Path.home() / "model"
+        self.model_cache_path = self.cache_directory / f"{self.model_name}-{self.model_version}"
+        self.model_cacher = ModelCacher(self.model_name, self.model_version)
+
+    @patch("datadayessentials.modelling.model_manager.Config")
+    def test_get_model_cache_path(self, mock_config):
+        mock_config.return_value = MagicMock(cache_directory=self.cache_directory)
+        self.assertEqual(self.model_cache_path, self.model_cacher._get_model_cache_path())
+
+    @patch("datadayessentials.modelling.model_manager.Config")
+    def test_is_model_cached(self, mock_config):
+        self._clean_up()
+        mock_config.return_value = MagicMock(cache_directory=self.cache_directory)
+        self.assertFalse(self.model_cacher.is_model_cached())
+        self.model_cache_path.mkdir()
+        self.assertTrue(self.model_cacher.is_model_cached())
+        self._clean_up()
+    
+
+    @patch("datadayessentials.modelling.model_manager.Config")
+    def test_cache_model(self, mock_config):
+        self._clean_up()
+        mock_config.return_value = MagicMock(cache_directory=self.cache_directory)
+        self.model_path.mkdir()
+        self.model_cacher.cache_model(self.model_path)
+        self.assertTrue((self.model_cache_path).exists())
+        self._clean_up()
+
+    @patch("datadayessentials.modelling.model_manager.Config")
+    def test_copy_model_from_cache(self, mock_config):
+        self._clean_up()
+        mock_config.return_value = MagicMock(cache_directory=self.cache_directory)
+        self.model_cache_path.mkdir()
+        self.model_cacher.copy_model_from_cache(self.model_path)
+        self.assertTrue(Path(self.model_path).exists())
+        self._clean_up()
+
+    def _clean_up(self):
+        if self.model_path.exists():
+            shutil.rmtree(self.model_path)
+        if self.model_cache_path.exists():
+            shutil.rmtree(self.model_cache_path)

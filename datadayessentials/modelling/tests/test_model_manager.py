@@ -9,6 +9,7 @@ from pathlib import Path
 import unittest
 from unittest.mock import patch, MagicMock
 from .utils import trigger_test_run
+import sys
 
 def remove_test_folder(folder_to_delete: str = None):
     folder_to_delete = pathlib.Path(folder_to_delete)
@@ -71,8 +72,12 @@ class TestModelCacher(unittest.TestCase):
     def setUp(self):
         self.model_name = "model"
         self.model_version = 1
-        self.cache_directory = Path.home() / "cache"
-        self.model_path = Path.home() / "model"
+        if sys.platform != "win32":
+            home_dir = Path('/tmp/')
+        else:
+            home_dir = Path.home()
+        self.cache_directory = home_dir / "cache"
+        self.model_path = home_dir / "model"
         self.model_cache_path = self.cache_directory / f"{self.model_name}-{self.model_version}"
         self.model_cacher = ModelCacher(self.model_name, self.model_version)
 

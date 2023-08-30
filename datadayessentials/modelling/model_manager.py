@@ -8,6 +8,7 @@ from azureml.core.authentication import (
 from datadayessentials.modelling._base import IModelManager
 from datadayessentials.config import Config
 from .utils import get_workspace
+from pathlib import Path
 
 
 class ModelCacher:
@@ -22,15 +23,16 @@ class ModelCacher:
             ... download model to /tmp/model
             model_cacher.copy_model_from_cache("/tmp/model")
     """
-    def __init__(self, model_name: str, model_version: int):
+    def __init__(self, model_name: str, model_version: int, cache_location):
         self.model_name = model_name
         self.model_version = model_version
+        self.cache_location = Path(cache_location)
 
     def is_model_cached(self):
         return self._get_model_cache_path().exists()
     
     def _get_model_cache_path(self):
-        return Config().cache_directory / f"{self.model_name}-{self.model_version}"
+        return self.cache_location / f"{self.model_name}-{self.model_version}"
     
     def copy_model_folder_to_cache(self, model_path: str):
         shutil.copytree(model_path, self._get_model_cache_path())
@@ -102,7 +104,8 @@ class ModelManager(IModelManager):
             shutil.rmtree(folder_to_save_model)
 
         model = Model(self.workspace, model_name, version=model_version)
-        model_cacher = ModelCacher(model_name, model_version)
+        cache_location = Config().get_environment_variable("local_cache_dir")
+        model_cacher = ModelCacher(model_name, model_version, cache_location)
         if model_cacher.is_model_cached():
             model_cacher.copy_model_folder_from_cache(folder_to_save_model)
             return folder_to_save_model

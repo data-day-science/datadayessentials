@@ -42,6 +42,8 @@ class ModelFactory(IModelFactory):
             model_files_download_location
         ) 
         return self.model_class.load_model_from_folder(model_location)    
+    
+
 
     def create_from_registered_model(self, model_name: str, model_version: str = None, model_path_in_job: str = 'model') -> IModelSavingLoadingAttribute:
         """

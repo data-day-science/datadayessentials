@@ -203,7 +203,7 @@ class ModelManager(IModelManager):
         run_id: str,
         model_name: str,
         model_path: str = "model",
-        tags: dict = None,
+        tags: dict = {},
         properties: dict = None,
     ) -> Model:
         """
@@ -227,7 +227,7 @@ class ModelManager(IModelManager):
             properties=properties,
         )
 
-    def register_ensemble_model_from_run_ids(self, run_ids: Dict[str, str], ensemble_model_name: str, properties: dict = None, tags: dict = None):
+    def register_ensemble_model_from_run_ids(self, run_ids: Dict[str, str], ensemble_model_name: str, properties: dict = None, tags: dict = {}):
         """From the run ids provided, downloads all the run ids to a local temporary folder and uploads them all as a single model to the model registry.
 
         Args:

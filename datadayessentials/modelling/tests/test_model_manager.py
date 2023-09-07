@@ -71,7 +71,7 @@ class TestModelManager(unittest.TestCase):
     def test_register_ensemble_model_from_run_ids(self):
         run_ids = {'model_1': self.run_id, 'model_2': self.run_id}
         model_name = "test_ensemble_model_1"
-        self.model_manager.register_ensemble_model_from_run_ids(model_name, run_ids)
+        self.model_manager.register_ensemble_model_from_run_ids(run_ids, model_name)
         assert model_name in [model for model in self.model_manager.workspace.models]
         Model(workspace=self.model_manager.workspace, name=model_name).delete()
         assert model_name not in [model for model in self.model_manager.workspace.models]

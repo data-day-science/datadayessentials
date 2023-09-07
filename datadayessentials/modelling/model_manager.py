@@ -175,6 +175,7 @@ class ModelManager(IModelManager):
         model_path: str,
         model_version: int = None,
         properties: dict = None,
+        tags: dict = {},
     ) -> Model:
         """
         Registers the model in the Azure ML studio
@@ -193,7 +194,7 @@ class ModelManager(IModelManager):
             workspace=self.workspace,
             model_name=model_name,
             model_path=model_path,
-            tags={"version": model_version},
+            tags={"version": model_version, **tags},
             properties=properties,
         )
 
@@ -226,7 +227,7 @@ class ModelManager(IModelManager):
             properties=properties,
         )
 
-    def register_ensemble_model_from_run_ids(self, run_ids: Dict[str, str], ensemble_model_name: str):
+    def register_ensemble_model_from_run_ids(self, run_ids: Dict[str, str], ensemble_model_name: str, properties: dict = None, tags: dict = None):
         """From the run ids provided, downloads all the run ids to a local temporary folder and uploads them all as a single model to the model registry.
 
         Args:
@@ -242,5 +243,5 @@ class ModelManager(IModelManager):
         for model_name, run_id in run_ids.items():
             model_folder_name = ensemble_model_folder + "/" + model_name
             self.get_model_files_from_run(run_id, model_folder_name)
-        self.register_model_from_local_folder(ensemble_model_name, ensemble_model_folder)
+        self.register_model_from_local_folder(ensemble_model_name, ensemble_model_folder, properties=properties, tags=tags)
         shutil.rmtree(ensemble_model_folder)

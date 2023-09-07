@@ -9,6 +9,7 @@ from datadayessentials.modelling._base import IModelManager
 from datadayessentials.config import Config
 from .utils import get_workspace
 from pathlib import Path
+from typing import Dict
 
 
 class ModelCacher:
@@ -224,3 +225,22 @@ class ModelManager(IModelManager):
             tags=tags,
             properties=properties,
         )
+
+    def register_ensemble_model_from_run_ids(self, run_ids: Dict[str, str], ensemble_model_name: str):
+        """From the run ids provided, downloads all the run ids to a local temporary folder and uploads them all as a single model to the model registry.
+
+        Args:
+            run_ids (Dict[str, str]): Dictionary containing the name of the individual models and their run ids
+            model_name (str): Name of the model to be registered
+        """
+        ensemble_model_folder = os.path.join(
+            Config().get_environment_variable("local_cache_dir"), "ensemble_model_files"
+        )
+        if os.path.exists(ensemble_model_folder):
+            shutil.rmtree(ensemble_model_folder)
+        os.makedirs(ensemble_model_folder)
+        for model_name, run_id in run_ids.items():
+            model_folder_name = ensemble_model_folder + "/" + model_name
+            self.get_model_files_from_run(run_id, model_folder_name)
+        self.register_model_from_local_folder(ensemble_model_name, ensemble_model_folder)
+        shutil.rmtree(ensemble_model_folder)

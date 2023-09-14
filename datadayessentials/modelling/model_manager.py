@@ -95,7 +95,7 @@ class ModelManager(IModelManager):
 
         """
 
-        if model_version is None:
+        if not model_version:
             model_version = Model.list(
                 self.workspace, name=model_name, latest=True
             )[0].version

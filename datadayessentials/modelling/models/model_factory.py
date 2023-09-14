@@ -35,6 +35,7 @@ class ModelFactory(IModelFactory):
         """
         model_manager = ModelManager() 
         model_files_download_location = os.path.join(Config().get_environment_variable("local_cache_dir"), 'temp_model_files')
+        print(f"downloading model files to {model_files_download_location}")
         model_location = os.path.join(model_files_download_location, model_path_in_job)
 
         model_manager.get_model_files_from_run(

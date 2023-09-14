@@ -95,6 +95,12 @@ class ModelManager(IModelManager):
 
         """
 
+        if not model_version:
+            model_version = Model.list(
+                self.workspace, name=model_name, latest=True
+            )[0].version
+        print(f"Downloading model {model_name} version {model_version}")
+        
         folder_to_save_model = (
             f"{model_name}-{model_version}"
             if folder_to_save_model is None
@@ -105,7 +111,8 @@ class ModelManager(IModelManager):
             shutil.rmtree(folder_to_save_model)
 
         model = Model(self.workspace, model_name, version=model_version)
-        cache_location = Config().get_environment_variable("local_cache_dir")
+        cache_location = os.path.join(os.path.expanduser("~"),Config().get_environment_variable("local_cache_dir"))
+
         model_cacher = ModelCacher(model_name, model_version, cache_location)
         if model_cacher.is_model_cached():
             model_cacher.copy_model_folder_from_cache(folder_to_save_model)

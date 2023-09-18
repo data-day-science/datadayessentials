@@ -166,11 +166,33 @@ class TestDataLakeParquetLoader(unittest.TestCase):
     #2. That the parquet loader wont load a file if it isnt a parquet file
     #3. That the parquet Loader will throw an error if the file doesnt exist
 
+    #each test should create the required  test files and then delete at the end using set up and tear down methods
 
-    #if a test parquet file doesnt exist in the test_data folder, generate a test parquet file to add to the test_data folder
-    if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_data", "test_parquet.parquet")):
-        parquet_file = pd.DataFrame({"col1": [1, 2, 3], "col2": [1, 2, 3]})
-        parquet_file.to_parquet(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_data", "test_parquet.parquet"))
+    #set up method
+    def setUp(self):
+        #if a test parquet file doesnt exist in the test_data folder, generate a test parquet file to add to the test_data folder
+        if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_data", "test_parquet.parquet")):
+            parquet_file = pd.DataFrame({"col1": [1, 2, 3], "col2": [1, 2, 3]})
+            parquet_file.to_parquet(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_data", "test_parquet.parquet"))
+
+        #if a test csv file called wrong_file_format.csv does not exist in the test_data folder, generate a test csv file to add to the test_data folder
+        if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_data", "wrong_file_format.csv")):
+            csv_file = pd.DataFrame({"col1": [1, 2, 3], "col2": [1, 2, 3]})
+            csv_file.to_csv(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_data", "wrong_file_format.csv"))
+
+        
+        
+
+    #tear down method
+    def tearDown(self):
+        #if a test parquet file exists in the test_data folder, delete it
+        if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_data", "test_parquet.parquet")):
+            os.remove(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_data", "test_parquet.parquet"))
+
+        #if a test csv file called wrong_file_format.csv exists in the test_data folder, delete it
+        if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_data", "wrong_file_format.csv")):
+            os.remove(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_data", "wrong_file_format.csv"))
+            
 
     @mock.patch("azure.storage.filedatalake.DataLakeFileClient.download_file")
     @mock.patch("azure.storage.filedatalake.DataLakeFileClient.exists")
@@ -249,23 +271,15 @@ class TestDataLakeParquetLoader(unittest.TestCase):
     )
     def test_load_non_existent_file(self, mock_file_properties, mock_file_exists, mock_download_file):
         # Prepare
+        
+        
+
         authentication = mock.MagicMock()
         authentication.get_credentials = mock.MagicMock(
             return_value={"USERNAME": "username", "PASSWORD": "password"}
         )
-        with open(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "test_data",
-                "test_parquet.parquet",
-            ),
-            "rb",
-        ) as f:
-            parquet_buf = BytesIO(f.read())
 
-        parquet_buf.seek(0)
         mock_file_exists.return_value = False
-        mock_download_file.side_effect = [copy.deepcopy(parquet_buf)]
 
         # Test
         parquet_loader = DataLakeParquetLoader(authentication)

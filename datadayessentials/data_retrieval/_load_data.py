@@ -18,6 +18,7 @@ from ._base import (
     IBlobLocation,
     IJsonLoader,
     IPickleLoader,
+    IParquetLoader
 )
 import copy
 from datadayessentials.data_transformation._transformers import (
@@ -532,3 +533,56 @@ class DataLakeJsonLoader(IJsonLoader):
             cacher.save_json_to_cache(obj)
             return obj
 
+class DataLakeParquetLoader(IParquetLoader):
+    """
+    Loads a parquet file from the Azure DataLake, using the cache by default.
+    """
+
+    def __init__(self, authentication: IAuthentication = None, use_cache=True):
+        """Instantiate a DataLakeParquetLoader
+
+        Args:
+            authentication (IAuthentication): Authentication object for azure (see authentications module)
+            use_cache (bool, optional): Option to use the object saved in the cache. Defaults to True.
+        """
+        self.use_cache = use_cache
+        if not authentication:
+            authentication = DataLakeAuthentication()
+        self.credential = authentication.get_azure_credentials()
+
+    def load(self, blob: BlobLocation) -> pd.DataFrame:
+        """Loads the file from azure or from the cache
+
+        Args:
+            blob (BlobLocation): Location in azure of the parquet to load
+
+        Returns:
+            pd.DataFrame: Pandas dataframe containing the loaded parquet
+        """
+        self.account_url = f"https://{blob.get_account()}.dfs.core.windows.net/"
+        self.datalake_service = DataLakeServiceClient(
+            account_url=self.account_url, credential=self.credential
+        )
+        # Check if the blob has already been cached
+        file_client = self.datalake_service.get_file_client(
+            blob.get_container(), blob.get_path_in_container()
+        )
+        file_exists = file_client.exists()
+        if not file_client.exists():
+            raise FileNotFoundError(f"File {blob} not found in azure.")
+        properties = file_client.get_file_properties()
+        #if the file type isnt parquet then raise a value error
+        if properties.content_settings.content_type != "application/octet-stream":
+            raise ValueError(f"File {blob} is not a parquet file.")
+        
+        
+        cacher = DataCacher(str(blob) + ".parquet", properties.last_modified)
+        if cacher.is_file_in_cache() and self.use_cache:
+            return cacher.get_df_from_cache()
+        else:
+            download = file_client.download_file()
+            buffer = BytesIO(download.read())
+            buffer.seek(0)
+            df = pd.read_parquet(buffer)
+            cacher.save_df_to_cache(df)
+            return df

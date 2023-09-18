@@ -5,7 +5,7 @@ import os
 from ...authentications import DatabaseAuthentication, DataLakeAuthentication
 from .._base import IURIGenerator
 import unittest.mock as mock
-from unittest.mock import DEFAULT
+from unittest.mock import DEFAULT, MagicMock, patch
 from .._load_data import (
     TableLoader,
     DataFrameTap,
@@ -13,6 +13,7 @@ from .._load_data import (
     DataCacher,
     DataLakeJsonLoader,
     DataLakePickleLoader,
+    DataLakeParquetLoader
 )
 from .._save_data import BlobLocation
 import pandas as pd
@@ -42,6 +43,9 @@ class FakeURIGenerator(IURIGenerator):
             BlobLocation("storate_acc", "container_name", "filepath", "filename")
         ] * self.n
 
+class content_settings:
+    def __init__(self,content_type):
+        self.content_type = content_type
 
 class TestTableLoader(unittest.TestCase):
     @mock.patch("pandas.read_sql")
@@ -155,6 +159,127 @@ class TestDataLakeJsonLoader(unittest.TestCase):
 
         # Evaluate
         self.assertDictEqual(expected_dict, output_dict)
+
+class TestDataLakeParquetLoader(unittest.TestCase):
+    #This class should test
+    #1. That the parquet loader can load a parquet file
+    #2. That the parquet loader wont load a file if it isnt a parquet file
+    #3. That the parquet Loader will throw an error if the file doesnt exist
+
+
+    #if a test parquet file doesnt exist in the test_data folder, generate a test parquet file to add to the test_data folder
+    if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_data", "test_parquet.parquet")):
+        parquet_file = pd.DataFrame({"col1": [1, 2, 3], "col2": [1, 2, 3]})
+        parquet_file.to_parquet(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_data", "test_parquet.parquet"))
+
+    @mock.patch("azure.storage.filedatalake.DataLakeFileClient.download_file")
+    @mock.patch("azure.storage.filedatalake.DataLakeFileClient.exists")
+    @mock.patch(
+        "azure.storage.filedatalake.DataLakeFileClient.get_file_properties",
+        return_value=SimpleNamespace(last_modified=datetime(2022, 1, 1),content_settings= content_settings(content_type="application/octet-stream")),
+    )
+    def test_load_file(self, mock_file_properties, mock_file_exists, mock_download_file):
+        # Prepare
+        authentication = mock.MagicMock()
+        authentication.get_credentials = mock.MagicMock(
+            return_value={"USERNAME": "username", "PASSWORD": "password"}
+        )
+        with open(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "test_data",
+                "test_parquet.parquet",
+            ),
+            "rb",
+        ) as f:
+            parquet_buf = BytesIO(f.read())
+
+        parquet_buf.seek(0)
+        expected_df = pd.read_parquet(copy.copy(parquet_buf))
+        mock_file_exists.return_value = True
+        mock_download_file.side_effect = [copy.deepcopy(parquet_buf)]
+
+        # Test
+        parquet_loader = DataLakeParquetLoader(authentication)
+        output_df = parquet_loader.load(BlobLocation("dsafs", "asd", "sadfa", "fasdf"))
+
+        # Evaluate
+        assert output_df.equals(expected_df)
+
+    #test 2
+    @mock.patch("azure.storage.filedatalake.DataLakeFileClient.download_file")
+    @mock.patch("azure.storage.filedatalake.DataLakeFileClient.exists")
+    @mock.patch(
+        "azure.storage.filedatalake.DataLakeFileClient.get_file_properties",
+        return_value=SimpleNamespace(last_modified=datetime(2022, 1, 1),content_settings= content_settings(content_type="not_a_csv")),
+    )
+
+    def test_load_non_parquet_file(self, mock_file_properties, mock_file_exists, mock_download_file):
+        # Prepare
+
+        authentication = mock.MagicMock()
+        authentication.get_credentials = mock.MagicMock(
+            return_value={"USERNAME": "username", "PASSWORD": "password"}
+        )
+
+        with open(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "test_data",
+                "test_csv.csv",
+            ),
+            "rb",
+        ) as f:
+            csv_buf = BytesIO(f.read())
+
+        csv_buf.seek(0)
+        mock_file_exists.return_value = True
+        mock_download_file.side_effect = [copy.deepcopy(csv_buf)]
+
+        # Test
+        parquet_loader = DataLakeParquetLoader(authentication)
+        with pytest.raises(ValueError):
+            output_df = parquet_loader.load(BlobLocation("dsafs", "asd", "sadfa", "fasdf"))
+
+    @mock.patch("azure.storage.filedatalake.DataLakeFileClient.download_file")
+    @mock.patch("azure.storage.filedatalake.DataLakeFileClient.exists")
+    @mock.patch(
+        "azure.storage.filedatalake.DataLakeFileClient.get_file_properties",
+        return_value=SimpleNamespace(last_modified=datetime(2022, 1, 1),content_settings= content_settings(content_type="application/octet-stream")),
+    )
+    def test_load_non_existent_file(self, mock_file_properties, mock_file_exists, mock_download_file):
+        # Prepare
+        authentication = mock.MagicMock()
+        authentication.get_credentials = mock.MagicMock(
+            return_value={"USERNAME": "username", "PASSWORD": "password"}
+        )
+        with open(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "test_data",
+                "test_parquet.parquet",
+            ),
+            "rb",
+        ) as f:
+            parquet_buf = BytesIO(f.read())
+
+        parquet_buf.seek(0)
+        mock_file_exists.return_value = False
+        mock_download_file.side_effect = [copy.deepcopy(parquet_buf)]
+
+        # Test
+        parquet_loader = DataLakeParquetLoader(authentication)
+        with pytest.raises(FileNotFoundError):
+            output_df = parquet_loader.load(BlobLocation("dsafs", "asd", "sadfa", "fasdf"))
+
+
+
+
+
+
+
+        
+    
 
 
 class MockStorageStreamDownloader:

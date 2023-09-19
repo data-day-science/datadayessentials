@@ -83,6 +83,24 @@ class DataCacher:
         """
 
         return os.path.exists(self.file_path)
+    
+    def is_dir_in_cache(self) -> str:
+        """Check if the directory is in the cache.
+
+        Returns:
+            bool: Does the directory exist in the cache
+        """
+
+        return os.path.exists(self.file_dir)
+    
+    def get_dir_from_cache(self) -> str:
+        """Retrieve the directory from the cache.
+
+        Returns:
+            str: cached directory
+        """
+        return self.file_dir
+
 
     def get_df_from_cache(self) -> pd.DataFrame:
         """Retrieve the dataframe from the cache.
@@ -563,6 +581,14 @@ class DataLakeParquetLoader(IParquetLoader):
         self.datalake_service = DataLakeServiceClient(
             account_url=self.account_url, credential=self.credential
         )
+        #check if the filename element of blob is set to None, if so then call _load_file and pass the blob.  If not then call _load_folder and pass the blob
+        if blob.filename == None:
+            return self._load_file(blob)    
+        else:
+            return self._load_folder(blob)
+        
+
+    def _load_file(self,blob: BlobLocation) -> pd.DataFrame:
         # Check if the blob has already been cached
         file_client = self.datalake_service.get_file_client(
             blob.get_container(), blob.get_path_in_container()
@@ -586,3 +612,26 @@ class DataLakeParquetLoader(IParquetLoader):
             df = pd.read_parquet(buffer)
             cacher.save_df_to_cache(df)
             return df
+
+    def _load_folder(self,blob: BlobLocation) -> pd.DataFrame:
+        file_client = self.datalake_service.get_file_client(
+            blob.get_container(), blob.get_filepath()
+        )
+        available_files = file_client.get_paths()
+
+        cached_directory = os.path.join(os.path.expanduser("~"), Config().get_environment_variable(variable_name="local_cache_dir"), blob.get_filepath())
+        if os.path.exists(cached_directory) and self.use_cache:
+            return pd.read_parquet(cached_directory)
+        else:
+            dfs = []
+            for file in available_files:
+                if file.name.endswith(".parquet"):
+                    download = file_client.get_file_client(file.name).download_file()
+                    buffer = BytesIO(download.read())
+                    buffer.seek(0)
+                    df = pd.read_parquet(buffer)
+                    dfs.append(df)
+            combined_df = pd.concat(dfs)
+            combined_df.to_parquet(cached_directory)
+            return combined_df
+            

@@ -567,7 +567,7 @@ class DataLakeParquetLoader(IParquetLoader):
         file_client = self.datalake_service.get_file_client(
             blob.get_container(), blob.get_path_in_container()
         )
-        file_exists = file_client.exists()
+
         if not file_client.exists():
             raise FileNotFoundError(f"File {blob} not found in azure.")
         properties = file_client.get_file_properties()

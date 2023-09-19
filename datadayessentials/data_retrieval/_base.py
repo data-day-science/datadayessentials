@@ -152,7 +152,7 @@ class IParquetLoader(IDataFrameLoader):
         pass
 
     @abstractmethod
-    def load(self) -> Any:
+    def load(self) -> pd.DataFrame:
         pass
 
 

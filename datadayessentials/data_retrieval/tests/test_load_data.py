@@ -286,6 +286,46 @@ class TestDataLakeParquetLoader(unittest.TestCase):
         with pytest.raises(FileNotFoundError):
             output_df = parquet_loader.load(BlobLocation("dsafs", "asd", "sadfa", "fasdf"))
 
+    def test_load_folder(self):
+        # Prepare
+        authentication = mock.MagicMock()
+        authentication.get_credentials = mock.MagicMock(
+            return_value={"USERNAME": "username", "PASSWORD": "password"}
+        )
+
+        # create a BlobLocation object with a folder path but no filename
+        blob_location = BlobLocation("dsafs", "asd", "sadfa", None)
+
+        #assert that the _load_folder method is called to handle a folder path
+        with mock.patch.object(DataLakeParquetLoader, "_load_folder") as mock_load_folder:
+            parquet_loader = DataLakeParquetLoader(authentication)
+            parquet_loader.load(blob_location)
+            mock_load_folder.assert_called_once_with(blob_location)
+
+    def test_load_folder_creates_subfolder_in_cache(self):
+
+         # Prepare
+        authentication = mock.MagicMock()
+        authentication.get_credentials = mock.MagicMock(
+            return_value={"USERNAME": "username", "PASSWORD": "password"}
+        )
+
+        # create a BlobLocation object with a folder path but no filename
+        blob_location = BlobLocation("dsafs", "asd", "sadfa", None)
+
+        # mock DataLakeParquetLoader._load_file and DataLakeParquetLoader._get_available_files method to return a list of objects with a name attribute that holds a string
+        with mock.patch.object(DataLakeParquetLoader, "_load_file") as mock_load_file, mock.patch.object(DataLakeParquetLoader, "_get_available_files") as mock_get_available_files:
+            mock_load_file.return_value = pd.DataFrame({"col1": [1, 2, 3], "col2": [1, 2, 3]})
+            mock_get_available_files.return_value = [SimpleNamespace(name="test_file.parquet")]
+            parquet_loader = DataLakeParquetLoader(authentication)
+            parquet_loader.load(blob_location)
+
+            #assert that the _load_file method is called with the correct BlobLocation object
+            mock_load_file.assert_called_once_with(BlobLocation("dsafs", "asd", "sadfa", "test_file.parquet"),cache_subfolder="sadfa")
+            
+        
+
+
 
 
 

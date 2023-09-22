@@ -31,7 +31,7 @@ import pandas as pd
 import datetime
 import logging
 from ..config._config import Config
-from azure.storage.filedatalake import DataLakeServiceClient
+from azure.storage.filedatalake import DataLakeServiceClient, FileSystemProperties, FileSystemClient
 from azure.storage.blob import StorageStreamDownloader, BlobServiceClient, BlobClient
 from datetime import datetime, date
 from ._save_data import BlobLocation
@@ -44,6 +44,9 @@ import json, pickle
 
 from datadayessentials import authentications
 
+from azure.core.exceptions import HttpResponseError
+
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
@@ -53,7 +56,7 @@ class DataCacher:
     The dataframes are saved to the cache directory specified in the config yaml. This directory is always in the user's home path.
     """
 
-    def __init__(self, file: str, last_modified: datetime = None):
+    def __init__(self, file: str, last_modified: datetime = None, sub_folder: str = None):
         """Initialises the Cacher with file name to be checked, if the last_modified parameter is passed then include this in the filename
 
         Args:
@@ -70,7 +73,12 @@ class DataCacher:
             self.file = file
 
         home = str(Path.home())
-        self.file_dir = os.path.join(home, Config().get_environment_variable(variable_name="local_cache_dir"))
+        if sub_folder:
+            print(f"subfolder is {sub_folder}")
+            self.file_dir = os.path.join(home, Config().get_environment_variable(variable_name="local_cache_dir"), sub_folder)
+        else:
+            print(f"subfolder is None")
+            self.file_dir = os.path.join(home, Config().get_environment_variable(variable_name="local_cache_dir"))
         self.file_path = os.path.join(self.file_dir, self.file)
         if not os.path.exists(self.file_dir):
             os.makedirs(self.file_dir)
@@ -81,7 +89,7 @@ class DataCacher:
         Returns:
             bool: Does the file exist in the cache
         """
-
+        print(f"Searching cache for {self.file_path}")
         return os.path.exists(self.file_path)
     
     def is_dir_in_cache(self) -> str:
@@ -139,6 +147,18 @@ class DataCacher:
         except FileNotFoundError:
             json_out = {}
         return json_out
+    
+    def get_pq_from_cache(self) -> pd.DataFrame:
+        """Retrieve the parquet file from the cache.
+
+        Returns:
+            pd.DataFrame: cached file
+        """
+        try:
+            df = pd.read_parquet(self.file_path)
+        except FileNotFoundError:
+            df = pd.DataFrame()
+        return df
 
     def save_df_to_cache(self, df: pd.DataFrame, size: int = 0):
         """Save the dataframe to the cache.
@@ -148,6 +168,15 @@ class DataCacher:
         """
         if not df.empty:
             df.to_csv(self.file_path, index_label="index")
+
+    def save_pq_to_cache(self, df: pd.DataFrame):
+        """Save the dataframe to the cache.
+
+        Args:
+            df (pd.DataFrame): dataframe to store
+        """
+        if not df.empty:
+            df.to_parquet(self.file_path)
 
     def save_pickle_to_cache(self, obj: Any):
         """Save the python object as a pickle file in the cache.
@@ -568,6 +597,12 @@ class DataLakeParquetLoader(IParquetLoader):
             authentication = DataLakeAuthentication()
         self.credential = authentication.get_azure_credentials()
 
+    def _get_file_client(self,blob: BlobLocation):
+        file_client = self.datalake_service.get_file_client(
+            blob.get_container(), blob.get_path_in_container()
+        )
+        return file_client
+
     def load(self, blob: BlobLocation) -> pd.DataFrame:
         """Loads the file from azure or from the cache
 
@@ -583,16 +618,16 @@ class DataLakeParquetLoader(IParquetLoader):
         )
         #check if the filename element of blob is set to None, if so then call _load_file and pass the blob.  If not then call _load_folder and pass the blob
         if blob.filename == None:
-            return self._load_file(blob)    
+            return self._load_folder(blob)    
         else:
-            return self._load_folder(blob)
+            return self._load_file(blob)
+
+    
         
 
-    def _load_file(self,blob: BlobLocation) -> pd.DataFrame:
+    def _load_file(self,blob: BlobLocation, cache_subfolder:str=None) -> pd.DataFrame:
         # Check if the blob has already been cached
-        file_client = self.datalake_service.get_file_client(
-            blob.get_container(), blob.get_path_in_container()
-        )
+        file_client = self._get_file_client(blob)
 
         if not file_client.exists():
             raise FileNotFoundError(f"File {blob} not found in azure.")
@@ -602,36 +637,48 @@ class DataLakeParquetLoader(IParquetLoader):
             raise ValueError(f"File {blob} is not a parquet file.")
         
         
-        cacher = DataCacher(str(blob) + ".parquet", properties.last_modified)
+        cacher = DataCacher(str(blob), properties.last_modified,sub_folder=cache_subfolder)
+        print(cacher)
         if cacher.is_file_in_cache() and self.use_cache:
-            return cacher.get_df_from_cache()
+            print(f"loading {blob.get_filepath()} from cache")
+            return cacher.get_pq_from_cache()
         else:
             download = file_client.download_file()
             buffer = BytesIO(download.read())
             buffer.seek(0)
             df = pd.read_parquet(buffer)
-            cacher.save_df_to_cache(df)
+            cacher.save_pq_to_cache(df)
             return df
+        
+    def _get_available_files(self,blob: BlobLocation) -> List[str]:
+        download_path = blob.get_filepath().replace("\\", "/")
+        print(f"downloading files from {download_path}")
+        try:
+            file_system_client = self.datalake_service.get_file_system_client(blob.get_container())
+            available_files = file_system_client.get_paths(path=blob.get_filepath())
+            return available_files 
+        except HttpResponseError as e:
+            print(e.message)
 
     def _load_folder(self,blob: BlobLocation) -> pd.DataFrame:
-        file_client = self.datalake_service.get_file_client(
-            blob.get_container(), blob.get_filepath()
-        )
-        available_files = file_client.get_paths()
-
-        cached_directory = os.path.join(os.path.expanduser("~"), Config().get_environment_variable(variable_name="local_cache_dir"), blob.get_filepath())
-        if os.path.exists(cached_directory) and self.use_cache:
-            return pd.read_parquet(cached_directory)
-        else:
-            dfs = []
-            for file in available_files:
-                if file.name.endswith(".parquet"):
-                    download = file_client.get_file_client(file.name).download_file()
-                    buffer = BytesIO(download.read())
-                    buffer.seek(0)
-                    df = pd.read_parquet(buffer)
-                    dfs.append(df)
-            combined_df = pd.concat(dfs)
-            combined_df.to_parquet(cached_directory)
-            return combined_df
+        
+        available_files = self._get_available_files(blob)
             
+        dfs = []
+        for file in available_files:
+            print(f"Loading file {file.name}")
+            if file.name.endswith(".parquet"):
+                try:
+
+                    individual_file_blob = BlobLocation(blob.get_account(), blob.get_container(), blob.get_filepath(), str(file.name).split("/")[-1])
+                    df = self._load_file(individual_file_blob, cache_subfolder=individual_file_blob.get_filepath())
+                    dfs.append(df)
+                except Exception as e:
+                    print(f"Error loading file {file.name}: {str(e)}")
+        if dfs:
+            combined_df = pd.concat(dfs)
+        else:
+            combined_df = pd.DataFrame()  # Create an empty DataFrame
+        return combined_df
+
+                    

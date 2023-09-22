@@ -597,36 +597,75 @@ class DataLakeParquetLoader(IParquetLoader):
             authentication = DataLakeAuthentication()
         self.credential = authentication.get_azure_credentials()
 
-    def _get_file_client(self,blob: BlobLocation):
+    def _get_file_client(self, blob: BlobLocation):
+        """
+        Helper function to get the file client for a given blob location
+        """
         file_client = self.datalake_service.get_file_client(
             blob.get_container(), blob.get_path_in_container()
         )
         return file_client
 
-    def load(self, blob: BlobLocation) -> pd.DataFrame:
-        """Loads the file from azure or from the cache
+    def _get_available_files(self, blob: BlobLocation) -> List[str]:
+        """Get a list of available files from the specified BlobLocation.
 
         Args:
-            blob (BlobLocation): Location in azure of the parquet to load
+            blob (BlobLocation): The BlobLocation representing the location of the files.
 
         Returns:
-            pd.DataFrame: Pandas dataframe containing the loaded parquet
-        """
-        self.account_url = f"https://{blob.get_account()}.dfs.core.windows.net/"
-        self.datalake_service = DataLakeServiceClient(
-            account_url=self.account_url, credential=self.credential
-        )
-        #check if the filename element of blob is set to None, if so then call _load_file and pass the blob.  If not then call _load_folder and pass the blob
-        if blob.filename == None:
-            return self._load_folder(blob)    
-        else:
-            return self._load_file(blob)
+            List[str]: A list of file paths available at the specified BlobLocation. 
+                    Returns an empty list if the location is not found or an error occurs.
 
-    
+        Raises:
+            None
+
+        Note:
+            This function retrieves the available files at the specified BlobLocation
+            by connecting to the corresponding Azure Data Lake Storage file system.
+            It handles ResourceNotFoundError and HttpResponseError exceptions and
+            prints informative messages in case of errors.
+        """
+        download_path = blob.get_filepath().replace("\\", "/")
+        print(f"downloading files from {download_path}")
+        try:
+            file_system_client = self.datalake_service.get_file_system_client(blob.get_container())
+            available_files = file_system_client.get_paths(path=blob.get_filepath())
+            return available_files 
+        except ResourceNotFoundError as e:
+            print(f"File {download_path} not found. Skipping")
+            return []
+        except HttpResponseError as e:
+            print(f"Error while getting files from {download_path}: {e.message}")
+            return []
         
 
     def _load_file(self,blob: BlobLocation, cache_subfolder:str=None) -> pd.DataFrame:
-        # Check if the blob has already been cached
+        """
+        Load a file from Azure Blob Storage, optionally caching it for future use.
+
+        Args:
+            blob (BlobLocation): The BlobLocation representing the file to load.
+            cache_subfolder (str, optional): A subfolder within the cache directory. Default is None.
+
+        Returns:
+            pd.DataFrame: The loaded data as a Pandas DataFrame.
+
+        Raises:
+            FileNotFoundError: If the specified blob does not exist in Azure Blob Storage.
+            ValueError: If the specified blob is not a Parquet file.
+
+        Note:
+            This function loads a file from Azure Blob Storage using the provided BlobLocation.
+            It checks if the file exists and if it's a Parquet file (content type).
+            If the file is already cached and caching is enabled, it retrieves the data from the cache.
+            Otherwise, it downloads the file, reads it as a Parquet file, and optionally caches it for future use.
+
+        Example:
+            To load a file from Azure Blob Storage and cache it in a subfolder:
+            >>> blob_location = BlobLocation("container_name", "folder/file.parquet")
+            >>> data = _load_file(blob_location, cache_subfolder="my_cache")
+        """
+   
         file_client = self._get_file_client(blob)
 
         if not file_client.exists():
@@ -650,17 +689,29 @@ class DataLakeParquetLoader(IParquetLoader):
             cacher.save_pq_to_cache(df)
             return df
         
-    def _get_available_files(self,blob: BlobLocation) -> List[str]:
-        download_path = blob.get_filepath().replace("\\", "/")
-        print(f"downloading files from {download_path}")
-        try:
-            file_system_client = self.datalake_service.get_file_system_client(blob.get_container())
-            available_files = file_system_client.get_paths(path=blob.get_filepath())
-            return available_files 
-        except HttpResponseError as e:
-            print(e.message)
+    
 
     def _load_folder(self,blob: BlobLocation) -> pd.DataFrame:
+        """
+        Load all Parquet files within a folder in Azure Blob Storage and combine them into a single DataFrame.
+
+        Args:
+            blob (BlobLocation): The BlobLocation representing the folder containing Parquet files.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the concatenated data from all Parquet files in the folder.
+
+        Note:
+            This function retrieves a list of available files within the specified folder in Azure Blob Storage
+            using the provided BlobLocation. It then iterates through the files, loading each Parquet file
+            using the `_load_file` method and combining them into a single DataFrame.
+            If no Parquet files are found, an empty DataFrame is returned.
+
+        Example:
+            To load all Parquet files from a folder in Azure Blob Storage:
+            >>> folder_location = BlobLocation("account_name","container_name", "folder/")
+            >>> data_frame = _load_folder(folder_location)
+        """
         
         available_files = self._get_available_files(blob)
             
@@ -681,4 +732,45 @@ class DataLakeParquetLoader(IParquetLoader):
             combined_df = pd.DataFrame()  # Create an empty DataFrame
         return combined_df
 
-                    
+    def load(self, blob: BlobLocation) -> pd.DataFrame:
+        """
+        Load data from Azure Blob Storage based on the provided BlobLocation.
+
+        Args:
+            blob (BlobLocation): The BlobLocation representing the data to be loaded.
+
+        Returns:
+            pd.DataFrame: A Pandas DataFrame containing the loaded data.
+
+        Note:
+            This function connects to Azure Blob Storage using the provided BlobLocation
+            and loads data based on the type of BlobLocation:
+            
+            - If the `filename` attribute of the BlobLocation is set to None, it calls `_load_folder` 
+            to load all Parquet files within a folder in Azure Blob Storage and combines them into a single DataFrame.
+            
+            - If the `filename` attribute is not None, it calls `_load_file` to load a specific Parquet file.
+            
+            The function returns a Pandas DataFrame containing the loaded data.
+            
+        Example:
+            To load data from Azure Blob Storage:
+            
+            1. Load a specific Parquet file:
+            >>> blob_location = BlobLocation("container_name", "folder/file.parquet")
+            >>> data_frame = load(blob_location)
+            
+            2. Load all Parquet files from a folder:
+            >>> folder_location = BlobLocation("container_name", "folder/")
+            >>> data_frame = load(folder_location)
+        """
+        
+        self.account_url = f"https://{blob.get_account()}.dfs.core.windows.net/"
+        self.datalake_service = DataLakeServiceClient(
+            account_url=self.account_url, credential=self.credential
+        )
+        #check if the filename element of blob is set to None, if so then call _load_file and pass the blob.  If not then call _load_folder and pass the blob
+        if blob.filename == None:
+            return self._load_folder(blob)    
+        else:
+            return self._load_file(blob)

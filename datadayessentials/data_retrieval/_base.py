@@ -147,6 +147,14 @@ class IPickleLoader(IDataFrameLoader):
     def load(self) -> Any:
         pass
 
+class IParquetLoader(IDataFrameLoader):
+    def __init__(self, authentication: IAuthentication):
+        pass
+
+    @abstractmethod
+    def load(self) -> pd.DataFrame:
+        pass
+
 
 class ICSVSaver(IDataFrameSaver):
     def __init__(self, authentication: IAuthentication):

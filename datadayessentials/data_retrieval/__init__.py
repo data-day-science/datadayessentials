@@ -23,6 +23,7 @@ from ._validate_data import DataFrameValidator
 from ._load_data import (
     TableLoader,
     DataLakeCSVLoader,
+    DataLakeParquetLoader,
     DataFrameTap,
     AzureBlobLoader,
 )
@@ -54,6 +55,7 @@ __all__ = [
     'DataFrameValidator',
     'IURIGenerator',
     'ICSVLoader',
+    'DataLakeParquetLoader',
     'IProjectDataset',
     'AzureBlobLoader',
     'DataLakeDirectoryDeleter'

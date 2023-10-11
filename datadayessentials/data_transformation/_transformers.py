@@ -1,3 +1,6 @@
+import re
+from abc import ABC
+
 from ._base import IDataFrameTransformer, IDataFrameCaster
 import pandas as pd
 import copy
@@ -37,7 +40,7 @@ class PreprocessingError(Exception):
     """
 
     def __init__(
-        self, step_name: str = "preprocessing", message: str = "preprocessing error"
+            self, step_name: str = "preprocessing", message: str = "preprocessing error"
     ):
         """Instantiates a preprocessing error, based on the step that it occurred and the error message
 
@@ -153,11 +156,11 @@ class DataFrameTimeSlicer(IDataFrameTransformer):
 
     # date range inclusive (>=, <=)
     def __init__(
-        self,
-        col_name_for_time: str,
-        min_time: datetime,
-        max_time: datetime,
-        convert_to_datetime_format: str = "",
+            self,
+            col_name_for_time: str,
+            min_time: datetime,
+            max_time: datetime,
+            convert_to_datetime_format: str = "",
     ):
         """Instantiate a DataFrameTimeSlicer
 
@@ -220,7 +223,7 @@ class DataFrameTimeSlicer(IDataFrameTransformer):
         return data[
             (data[self.col_name_for_time] >= self.min_time)
             & (data[self.col_name_for_time] <= self.max_time)
-        ]
+            ]
 
 
 class DataFrameCaster(IDataFrameCaster):
@@ -348,35 +351,35 @@ class ValueReplacer(IDataFrameTransformer):
     """
 
     def __init__(
-        self,
-        unwanted_values: List = [
-            "M",
-            "C",
-            "{ND}",
-            "ND",
-            "OB",
-            "Not Found",
-            "{OB}",
-            "T",
-            "__",
-            -999997,
-            -999999,
-            999999,
-            999997,
-            -999997.0,
-            -999999.0,
-            999999.0,
-            999997.0,
-            "-999997",
-            "-999999",
-            "999999",
-            "999997",
-            "-999997.0",
-            "-999999.0",
-            "999999.0",
-            "999997.0",
-        ],
-        replacement_value: Any = np.nan,
+            self,
+            unwanted_values: List = [
+                "M",
+                "C",
+                "{ND}",
+                "ND",
+                "OB",
+                "Not Found",
+                "{OB}",
+                "T",
+                "__",
+                -999997,
+                -999999,
+                999999,
+                999997,
+                -999997.0,
+                -999999.0,
+                999999.0,
+                999997.0,
+                "-999997",
+                "-999999",
+                "999999",
+                "999997",
+                "-999997.0",
+                "-999999.0",
+                "999999.0",
+                "999997.0",
+            ],
+            replacement_value: Any = np.nan,
     ):
         """Instantiate the ValueReplacer
 
@@ -462,8 +465,8 @@ class DominatedColumnDropper(IDataFrameTransformer):
                     col_to_remove.append(col)
                     continue
                 if (
-                    df_out[col].value_counts().iloc[0] / df_out.shape[0]
-                    >= self.dominance_threshold
+                        df_out[col].value_counts().iloc[0] / df_out.shape[0]
+                        >= self.dominance_threshold
                 ):
                     col_to_remove.append(col)
 
@@ -518,7 +521,7 @@ class CatTypeConverter(IDataFrameTransformer):
         self.date_col_names = date_col_names
 
     def process(
-        self, df: pd.DataFrame, verbose: bool = False, create_copy=False
+            self, df: pd.DataFrame, verbose: bool = False, create_copy=False
     ) -> pd.DataFrame:
         """Apply the column conversion returning a new dataframe
 
@@ -731,7 +734,7 @@ class ColBasedQuantiler(IDataFrameTransformer):
         self.dict_quantile_thresholds = {}
 
     def calc_thresholds_by_column(
-        self, df: pd.DataFrame, quantile_cols: List[float]
+            self, df: pd.DataFrame, quantile_cols: List[float]
     ) -> dict:
         """
         calculates the lower and upper values based on provided quantile and columns
@@ -833,13 +836,13 @@ class ColumnFiller(IDataFrameTransformer):
     """
 
     def __init__(
-        self,
-        col_names,
-        critical_features,
-        fill_value=np.nan,
-        enforce=False,
-        fmt="speedy",
-        logger=None,
+            self,
+            col_names,
+            critical_features,
+            fill_value=np.nan,
+            enforce=False,
+            fmt="speedy",
+            logger=None,
     ):
         self.col_names = col_names
         self.critical_features = critical_features
@@ -1016,55 +1019,29 @@ class CategoricalColumnSplitter(IDataFrameTransformer):
 
 
 class DataFrameColumnTypeSplitter(IDataFrameTransformer):
+    def __init__(self, only_process_columns: list = None):
 
-    """
-    A class for splitting mixed data type columns in a DataFrame into separate columns based on data type.
-    """
-
-    def __init__(self, dataframe: pd.DataFrame, only_process_columns: List[str] = None):
-        """
-        Initialize the DataFrameValueReplacer with the provided DataFrame.
-        If only_process_columns is not provided, all columns in the DataFrame will be processed.
-        If only_process_columns is provided, only those columns will be processed.
-
-        Args:
-            dataframe (pd.DataFrame): The input DataFrame to be processed.
-        """
-        self.dataframe = dataframe
-
+        self.columns_to_process = None
         if only_process_columns:
-            self.original_columns = only_process_columns
-        else:
-            self.original_columns = dataframe.columns
+            self.columns_to_process = only_process_columns
 
-    def _replace_numbers_with_nan(self):
-        """
-        Replace numeric values with NaN in the DataFrame and create new columns with prefixes.
-        """
-        for column in self.original_columns:
-            new_col_name = "numeric_" + column
-            self.dataframe[new_col_name] = np.where(
-                self.dataframe[column].apply(lambda x: isinstance(x, (int, float))),
-                np.nan,
-                self.dataframe[column],
-            )
+    @staticmethod
+    def extract_numbers_from_text(text_series: pd.Series) -> pd.Series:
+        numbers = text_series.str.extract(r'(\d+)').astype(float)
+        return numbers.squeeze().replace(0.0, np.nan)
 
-    def _replace_strings_with_nan(self):
-        """
-        Replace string values with NaN in the DataFrame and overwrite the existing columns.
-        """
-        for column in self.original_columns:
-            self.dataframe[column] = np.where(
-                self.dataframe[column].apply(lambda x: isinstance(x, str)),
-                np.nan,
-                self.dataframe[column],
-            )
+    @staticmethod
+    def extract_letters_from_text(text_series: pd.Series) -> pd.Series:
+        letters = text_series.str.replace(r'[^a-zA-Z]', '', regex=True)
+        return letters.where(letters.str.strip() != '', np.nan)
 
-    def process(self, dataframe: pd.DataFrame):
-        """
-        Run both the replace_numbers_with_nan and replace_strings_with_nan methods.
-        """
-        self._replace_numbers_with_nan()
-        self._replace_strings_with_nan()
-        
-        return self.dataframe
+    def process(self, data: pd.DataFrame) -> pd.DataFrame:
+        data = data.astype(str)
+        if not self.columns_to_process:
+            self.columns_to_process = data.columns
+
+        for col in self.columns_to_process:
+            data[f'{col}_numeric'] = self.extract_numbers_from_text(data[col])
+            data[col] = self.extract_letters_from_text(data[col])
+
+        return data

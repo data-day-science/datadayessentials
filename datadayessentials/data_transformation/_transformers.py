@@ -1015,21 +1015,27 @@ class CategoricalColumnSplitter(IDataFrameTransformer):
         return df_in
 
 
-class DataFrameColumnTypeSplitter:
+class DataFrameColumnTypeSplitter(IDataFrameTransformer):
 
     """
     A class for splitting mixed data type columns in a DataFrame into separate columns based on data type.
     """
 
-    def __init__(self, dataframe: pd.DataFrame):
+    def __init__(self, dataframe: pd.DataFrame, only_process_columns: List[str] = None):
         """
         Initialize the DataFrameValueReplacer with the provided DataFrame.
+        If only_process_columns is not provided, all columns in the DataFrame will be processed.
+        If only_process_columns is provided, only those columns will be processed.
 
         Args:
             dataframe (pd.DataFrame): The input DataFrame to be processed.
         """
         self.dataframe = dataframe
-        self.original_columns = dataframe.columns
+
+        if only_process_columns:
+            self.original_columns = only_process_columns
+        else:
+            self.original_columns = dataframe.columns
 
     def _replace_numbers_with_nan(self):
         """
@@ -1054,9 +1060,11 @@ class DataFrameColumnTypeSplitter:
                 self.dataframe[column],
             )
 
-    def run_value_replacers(self):
+    def process(self, dataframe: pd.DataFrame):
         """
         Run both the replace_numbers_with_nan and replace_strings_with_nan methods.
         """
         self._replace_numbers_with_nan()
         self._replace_strings_with_nan()
+        
+        return self.dataframe

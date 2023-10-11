@@ -3,6 +3,7 @@ import os
 import unittest
 from datetime import datetime
 from math import isclose
+from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
@@ -23,7 +24,7 @@ from .._transformers import (
     ColumnDotRenamer,
     CategoricalColumnSplitter,
     is_data_size_small,
-    SimpleCatTypeConverter,
+    SimpleCatTypeConverter, DataFrameColumnTypeSplitter,
 )
 
 
@@ -700,3 +701,41 @@ class TestDataTransformer:
                 ]
             )
         )
+
+
+class TestDataFrameColumnTypeSplitter(unittest.TestCase):
+    def setUp(self):
+        self.data = pd.DataFrame({"A": [1, 2, 3], "B": ["A", "B", "C"], "C": [1, "B", 3]})
+
+    def test_initialization(self):
+        splitter = DataFrameColumnTypeSplitter(self.data)
+        self.assertTrue(isinstance(splitter, DataFrameColumnTypeSplitter))
+        self.assertTrue(isinstance(splitter.dataframe, pd.DataFrame))
+        self.assertTrue((splitter.original_columns == ["A", "B", "C"]).all())
+
+    def test_replace_numbers_with_nan(self):
+        splitter = DataFrameColumnTypeSplitter(self.data)
+        splitter._replace_numbers_with_nan()
+        self.assertTrue("numeric_A" in splitter.dataframe.columns)
+        self.assertTrue("numeric_B" in splitter.dataframe.columns)
+        self.assertTrue("numeric_C" in splitter.dataframe.columns)
+        self.assertTrue(splitter.dataframe["numeric_A"].equals(pd.Series([np.nan, np.nan, np.nan])))
+        self.assertTrue(splitter.dataframe["numeric_B"].equals(pd.Series(["A", "B", "C"])))
+        self.assertTrue(splitter.dataframe["numeric_C"].equals(pd.Series([np.nan, "B", np.nan])))
+
+    def test_replace_strings_with_nan(self):
+        splitter = DataFrameColumnTypeSplitter(self.data)
+        splitter._replace_strings_with_nan()
+        self.assertTrue("A" in splitter.dataframe.columns)
+        self.assertTrue("B" in splitter.dataframe.columns)
+        self.assertTrue("C" in splitter.dataframe.columns)
+        self.assertTrue(splitter.dataframe["A"].equals(pd.Series([1.0, 2.0, 3.0])))
+        self.assertTrue(splitter.dataframe["B"].values[0], np.nan)
+        self.assertTrue(splitter.dataframe["B"].values[1], np.nan)
+        self.assertTrue(splitter.dataframe["B"].values[2], np.nan)
+        self.assertTrue(splitter.dataframe["C"].values[0], 1.0)
+        self.assertTrue(splitter.dataframe["C"].values[1], np.nan)
+        self.assertTrue(splitter.dataframe["C"].values[2], 3.0)
+
+
+

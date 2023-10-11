@@ -37,7 +37,7 @@ class PreprocessingError(Exception):
     """
 
     def __init__(
-            self, step_name: str = "preprocessing", message: str = "preprocessing error"
+        self, step_name: str = "preprocessing", message: str = "preprocessing error"
     ):
         """Instantiates a preprocessing error, based on the step that it occurred and the error message
 
@@ -153,11 +153,11 @@ class DataFrameTimeSlicer(IDataFrameTransformer):
 
     # date range inclusive (>=, <=)
     def __init__(
-            self,
-            col_name_for_time: str,
-            min_time: datetime,
-            max_time: datetime,
-            convert_to_datetime_format: str = "",
+        self,
+        col_name_for_time: str,
+        min_time: datetime,
+        max_time: datetime,
+        convert_to_datetime_format: str = "",
     ):
         """Instantiate a DataFrameTimeSlicer
 
@@ -220,7 +220,7 @@ class DataFrameTimeSlicer(IDataFrameTransformer):
         return data[
             (data[self.col_name_for_time] >= self.min_time)
             & (data[self.col_name_for_time] <= self.max_time)
-            ]
+        ]
 
 
 class DataFrameCaster(IDataFrameCaster):
@@ -279,6 +279,7 @@ class DataFrameCaster(IDataFrameCaster):
         new_schema = {key: val["dtype"] for key, val in self.target_schema.items()}
         data = data.astype(new_schema, errors="ignore")
         return data
+
 
 class InvalidPayloadDropperByPrefix(IDataFrameTransformer):
     """
@@ -347,35 +348,35 @@ class ValueReplacer(IDataFrameTransformer):
     """
 
     def __init__(
-            self,
-            unwanted_values: List = [
-                "M",
-                "C",
-                "{ND}",
-                "ND",
-                "OB",
-                "Not Found",
-                "{OB}",
-                "T",
-                "__",
-                -999997,
-                -999999,
-                999999,
-                999997,
-                -999997.0,
-                -999999.0,
-                999999.0,
-                999997.0,
-                "-999997",
-                "-999999",
-                "999999",
-                "999997",
-                "-999997.0",
-                "-999999.0",
-                "999999.0",
-                "999997.0",
-            ],
-            replacement_value: Any = np.nan,
+        self,
+        unwanted_values: List = [
+            "M",
+            "C",
+            "{ND}",
+            "ND",
+            "OB",
+            "Not Found",
+            "{OB}",
+            "T",
+            "__",
+            -999997,
+            -999999,
+            999999,
+            999997,
+            -999997.0,
+            -999999.0,
+            999999.0,
+            999997.0,
+            "-999997",
+            "-999999",
+            "999999",
+            "999997",
+            "-999997.0",
+            "-999999.0",
+            "999999.0",
+            "999997.0",
+        ],
+        replacement_value: Any = np.nan,
     ):
         """Instantiate the ValueReplacer
 
@@ -461,8 +462,8 @@ class DominatedColumnDropper(IDataFrameTransformer):
                     col_to_remove.append(col)
                     continue
                 if (
-                        df_out[col].value_counts().iloc[0] / df_out.shape[0]
-                        >= self.dominance_threshold
+                    df_out[col].value_counts().iloc[0] / df_out.shape[0]
+                    >= self.dominance_threshold
                 ):
                     col_to_remove.append(col)
 
@@ -517,7 +518,7 @@ class CatTypeConverter(IDataFrameTransformer):
         self.date_col_names = date_col_names
 
     def process(
-            self, df: pd.DataFrame, verbose: bool = False, create_copy=False
+        self, df: pd.DataFrame, verbose: bool = False, create_copy=False
     ) -> pd.DataFrame:
         """Apply the column conversion returning a new dataframe
 
@@ -604,7 +605,6 @@ class CatTypeConverter(IDataFrameTransformer):
 
 
 class SimpleCatTypeConverter(IDataFrameTransformer):
-
     """
     Takes a list of column names and converts those in a dataframe to a category type.
     Date columns are not converted to a different type.
@@ -626,8 +626,12 @@ class SimpleCatTypeConverter(IDataFrameTransformer):
 
     def process(self, df: pd.DataFrame):
         df[self.categorical_columns] = df[self.categorical_columns].astype("category")
-        non_categorical_columns = list(set(df.columns) - set(self.categorical_columns) - set(self.date_columns))
-        df[non_categorical_columns] = df[non_categorical_columns].apply(pd.to_numeric, errors="coerce")  # noqa: E501
+        non_categorical_columns = list(
+            set(df.columns) - set(self.categorical_columns) - set(self.date_columns)
+        )
+        df[non_categorical_columns] = df[non_categorical_columns].apply(
+            pd.to_numeric, errors="coerce"
+        )  # noqa: E501
         return df
 
 
@@ -727,7 +731,7 @@ class ColBasedQuantiler(IDataFrameTransformer):
         self.dict_quantile_thresholds = {}
 
     def calc_thresholds_by_column(
-            self, df: pd.DataFrame, quantile_cols: List[float]
+        self, df: pd.DataFrame, quantile_cols: List[float]
     ) -> dict:
         """
         calculates the lower and upper values based on provided quantile and columns
@@ -829,13 +833,13 @@ class ColumnFiller(IDataFrameTransformer):
     """
 
     def __init__(
-            self,
-            col_names,
-            critical_features,
-            fill_value=np.nan,
-            enforce=False,
-            fmt="speedy",
-            logger=None,
+        self,
+        col_names,
+        critical_features,
+        fill_value=np.nan,
+        enforce=False,
+        fmt="speedy",
+        logger=None,
     ):
         self.col_names = col_names
         self.critical_features = critical_features
@@ -1009,3 +1013,50 @@ class CategoricalColumnSplitter(IDataFrameTransformer):
                 df_in[col] = cat_series
         df_in = pd.concat([df_in, pd.DataFrame(num_dict)], axis=1)
         return df_in
+
+
+class DataFrameColumnTypeSplitter:
+
+    """
+    A class for splitting mixed data type columns in a DataFrame into separate columns based on data type.
+    """
+
+    def __init__(self, dataframe: pd.DataFrame):
+        """
+        Initialize the DataFrameValueReplacer with the provided DataFrame.
+
+        Args:
+            dataframe (pd.DataFrame): The input DataFrame to be processed.
+        """
+        self.dataframe = dataframe
+        self.original_columns = dataframe.columns
+
+    def _replace_numbers_with_nan(self):
+        """
+        Replace numeric values with NaN in the DataFrame and create new columns with prefixes.
+        """
+        for column in self.original_columns:
+            new_col_name = "numeric_" + column
+            self.dataframe[new_col_name] = np.where(
+                self.dataframe[column].apply(lambda x: isinstance(x, (int, float))),
+                np.nan,
+                self.dataframe[column],
+            )
+
+    def _replace_strings_with_nan(self):
+        """
+        Replace string values with NaN in the DataFrame and overwrite the existing columns.
+        """
+        for column in self.original_columns:
+            self.dataframe[column] = np.where(
+                self.dataframe[column].apply(lambda x: isinstance(x, str)),
+                np.nan,
+                self.dataframe[column],
+            )
+
+    def run_value_replacers(self):
+        """
+        Run both the replace_numbers_with_nan and replace_strings_with_nan methods.
+        """
+        self._replace_numbers_with_nan()
+        self._replace_strings_with_nan()

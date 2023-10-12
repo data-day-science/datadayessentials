@@ -1026,11 +1026,6 @@ class DataFrameColumnTypeSplitter(IDataFrameTransformer):
             self.columns_to_process = only_process_columns
 
     @staticmethod
-    def extract_numbers_from_text(text_series: pd.Series) -> pd.Series:
-        numbers = text_series.str.extract(r'(\d+\.\d+|\d+)').astype(float)
-        return numbers.squeeze().replace(0.0, np.nan)
-
-    @staticmethod
     def extract_letters_from_text(text_series: pd.Series) -> pd.Series:
         letters = text_series.str.replace(r'[^a-zA-Z]', '', regex=True)
         return letters.where(letters.str.strip() != '', np.nan)
@@ -1042,9 +1037,8 @@ class DataFrameColumnTypeSplitter(IDataFrameTransformer):
         data_to_transform = data[self.columns_to_process].astype(str)
         boolean_mask = data_to_transform.apply(self.extract_letters_from_text).notna()
 
-        nums = data_to_transform[~boolean_mask].apply(self.extract_numbers_from_text)
+        nums = data_to_transform.apply(pd.to_numeric, errors='coerce')
         nums.columns = [x + "_num" for x in nums.columns]
-
         strings = data_to_transform[boolean_mask].apply(self.extract_letters_from_text)
 
         data[nums.columns] = nums

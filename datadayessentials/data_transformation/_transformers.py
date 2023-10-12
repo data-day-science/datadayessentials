@@ -1020,16 +1020,9 @@ class CategoricalColumnSplitter(IDataFrameTransformer):
 
 class DataFrameColumnTypeSplitter(IDataFrameTransformer):
     def __init__(self, only_process_columns: list = None):
-
         self.columns_to_process = None
         if only_process_columns:
             self.columns_to_process = only_process_columns
-
-    @staticmethod
-    def extract_letters_from_text(text_series: pd.Series) -> pd.Series:
-        # Does value have any letters in it?
-        letters = text_series.str.replace(r'[^a-zA-Z]', '', regex=True)
-        return letters.where(letters.str.strip() != '', np.nan)
 
     def process(self, data: pd.DataFrame) -> pd.DataFrame:
         if not self.columns_to_process:

@@ -1027,7 +1027,7 @@ class DataFrameColumnTypeSplitter(IDataFrameTransformer):
 
     @staticmethod
     def extract_numbers_from_text(text_series: pd.Series) -> pd.Series:
-        numbers = text_series.str.extract(r'(\d+)').astype(float)
+        numbers = text_series.str.extract(r'(\d+\.\d+|\d+)').astype(float)
         return numbers.squeeze().replace(0.0, np.nan)
 
     @staticmethod

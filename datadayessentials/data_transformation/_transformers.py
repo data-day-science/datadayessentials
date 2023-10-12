@@ -1027,6 +1027,7 @@ class DataFrameColumnTypeSplitter(IDataFrameTransformer):
 
     @staticmethod
     def extract_letters_from_text(text_series: pd.Series) -> pd.Series:
+        # Does value have any letters in it?
         letters = text_series.str.replace(r'[^a-zA-Z]', '', regex=True)
         return letters.where(letters.str.strip() != '', np.nan)
 
@@ -1035,10 +1036,10 @@ class DataFrameColumnTypeSplitter(IDataFrameTransformer):
             self.columns_to_process = data.columns
 
         data_to_transform = data[self.columns_to_process].astype(str)
-        boolean_mask = data_to_transform.apply(self.extract_letters_from_text).notna()
 
         nums = data_to_transform.apply(pd.to_numeric, errors='coerce')
         nums.columns = [x + "_num" for x in nums.columns]
+        boolean_mask = data_to_transform.apply(self.extract_letters_from_text).notna()
         strings = data_to_transform[boolean_mask].apply(self.extract_letters_from_text)
 
         data[nums.columns] = nums

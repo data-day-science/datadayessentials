@@ -1035,14 +1035,12 @@ class DataFrameColumnTypeSplitter(IDataFrameTransformer):
         if not self.columns_to_process:
             self.columns_to_process = data.columns
 
+        columns_not_to_process = [item for item in data.columns if item not in self.columns_to_process]
+
         data_to_transform = data[self.columns_to_process].astype(str)
+        nums = data_to_transform.apply(lambda col: pd.to_numeric(col, errors='coerce'))
+        strings = pd.DataFrame(np.where(~nums.notna(), data_to_transform, np.nan))
+        nums.columns = [f"{col}_num" for col in data_to_transform.columns]
+        strings.columns = [col for col in data_to_transform.columns]
 
-        nums = data_to_transform.apply(pd.to_numeric, errors='coerce')
-        nums.columns = [x + "_num" for x in nums.columns]
-        boolean_mask = data_to_transform.apply(self.extract_letters_from_text).notna()
-        strings = data_to_transform[boolean_mask].apply(self.extract_letters_from_text)
-
-        data[nums.columns] = nums
-        data[strings.columns] = strings
-
-        return data
+        return pd.concat([nums, strings, data[columns_not_to_process]], axis=1)

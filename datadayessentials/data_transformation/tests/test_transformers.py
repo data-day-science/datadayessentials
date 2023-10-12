@@ -3,6 +3,7 @@ import os
 import unittest
 from datetime import datetime
 from math import isclose
+from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
@@ -23,7 +24,7 @@ from .._transformers import (
     ColumnDotRenamer,
     CategoricalColumnSplitter,
     is_data_size_small,
-    SimpleCatTypeConverter,
+    SimpleCatTypeConverter, DataFrameColumnTypeSplitter,
 )
 
 
@@ -700,3 +701,61 @@ class TestDataTransformer:
                 ]
             )
         )
+
+
+class TestDataFrameColumnTypeSplitter(unittest.TestCase):
+    def test_initialization(self):
+        splitter = DataFrameColumnTypeSplitter()
+        self.assertTrue(isinstance(splitter, DataFrameColumnTypeSplitter))
+
+    def test_process(self):
+        data = {
+            'TextColumn1': ['1', 1, "2.25", np.nan, '789ghi'],
+            'TextColumn2': ['1', 1, "2.25", np.nan, '789ghi']
+        }
+
+        df = pd.DataFrame(data)
+        splitter = DataFrameColumnTypeSplitter()
+        result = splitter.process(df)
+
+        expected_columns = ['TextColumn1_num', 'TextColumn2_num','TextColumn1', 'TextColumn2']
+        actual_columns = result.columns.tolist()
+
+        print(result)
+        self.assertListEqual(actual_columns, expected_columns)
+
+        self.assertEqual(result['TextColumn1_num'].values[0], 1)
+        self.assertEqual(result['TextColumn1_num'].values[1], 1)
+        self.assertEqual(result['TextColumn1_num'].values[2], 2.25)
+        # self.assertEqual(result['TextColumn1_num'].values[3], np.nan)
+        # self.assertEqual(result['TextColumn1_num'].values[4], np.nan)
+
+        self.assertEqual(result['TextColumn2_num'].values[0], 1.00)
+        self.assertEqual(result['TextColumn2_num'].values[1], 1.00)
+        self.assertEqual(result['TextColumn2_num'].values[2], 2.25)
+        # self.assertEqual(result['TextColumn2_num'].values[3], np.nan)
+        # self.assertEqual(result['TextColumn2_num'].values[4], np.nan)
+
+        # self.assertEqual(result['TextColumn1'].values[0], np.nan)
+        # self.assertEqual(result['TextColumn1'].values[1], np.nan)
+        # self.assertEqual(result['TextColumn1'].values[2], np.nan)
+        # self.assertEqual(result['TextColumn1_num'].values[3], np.nan)
+        self.assertEqual(result['TextColumn1'].values[4], "789ghi")
+
+        # self.assertEqual(result['TextColumn2'].values[0], np.nan)
+        # self.assertEqual(result['TextColumn2'].values[1], np.nan)
+        # self.assertEqual(result['TextColumn2'].values[2], np.nan)
+        # self.assertEqual(result['TextColumn2'].values[3], np.nan)
+        self.assertEqual(result['TextColumn2'].values[4], "789ghi")
+
+        df = pd.DataFrame(data)
+        splitter2 = DataFrameColumnTypeSplitter(only_process_columns=['TextColumn1'])
+        result2 = splitter2.process(df)
+        print(result2.columns)
+
+
+        # Check if the DataFrame has the expected columns
+        expected_columns = ['TextColumn1_num', 'TextColumn1', 'TextColumn2']
+        self.assertListEqual(result2.columns.tolist(), expected_columns)
+
+

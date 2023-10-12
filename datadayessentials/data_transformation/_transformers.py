@@ -1,3 +1,6 @@
+import re
+from abc import ABC
+
 from ._base import IDataFrameTransformer, IDataFrameCaster
 import pandas as pd
 import copy
@@ -279,6 +282,7 @@ class DataFrameCaster(IDataFrameCaster):
         new_schema = {key: val["dtype"] for key, val in self.target_schema.items()}
         data = data.astype(new_schema, errors="ignore")
         return data
+
 
 class InvalidPayloadDropperByPrefix(IDataFrameTransformer):
     """
@@ -604,7 +608,6 @@ class CatTypeConverter(IDataFrameTransformer):
 
 
 class SimpleCatTypeConverter(IDataFrameTransformer):
-
     """
     Takes a list of column names and converts those in a dataframe to a category type.
     Date columns are not converted to a different type.
@@ -626,8 +629,12 @@ class SimpleCatTypeConverter(IDataFrameTransformer):
 
     def process(self, df: pd.DataFrame):
         df[self.categorical_columns] = df[self.categorical_columns].astype("category")
-        non_categorical_columns = list(set(df.columns) - set(self.categorical_columns) - set(self.date_columns))
-        df[non_categorical_columns] = df[non_categorical_columns].apply(pd.to_numeric, errors="coerce")  # noqa: E501
+        non_categorical_columns = list(
+            set(df.columns) - set(self.categorical_columns) - set(self.date_columns)
+        )
+        df[non_categorical_columns] = df[non_categorical_columns].apply(
+            pd.to_numeric, errors="coerce"
+        )  # noqa: E501
         return df
 
 
@@ -1009,3 +1016,24 @@ class CategoricalColumnSplitter(IDataFrameTransformer):
                 df_in[col] = cat_series
         df_in = pd.concat([df_in, pd.DataFrame(num_dict)], axis=1)
         return df_in
+
+
+class DataFrameColumnTypeSplitter(IDataFrameTransformer):
+    def __init__(self, only_process_columns: list = None):
+        self.columns_to_process = None
+        if only_process_columns:
+            self.columns_to_process = only_process_columns
+
+    def process(self, data: pd.DataFrame) -> pd.DataFrame:
+        if not self.columns_to_process:
+            self.columns_to_process = data.columns
+
+        columns_not_to_process = [item for item in data.columns if item not in self.columns_to_process]
+
+        data_to_transform = data[self.columns_to_process].astype(str)
+        nums = data_to_transform.apply(lambda col: pd.to_numeric(col, errors='coerce'))
+        strings = pd.DataFrame(np.where(~nums.notna(), data_to_transform, np.nan))
+        nums.columns = [f"{col}_num" for col in data_to_transform.columns]
+        strings.columns = [col for col in data_to_transform.columns]
+
+        return pd.concat([nums, strings, data[columns_not_to_process]], axis=1)

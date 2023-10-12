@@ -1036,12 +1036,18 @@ class DataFrameColumnTypeSplitter(IDataFrameTransformer):
         return letters.where(letters.str.strip() != '', np.nan)
 
     def process(self, data: pd.DataFrame) -> pd.DataFrame:
-        data = data.astype(str)
         if not self.columns_to_process:
             self.columns_to_process = data.columns
 
-        for col in self.columns_to_process:
-            data[f'{col}_numeric'] = self.extract_numbers_from_text(data[col])
-            data[col] = self.extract_letters_from_text(data[col])
+        data_to_transform = data[self.columns_to_process].astype(str)
+        boolean_mask = data_to_transform.apply(self.extract_letters_from_text).notna()
+
+        nums = data_to_transform[~boolean_mask].apply(self.extract_numbers_from_text)
+        nums.columns = [x + "_num" for x in nums.columns]
+
+        strings = data_to_transform[boolean_mask].apply(self.extract_letters_from_text)
+
+        data[nums.columns] = nums
+        data[strings.columns] = strings
 
         return data

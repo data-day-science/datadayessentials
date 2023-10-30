@@ -282,7 +282,7 @@ class DataLakeJsonSaver(IJsonSaver):
         )
         logger.debug("created client")
 
-        file_client.upload_data(json.dumps(data), overwrite=True)
+        file_client.upload_data(json.dumps(data), overwrite=True, timeout=10000, chunk_size=10 * 1024 * 1024)
         logger.debug("created file")
 
 
@@ -325,5 +325,5 @@ class DataLakePickleSaver(IPickleSaver):
         )
         logger.debug("created client")
 
-        file_client.upload_data(pickle.dumps(data), overwrite=True)
+        file_client.upload_data(pickle.dumps(data), overwrite=True, timeout=10000, chunk_size=10 * 1024 * 1024)
         logger.debug("created file")

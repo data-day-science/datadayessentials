@@ -1,3 +1,4 @@
+from azure.core.exceptions import ResourceNotFoundError
 from azureml.core import Workspace
 from azureml.core.authentication import ServicePrincipalAuthentication, InteractiveLoginAuthentication
 
@@ -444,7 +445,11 @@ class ProjectDatasetManager(IProjectDataset):
         Returns:
             list: datasets
         """
-        return self.project_asset_loader._get_project_assets()
+        try:
+            return self.project_asset_loader._get_project_assets()
+        except ResourceNotFoundError as e:
+            print("There are no datasets for this project. ResourceNotFoundError: ", e)
+
 
     def list_dataset_descriptions(
             self, datasets: List = [], version: Dict[str, str] = {}

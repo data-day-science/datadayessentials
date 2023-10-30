@@ -1,3 +1,4 @@
+from azure.core.exceptions import ResourceNotFoundError
 from azureml.core import Workspace
 from azureml.core.authentication import ServicePrincipalAuthentication, InteractiveLoginAuthentication
 

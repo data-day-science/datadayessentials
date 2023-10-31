@@ -1028,12 +1028,15 @@ class DataFrameColumnTypeSplitter(IDataFrameTransformer):
         if not self.columns_to_process:
             self.columns_to_process = data.columns
 
-        columns_not_to_process = [item for item in data.columns if item not in self.columns_to_process]
+        data_to_transform_as_str = data[self.columns_to_process].astype(str)
+        nums = data_to_transform_as_str.apply(lambda col: pd.to_numeric(col, errors='coerce'))
+        strings = pd.DataFrame(np.where(~nums.notna(), data_to_transform_as_str, np.nan))
 
-        data_to_transform = data[self.columns_to_process].astype(str)
-        nums = data_to_transform.apply(lambda col: pd.to_numeric(col, errors='coerce'))
-        strings = pd.DataFrame(np.where(~nums.notna(), data_to_transform, np.nan))
-        nums.columns = [f"{col}_num" for col in data_to_transform.columns]
-        strings.columns = [col for col in data_to_transform.columns]
+        nums.columns = [f"{col}_num" for col in data_to_transform_as_str.columns]
+        strings.columns = [col for col in data_to_transform_as_str.columns]
+        untransformed_columns = [item for item in data.columns if item not in self.columns_to_process]
 
-        return pd.concat([nums, strings, data[columns_not_to_process]], axis=1)
+        nums.reset_index(drop=True, inplace=True)
+        strings.reset_index(drop=True, inplace=True)
+
+        return pd.concat([nums, strings, data[untransformed_columns].reset_index(drop= True)], axis=1)

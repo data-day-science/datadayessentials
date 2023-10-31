@@ -35,6 +35,7 @@ from ._transformers import (
     ColumnDotRenamer,
     CategoricalColumnSplitter,
     SimpleCatTypeConverter,
+    DataFrameColumnTypeSplitter
 )
 
 from ._feature_extraction_helper import FeatureExtractor
@@ -70,4 +71,5 @@ __all__ = [
     "run_pipeline_with_multi_threading",
     "CategoricalColumnSplitter",
     "SimpleCatTypeConverter",
+    "DataFrameColumnTypeSplitter"
 ]

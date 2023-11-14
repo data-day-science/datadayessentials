@@ -25,16 +25,11 @@ class DatabaseAuthentication(IAuthentication):
     credentials_dict = database_authentication.get_credentials()
     ```
     """
-    
-    def __init__(self, database_reference: str = "cf247") -> None:
-        """Creates a DatabaseAuthentication object
 
-        Args:
-            database_reference (str, optional): The reference of the database to connect to that maps to the login details in the Config. Defaults to "dwh".
-        """
+    def __init__(self, database_reference: str = "readable_secondary") -> None:
+        self.database_reference = database_reference
 
-
-    def get_credentials(self) -> dict:
+    def get_credentials(self, primary=False) -> dict:
         """Fetches username and password for connecting to a database
 
         Retrieves the DWH lgin credentials from our secret manager in azure
@@ -45,8 +40,12 @@ class DatabaseAuthentication(IAuthentication):
         logger.debug("Fetching Credentials")
         credentials = super().get_azure_credentials()
 
-        username = Config().get_environment_variable("data-science-username")
-        password = Config().get_environment_variable("data-science-password")
+        if self.database_reference in ["primary", "secondary"]:
+            username = Config().get_environment_variable("prod-db-username")
+            password = Config().get_environment_variable("prod-db-password")
+        else:
+            username = Config().get_environment_variable("dev-db-username")
+            password = Config().get_environment_variable("dev-db-password")
 
         return {"USERNAME": username, "PASSWORD": password}
 
@@ -63,7 +62,7 @@ class SQLServerConnection(ISQLServerConnection):
     """
 
     def __init__(
-        self, credentials: dict, database_reference: str = "readable_secondary"
+        self, credentials: dict, database_reference: str = "readable_secondary",
     ) -> None:
         """Creates a connection object, the server name corresponds to options in the config file.
 
@@ -108,17 +107,17 @@ class SQLServerConnection(ISQLServerConnection):
 
         server = database_info["server"]
         database = database_info["database"]
-        
+        port = database_info['port'] if 'port' in database_info else None
+        application_intent = database_info['application_intent'] if 'application_intent' in database_info else None
+
+        connection_string = "DRIVER={ODBC Driver 17 for SQL Server};SERVER=" + server + ";DATABASE=" + database + ";ENCRYPT=yes;UID=" + self.credentials["USERNAME"] + ";PWD=" + self.credentials["PASSWORD"]
+        if port:
+            connection_string += f";PORT={port}"
+        if application_intent:
+            connection_string += f";ApplicationIntent={application_intent}"
    
         self.cnxn = pyodbc.connect(
-            "DRIVER={ODBC Driver 17 for SQL Server};SERVER="
-            + server
-            + ";DATABASE="
-            + database
-            + ";ENCRYPT=yes;UID="
-            + self.credentials["USERNAME"]
-            + ";PWD="
-            + self.credentials["PASSWORD"]
+            connection_string
         )
 
 

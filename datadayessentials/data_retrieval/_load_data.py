@@ -236,7 +236,7 @@ class TableLoader(ITableLoader):
         logger.debug(f"Creating TableLoader Class")
         self.use_cache = use_cache
         if not authentication:
-            authentication = DatabaseAuthentication()
+            authentication = DatabaseAuthentication(database_reference=server_name)
         self.authetication = authentication
         self.sql_statement = sql_statement
         self.server_name = server_name

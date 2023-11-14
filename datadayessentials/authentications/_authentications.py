@@ -63,7 +63,7 @@ class SQLServerConnection(ISQLServerConnection):
     """
 
     def __init__(
-        self, credentials: dict, database_reference: str = "readable_secondary"
+        self, credentials: dict, database_reference: str = "readable_secondary",
     ) -> None:
         """Creates a connection object, the server name corresponds to options in the config file.
 
@@ -108,17 +108,17 @@ class SQLServerConnection(ISQLServerConnection):
 
         server = database_info["server"]
         database = database_info["database"]
-        
+        port = database_info['port'] if 'port' in database_info else None
+        application_intent = database_info['application_intent'] if 'application_intent' in database_info else None
+
+        connection_string = "DRIVER={ODBC Driver 17 for SQL Server};SERVER=" + server + ";DATABASE=" + database + ";ENCRYPT=yes;UID=" + self.credentials["USERNAME"] + ";PWD=" + self.credentials["PASSWORD"]
+        if port:
+            connection_string += f";PORT={port}"
+        if application_intent:
+            connection_string += f";ApplicationIntent={application_intent}"
    
         self.cnxn = pyodbc.connect(
-            "DRIVER={ODBC Driver 17 for SQL Server};SERVER="
-            + server
-            + ";DATABASE="
-            + database
-            + ";ENCRYPT=yes;UID="
-            + self.credentials["USERNAME"]
-            + ";PWD="
-            + self.credentials["PASSWORD"]
+            connection_string
         )
 
 

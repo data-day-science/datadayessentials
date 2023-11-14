@@ -25,16 +25,11 @@ class DatabaseAuthentication(IAuthentication):
     credentials_dict = database_authentication.get_credentials()
     ```
     """
-    
-    def __init__(self, database_reference: str = "cf247") -> None:
-        """Creates a DatabaseAuthentication object
 
-        Args:
-            database_reference (str, optional): The reference of the database to connect to that maps to the login details in the Config. Defaults to "dwh".
-        """
+    def __init__(self, database_reference: str = "readable_secondary") -> None:
+        self.database_reference = database_reference
 
-
-    def get_credentials(self) -> dict:
+    def get_credentials(self, primary=False) -> dict:
         """Fetches username and password for connecting to a database
 
         Retrieves the DWH lgin credentials from our secret manager in azure
@@ -45,8 +40,12 @@ class DatabaseAuthentication(IAuthentication):
         logger.debug("Fetching Credentials")
         credentials = super().get_azure_credentials()
 
-        username = Config().get_environment_variable("data-science-username")
-        password = Config().get_environment_variable("data-science-password")
+        if self.database_reference in ["primary", "secondary"]:
+            username = Config().get_environment_variable("prod-db-username")
+            password = Config().get_environment_variable("prod-db-password")
+        else:
+            username = Config().get_environment_variable("dev-db-username")
+            password = Config().get_environment_variable("dev-db-password")
 
         return {"USERNAME": username, "PASSWORD": password}
 

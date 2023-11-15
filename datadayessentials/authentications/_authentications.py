@@ -15,7 +15,7 @@ logger.setLevel(logging.DEBUG)
 
 class DatabaseAuthentication(IAuthentication):
     """
-    Class for authenticating with DWH, our data warehouse. 
+    Class for authenticating with DWH, our data warehouse.
     Example Use Case:
     ```
     from datadayessentials.authentications import DatabaseAuthentication, DataLakeAuthentication, SQLServerConnection
@@ -40,8 +40,12 @@ class DatabaseAuthentication(IAuthentication):
         logger.debug("Fetching Credentials")
         credentials = super().get_azure_credentials()
 
-        username = Config().get_environment_variable(f"{self.database_reference}-username")
-        password = Config().get_environment_variable(f"{self.database_reference}-password")
+        username = Config().get_environment_variable(
+            f"{self.database_reference}-username"
+        )
+        password = Config().get_environment_variable(
+            f"{self.database_reference}-password"
+        )
 
         return {"USERNAME": username, "PASSWORD": password}
 
@@ -58,7 +62,9 @@ class SQLServerConnection(ISQLServerConnection):
     """
 
     def __init__(
-        self, credentials: dict, database_reference: str = "readable_secondary",
+        self,
+        credentials: dict,
+        database_reference: str = "readable_secondary",
     ) -> None:
         """Creates a connection object, the server name corresponds to options in the config file.
 
@@ -69,14 +75,15 @@ class SQLServerConnection(ISQLServerConnection):
         Raises:
             ValueError: Raised when the server name is not available in the config file
         """
+        # replace any - with _ in the server name
+        database_reference = database_reference.replace("-", "_")
+
         self.credentials = credentials
-        
+
         try:
             Config().get_environment_variable(f"databases_{database_reference}")
         except KeyError:
-            raise ValueError(
-                f"The server was not recognised"
-            )
+            raise ValueError(f"The server was not recognised")
         self.database_reference = database_reference
         self.connect()
 
@@ -95,26 +102,39 @@ class SQLServerConnection(ISQLServerConnection):
 
     def connect(self):
         """Connect to the SQL server"""
-        logger.debug(
-            f"Connecting to database"
-        )  
+        logger.debug(f"Connecting to database")
 
-        database_info = Config().get_environment_variable(f"databases_{self.database_reference}")
+        database_info = Config().get_environment_variable(
+            f"databases_{self.database_reference}"
+        )
 
         server = database_info["server"]
         database = database_info["database"]
-        port = database_info['port'] if 'port' in database_info else None
-        application_intent = database_info['application_intent'] if 'application_intent' in database_info else None
+        port = database_info["port"] if "port" in database_info else None
+        application_intent = (
+            database_info["application_intent"]
+            if "application_intent" in database_info
+            else None
+        )
 
-        connection_string = "DRIVER={ODBC Driver 17 for SQL Server};SERVER=" + server + ";DATABASE=" + database + ";ENCRYPT=yes;UID=" + self.credentials["USERNAME"] + ";PWD=" + self.credentials["PASSWORD"] + ";Trusted_Connection=yes" + ";TrustServerCertificate=yes"
+        connection_string = (
+            "DRIVER={ODBC Driver 17 for SQL Server};SERVER="
+            + server
+            + ";DATABASE="
+            + database
+            + ";ENCRYPT=yes;UID="
+            + self.credentials["USERNAME"]
+            + ";PWD="
+            + self.credentials["PASSWORD"]
+            + ";Trusted_Connection=yes"
+            + ";TrustServerCertificate=yes"
+        )
         if port:
             connection_string += f";PORT={port}"
         if application_intent:
             connection_string += f";ApplicationIntent={application_intent}"
-   
-        self.cnxn = pyodbc.connect(
-            connection_string
-        )
+
+        self.cnxn = pyodbc.connect(connection_string)
 
 
 class DataLakeAuthentication(IAuthentication):
@@ -129,6 +149,7 @@ class DataLakeAuthentication(IAuthentication):
     dl_credentials = dl_authentication.get_credentials()
     ```
     """
+
     def get_credentials(self):
         """Retrieves azure credentials, for using cloud resources. This object is needed by many other parts of core that rely on cloud services.
 

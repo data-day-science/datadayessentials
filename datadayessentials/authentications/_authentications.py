@@ -77,7 +77,6 @@ class SQLServerConnection(ISQLServerConnection):
         """
 
         self.credentials = credentials
-        raise ValueError(f"The credentials are: {self.credentials}")
 
         try:
             Config().get_environment_variable(f"databases_{database_reference}")
@@ -132,6 +131,8 @@ class SQLServerConnection(ISQLServerConnection):
             connection_string += f";PORT={port}"
         if application_intent:
             connection_string += f";ApplicationIntent={application_intent}"
+
+        raise ValueError(connection_string)
 
         self.cnxn = pyodbc.connect(connection_string)
 

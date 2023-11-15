@@ -4,25 +4,16 @@ import os
 
 import numpy as np
 from datadayessentials.model_inference import (
-    ScorecardServiceHitter,
     IServiceHitter,
-    AffordabilityServiceHitter,
-    PrimePredictionsServiceHitter,
     ServiceHitterCacher,
 )
 from unittest.mock import Mock, patch
 from datadayessentials.model_inference._base import Models
 import pytest
 import pandas as pd
-from azure.ai.ml import MLClient, Input
-from azure.identity import InteractiveBrowserCredential
-import json
-import shutil
+
 from .test_data import test_data_path
-from pathlib import Path
-from datadayessentials.authentications import DataLakeAuthentication
-from datadayessentials.data_retrieval import SchemaFetcher
-from datadayessentials.data_transformation import DataFrameCaster
+
 
 
 class TestIServiceHitter:
@@ -51,87 +42,6 @@ class TestIServiceHitter:
             actual_dir
             == "https://testaccount.blob.core.windows.net/testcontainer/testfilepath/nestedtestfilepath"
         )
-
-
-@pytest.mark.skip(
-    reason="This is an end to end test and will really trigger batchendpoint. Given how long it takes these tests are disabled by default, but can be used when debugging the batch endpoints"
-)
-class TestScorecardServiceHit:
-    @pytest.fixture
-    def dataset(self):
-        print(test_data_path)
-        path = Path(test_data_path).joinpath("scorecard_payload.json")
-        test_payload = json.load(open(path, "r"))
-
-        dataset = (
-            pd.DataFrame(test_payload, dtype=object)
-            .set_index("index")
-            .rename(index={"AppIdentifier": "ApplicationId"})
-            .T
-        )
-        return dataset
-
-    def test_hit_function(self, dataset):
-        model_versions = ["AD3_v1", "AD3_v2"]
-
-        datalake_auth = DataLakeAuthentication()
-        sc_hitter = ScorecardServiceHitter(model_versions, datalake_auth)
-        results = sc_hitter.hit(dataset)
-        assert results.shape[0] > 0
-
-@pytest.mark.skip(
-    reason="This is an end to end test and will really trigger batchendpoint. Given how long it takes these tests are disabled by default, but can be used when debugging the batch endpoints"
-)
-class TestPrimePredictionsServiceHit:
-    @pytest.fixture
-    def dataset(self):
-        print(test_data_path)
-        path = Path(test_data_path).joinpath("prime_predictions_payload.json")
-        test_payload = json.load(open(path, "r"))
-
-        dataset = (
-            pd.DataFrame(test_payload, dtype=object)
-            .set_index("index")
-            .fillna(np.nan)
-            .rename(index={"AppIdentifier": "ApplicationId"})
-            .T
-        )
-        return dataset
-
-    def test_hit_function(self, dataset):
-        model_versions = ["PP4_v1"]
-
-        datalake_auth = DataLakeAuthentication()
-        sc_hitter = PrimePredictionsServiceHitter(model_versions, datalake_auth)
-        results = sc_hitter.hit(dataset)
-        assert results.shape[0] > 0
-
-@pytest.mark.skip(
-    reason="This is an end to end test and will really trigger batchendpoint. Given how long it takes these tests are disabled by default, but can be used when debugging the batch endpoints"
-)
-class TestAffordabilityServiceHit:
-    @pytest.fixture
-    def dataset(self):
-        print(test_data_path)
-        path = Path(test_data_path).joinpath("scorecard_payload.json")
-        test_payload = json.load(open(path, "r"))
-
-        dataset = (
-            pd.DataFrame(test_payload, dtype=object)
-            .set_index("index")
-            .rename(index={"AppIdentifier": "ApplicationId"})
-            .T
-        )
-        return dataset
-
-    def test_hit_function(self, dataset):
-
-        datalake_auth = DataLakeAuthentication()
-        sc_hitter = AffordabilityServiceHitter(datalake_auth)
-        results = sc_hitter.hit(dataset)
-        assert results.shape[0] > 0
-        assert "AFY_check" in results.columns
-        assert "ApplicationId" in results.columns
 
 
 class TestServiceHitterCacher:

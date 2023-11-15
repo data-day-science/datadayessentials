@@ -9,14 +9,12 @@ Both of the above have the ability to score multiple models at the same time, th
 
 
 # from ._base import MLModel
-from ._model_inference import ScorecardServiceHitter, AffordabilityServiceHitter, PrimePredictionsServiceHitter
+from ._model_inference import GenericServiceHitter 
 from ._base import IServiceHitter, ServiceHitterCacher
 
 
 __all__ = [
     'IServiceHitter',
-    'ScorecardServiceHitter',
-    'AffordabilityServiceHitter',
-    'ServiceHitterCacher',
-    'PrimePredictionsServiceHitter'
+    'GenericServiceHitter',
+    'ServiceHitterCacher'
 ]

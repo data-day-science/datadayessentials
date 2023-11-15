@@ -26,7 +26,8 @@ class DatabaseAuthentication(IAuthentication):
     ```
     """
 
-    def __init__(self, database_reference: str = "readable_secondary") -> None:
+    def __init__(self, database_reference: str = "readable-secondary") -> None:
+        database_reference = database_reference.replace("_", "-")
         self.database_reference = database_reference
 
     def get_credentials(self, primary=False) -> dict:
@@ -76,7 +77,9 @@ class SQLServerConnection(ISQLServerConnection):
             ValueError: Raised when the server name is not available in the config file
         """
         # replace any - with _ in the server name
-        database_reference = database_reference.replace("-", "_")
+        database_reference = database_reference.replace(
+            "-", "_"
+        )  # update app config soon so that we dont need this hack
 
         self.credentials = credentials
 

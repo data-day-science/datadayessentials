@@ -232,7 +232,7 @@ class TableLoader(ITableLoader):
     def __init__(
         self,
         sql_statement: str,
-        server_name: str = "readable-secondary",
+        server_name: str = "readable_secondary",
         authentication: IAuthentication = None,
         use_cache: bool = True,
     ):

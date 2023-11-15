@@ -71,13 +71,13 @@ class TableScan:
 
     Args:
         string_to_search (str): The string that table columns must contain to be included in the resulting list.
-        server_name (str): The name of the SQL Server to be queried. Defaults to "readable_secondary".
+        server_name (str): The name of the SQL Server to be queried. Defaults to "readable-secondary".
         use_cache (bool): Whether or not to utilize caching. Defaults to True.
     """
 
     def __init__(self,
                  string_to_search,
-                 server_name: str = "readable_secondary",
+                 server_name: str = "readable-secondary",
                  use_cache: bool = True):
 
         table_loader = TableLoader(

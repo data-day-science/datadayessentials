@@ -232,7 +232,7 @@ class TableLoader(ITableLoader):
     def __init__(
         self,
         sql_statement: str,
-        server_name: str = "readable_secondary",
+        server_name: str = "readable-secondary",
         authentication: IAuthentication = None,
         use_cache: bool = True,
     ):
@@ -241,7 +241,7 @@ class TableLoader(ITableLoader):
         Args:
             authentication (DWHAuthentication): DWHAuthentication instance for retrieving login credentials. Overides the default authentication method.
             sql_statement (str): SQL Statement to run against the SQL server
-            server_name (str, optional): Name of the server, used to retrieve database details from the config file. Defaults to "readable_secondary".
+            server_name (str, optional): Name of the server, used to retrieve database details from the config file. Defaults to "readable-secondary".
             use_cache (bool, optional): If true, cache the results by the SQL statement used. If false then run against the SQL Server and cache the results after for future use. Defaults to True.
         """
         logger.debug(f"Creating TableLoader Class")

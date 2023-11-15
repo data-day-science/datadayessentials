@@ -40,8 +40,8 @@ class DatabaseAuthentication(IAuthentication):
         logger.debug("Fetching Credentials")
         credentials = super().get_azure_credentials()
 
-        username = Config().get_environment_variable(f"{self.database_reference}-username")
-        password = Config().get_environment_variable(f"{self.database_reference}-password")
+        username = Config().get_environment_variable(f"databases_{self.database_reference}-username")
+        password = Config().get_environment_variable(f"databases_{self.database_reference}-password")
 
         return {"USERNAME": username, "PASSWORD": password}
 

@@ -40,12 +40,8 @@ class DatabaseAuthentication(IAuthentication):
         logger.debug("Fetching Credentials")
         credentials = super().get_azure_credentials()
 
-        if self.database_reference in ["primary", "secondary"]:
-            username = Config().get_environment_variable("prod-db-username")
-            password = Config().get_environment_variable("prod-db-password")
-        else:
-            username = Config().get_environment_variable("dev-db-username")
-            password = Config().get_environment_variable("dev-db-password")
+        username = Config().get_environment_variable(f"{self.database_reference}-username")
+        password = Config().get_environment_variable(f"{self.database_reference}-password")
 
         return {"USERNAME": username, "PASSWORD": password}
 
@@ -110,7 +106,7 @@ class SQLServerConnection(ISQLServerConnection):
         port = database_info['port'] if 'port' in database_info else None
         application_intent = database_info['application_intent'] if 'application_intent' in database_info else None
 
-        connection_string = "DRIVER={ODBC Driver 17 for SQL Server};SERVER=" + server + ";DATABASE=" + database + ";ENCRYPT=yes;UID=" + self.credentials["USERNAME"] + ";PWD=" + self.credentials["PASSWORD"]
+        connection_string = "DRIVER={ODBC Driver 17 for SQL Server};SERVER=" + server + ";DATABASE=" + database + ";ENCRYPT=yes;UID=" + self.credentials["USERNAME"] + ";PWD=" + self.credentials["PASSWORD"] + ";Trusted_Connection=yes" + ";TrustServerCertificate=yes"
         if port:
             connection_string += f";PORT={port}"
         if application_intent:

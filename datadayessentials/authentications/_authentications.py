@@ -124,8 +124,8 @@ class SQLServerConnection(ISQLServerConnection):
             + self.credentials["USERNAME"]
             + ";PWD="
             + self.credentials["PASSWORD"]
-            + ";Trusted_Connection=yes"
-            + ";TrustServerCertificate=yes"
+            # + ";Trusted_Connection=yes"
+            # + ";TrustServerCertificate=yes"
         )
         if port:
             connection_string += f";PORT={port}"

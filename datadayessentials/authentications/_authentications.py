@@ -132,8 +132,6 @@ class SQLServerConnection(ISQLServerConnection):
         if application_intent:
             connection_string += f";ApplicationIntent={application_intent}"
 
-        raise ValueError(connection_string)
-
         self.cnxn = pyodbc.connect(connection_string)
 
 

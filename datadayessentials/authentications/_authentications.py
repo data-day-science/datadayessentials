@@ -27,7 +27,6 @@ class DatabaseAuthentication(IAuthentication):
     """
 
     def __init__(self, database_reference: str = "readable-secondary") -> None:
-        database_reference = database_reference.replace("_", "-")
         self.database_reference = database_reference
 
     def get_credentials(self, primary=False) -> dict:
@@ -76,12 +75,9 @@ class SQLServerConnection(ISQLServerConnection):
         Raises:
             ValueError: Raised when the server name is not available in the config file
         """
-        # replace any - with _ in the server name
-        database_reference = database_reference.replace(
-            "-", "_"
-        )  # update app config soon so that we dont need this hack
 
         self.credentials = credentials
+        raise ValueError(f"The credentials are: {self.credentials}")
 
         try:
             Config().get_environment_variable(f"databases_{database_reference}")

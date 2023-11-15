@@ -103,7 +103,7 @@ class SQLServerConnection(ISQLServerConnection):
         logger.debug(f"Connecting to database")
 
         database_info = Config().get_environment_variable(
-            f"databases_{self.database_reference}"
+            f"databases-{self.database_reference}"
         )
 
         server = database_info["server"]

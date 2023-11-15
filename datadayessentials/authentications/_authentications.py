@@ -57,20 +57,20 @@ class SQLServerConnection(ISQLServerConnection):
     from datadayessentials.authentications import DWHAuthentication, DataLakeAuthentication, SQLServerConnection
 
     # Example use case for creating an SQLServerConnection - the server details are specified in the config file
-    sql_server_connection = SQLServerConnection(dwh_credentials_dict, server='readable_secondary')
+    sql_server_connection = SQLServerConnection(dwh_credentials_dict, server='readable-secondary')
     ```
     """
 
     def __init__(
         self,
         credentials: dict,
-        database_reference: str = "readable_secondary",
+        database_reference: str = "readable-secondary",
     ) -> None:
         """Creates a connection object, the server name corresponds to options in the config file.
 
         Args:
             credentials (dict): Credentials generated from DWHAuthentication object
-            server_name (str, optional): The name of the server to connect to (must have atching details in the config file). Defaults to "readable_secondary".
+            server_name (str, optional): The name of the server to connect to (must have atching details in the config file). Defaults to "readable-secondary".
 
         Raises:
             ValueError: Raised when the server name is not available in the config file
@@ -79,7 +79,7 @@ class SQLServerConnection(ISQLServerConnection):
         self.credentials = credentials
 
         try:
-            Config().get_environment_variable(f"databases_{database_reference}")
+            Config().get_environment_variable(f"databases-{database_reference}")
         except KeyError:
             raise ValueError(f"The server was not recognised")
         self.database_reference = database_reference

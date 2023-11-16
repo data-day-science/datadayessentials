@@ -27,13 +27,6 @@ class IDataFrameCaster(IDataFrameTransformer):
         pass
 
 
-class IFeatureExtractor(ABC):
-    def __init__(self):
-        pass
-
-    def run(self):
-        pass
-
 
 class IPreProcessor(ABC):
     def __init__(self):

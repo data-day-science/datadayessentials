@@ -42,67 +42,7 @@ class DataFramePipe(IDataFramePipe):
         return df
 
 
-class CreditDataPreProcessor(IPreProcessor):
-    """A wrapper class to handle preprocessing CRA data for use in scorecards and prime predictions.  The class accepts a dataframe pipe object
-    to handle the steps of preprocessing.  The secondary functionality is to ensure that the data is stripped down to the available features in the raw
-    dataset and to ensure that the categorical
 
-    """
-
-    def __init__(self, pipe: IDataFramePipe):
-        self.pipe = pipe
-        self.extractor = FeatureExtractor()
-
-    def run(
-            self,
-            data: pd.DataFrame,
-            categorical_features: list,
-            unwanted_features: list,
-            required_features: list,
-            target: str = None,
-            verbose=True,
-    ) -> Tuple[pd.DataFrame, list]:
-        """Runs the preprocessing pipeline.  The process first checks that the categoricals and raw features are in the dataset that has been passed.
-        The feature and categorical lists are adjusted accordingly.  The preprocessing steps then run, which may drop some columns.  The features and categorical
-        lists are then updated after this before returning the preprocessed data and categorical list
-
-        Args:
-            data (pd.DataFrame): features
-            categorical_features (list): list of categorical features required
-            unwanted_features (list): list of features to remove
-            required_features (list): exclusive list of features to keep
-            target (str): name of target column
-            verbose (bool, optional): print outputs. Defaults to True.
-
-        Returns:
-            tuple[pd.DataFrame, list]: returns the processed dataset and a list of categorical features
-        """
-
-        feature_columns_, categorical_features_ = self.extractor.run(
-            dataset_features=data.columns,
-            unwanted_features=unwanted_features,
-            required_features=required_features,
-            categorical_features=categorical_features,
-            target=target,
-            verbose=False,
-        )
-
-        for idx, each_step in enumerate(self.pipe.transformers):
-            if isinstance(each_step, CatTypeConverter):
-                self.pipe.transformers[idx].cat_col_names = categorical_features_
-
-        data_processed = self.pipe.run(data[feature_columns_])
-
-        feature_columns_, categorical_features_ = self.extractor.run(
-            dataset_features=data_processed.columns,
-            unwanted_features=unwanted_features,
-            required_features=required_features,
-            categorical_features=categorical_features_,
-            target=target,
-            verbose=verbose,
-        )
-
-        return data_processed[feature_columns_], categorical_features_
 
 
 def run_pipeline_with_multi_threading(pre_processor,

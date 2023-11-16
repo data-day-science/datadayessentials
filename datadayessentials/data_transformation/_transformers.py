@@ -1,7 +1,7 @@
 import re
 from abc import ABC
 
-from ._base import IDataFrameTransformer, IDataFrameCaster
+from ._base import IDataFrameTransformer
 import pandas as pd
 import copy
 from pandas.api.types import is_datetime64_any_dtype as is_datetime
@@ -385,11 +385,6 @@ class GranularColumnDropper(IDataFrameTransformer):
             print("Some of the columns requested are not in the dataframe")
             logger.warn("Some of the columns requested are not in the dataframe")
 
-
-
-
-
-
 class CategoricalColumnSplitter(IDataFrameTransformer):
     """
     Converts a QCB categorical field (insight codes) and splits it into a numerical and a categorical column. Seperating out the number of missed payments and other categorical fields.
@@ -441,7 +436,6 @@ class CategoricalColumnSplitter(IDataFrameTransformer):
                 df_in[col] = cat_series
         df_in = pd.concat([df_in, pd.DataFrame(num_dict)], axis=1)
         return df_in
-
 
 class DataFrameColumnTypeSplitter(IDataFrameTransformer):
     def __init__(self, only_process_columns: list = None):

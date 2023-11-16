@@ -25,29 +25,25 @@ from ._transformers import (
     DominatedColumnDropper,
     GranularColumnDropper,
     CategoricalColumnSplitter,
-    DataFrameColumnTypeSplitter
+    DataFrameColumnTypeSplitter,
 )
 
-from ._feature_extraction_helper import FeatureExtractor
 from ._data_pipe import (
     DataFramePipe,
     run_pipeline_with_multi_threading,
 )
-from ._base import IDataFrameTransformer, IDataFramePipe, IDataFrameCaster
+from ._base import IDataFrameTransformer, IDataFramePipe
 
 
 __all__ = [
     "DataFrameTimeSlicer",
-    "DataFrameCaster",
     "DataFramePipe",
     "ValueReplacer",
     "DominatedColumnDropper",
     "GranularColumnDropper",
-    "IDataFrameCaster",
     "IDataFramePipe",
     "IDataFrameTransformer",
-    "FeatureExtractor",
     "run_pipeline_with_multi_threading",
     "CategoricalColumnSplitter",
-    "DataFrameColumnTypeSplitter"
+    "DataFrameColumnTypeSplitter",
 ]

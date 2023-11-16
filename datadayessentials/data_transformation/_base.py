@@ -18,15 +18,6 @@ class IDataFramePipe(ABC):
         pass
 
 
-class IDataFrameCaster(IDataFrameTransformer):
-    def __init__(self, input_schema: dict):
-        pass
-
-    @abstractmethod
-    def process(self, data_frame: pd.DataFrame):
-        pass
-
-
 
 class IPreProcessor(ABC):
     def __init__(self):

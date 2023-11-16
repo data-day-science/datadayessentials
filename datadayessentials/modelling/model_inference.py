@@ -1,5 +1,5 @@
 from ._base import IInferenceModel
-import flaml
+
 import pandas as pd
 import numpy as np
 
@@ -9,7 +9,7 @@ class lightgbmInferenceModel(IInferenceModel):
     Class for inference model
     """
 
-    def __init__(self, model:flaml.AutoML):
+    def __init__(self, model):
         self.model = model.model
         self.feature_names_ = model.feature_names_
         self.feature_importances_ = model.feature_importances_

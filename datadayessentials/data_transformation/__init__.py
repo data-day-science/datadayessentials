@@ -6,7 +6,6 @@ Below is a summary of what is available in this module, followed by an example u
 ### Transformers
 - ColumnRenamer: Renames columns based on a dictionary mapping
 - DataFrameTimeSlicer: Slices (or filters) the DataFrame based on a date range and the date column name
-- DataFrameCaster: Cast the DataFrame to a new schema
 - TierMapper: Map from one set of Scorecard tiers to another
 - InvalidPayloadDropperByPrefix: Drops rows where there are NaN values in a subset of columns that begin with the prefix's provided
 - ValueReplacer: Replace a set of unwanted values with a fill value across the entire DataFrame

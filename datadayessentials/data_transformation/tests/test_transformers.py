@@ -12,26 +12,14 @@ import pytest
 
 from .test_data import test_path
 from .._transformers import (
-    ColumnRenamer,
     DataFrameTimeSlicer,
-    DataFrameCaster,
-    InvalidPayloadDropperByPrefix,
-    GranularColumnDropper,
-    ColumnFiller,
-    PreprocessingError,
-    LowerCaseTransformer,
-    CatTypeConverter,
-    ColumnDotRenamer,
     CategoricalColumnSplitter,
     is_data_size_small,
-    SimpleCatTypeConverter, DataFrameColumnTypeSplitter,
+    DataFrameColumnTypeSplitter,
 )
-
 
 def to_datetime(str_datetime):
     return datetime.strptime(str_datetime, "%Y%m%d")
-
-
 
 
 class TestDataFrameTimeSlicer:

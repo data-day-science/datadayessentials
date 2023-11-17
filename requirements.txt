@@ -2,6 +2,7 @@ pandas
 pyodbc
 numpy
 seaborn
+mlflow
 azureml.core
 azure.storage.blob
 matplotlib

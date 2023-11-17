@@ -3,9 +3,7 @@ from typing import Union
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from mlflow.models.model import ModelInfo
 from typing import Union, Tuple, List
-from datadayessentials.modelling.models._base import IModelSavingLoadingAttribute
 
 
 class ICatboostMetric(ABC):
@@ -38,7 +36,7 @@ class IExperimentManager(ABC):
         experiment_description: str,
         model_metrics: dict,
         versioning_meta_data: dict,
-        model: IModelSavingLoadingAttribute,
+        model,
     ) -> str:
         pass
 
@@ -168,19 +166,19 @@ class IModelEvaluator(ABC):
         """
         pass
 
-   
     class IInferenceModel(ABC):
         """Interface for inference model"""
-        
+
         feature_names_: List[str] = None
         feature_importances_: List[float] = None
         model = None
-            
+
         @abstractmethod
         def __init__(self, model):
             if not model.model:
-                raise ValueError("Model has not been fit.  Only a trained model should be passed to this class")
-            
+                raise ValueError(
+                    "Model has not been fit.  Only a trained model should be passed to this class"
+                )
 
         @abstractmethod
         def predict(self, X: pd.DataFrame) -> np.array:
@@ -205,5 +203,3 @@ class IModelEvaluator(ABC):
                 np.array: array of class probabilities for the given input data
             """
             pass
-
-        

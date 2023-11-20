@@ -43,9 +43,6 @@ class InferenceModel(IInferenceModel):
     """
     Class for inference model
     """
-    model = None
-    feature_names_ = None
-    feature_importances_ = None
 
     def __init__(self, model):
         

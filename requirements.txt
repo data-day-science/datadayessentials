@@ -13,7 +13,7 @@ azure-keyvault-secrets
 pyyaml
 catboost
 lightgbm
-
+xgboost
 azure-ai-ml
 IPython
 coverage

@@ -3,6 +3,7 @@ from ..model_inference import InferenceModel, lightgbmInferenceModel
 import unittest
 from unittest.mock import patch, MagicMock
 import pytest
+from lightgbm import LGBMClassifier
 
 
 class TestInferenceModel(unittest.TestCase):
@@ -36,7 +37,13 @@ class TestInferenceModel(unittest.TestCase):
 class TestlightgbmInferenceModel(unittest.TestCase):
     def setUp(self):
         self.model = MagicMock()
-        self.model.model = MagicMock()
+        self.model.model = MagicMock(spec=LGBMClassifier)
+
+        self.model.model.fit = MagicMock()
+        self.model.model.predict = MagicMock(return_value=[1, 2, 3])
+        self.model.model.predict_proba = MagicMock(return_value=[1, 2, 3])
+
+
         self.model.feature_names_ = ["a", "b", "c"]
         self.model.feature_importances_ = [0.1, 0.2, 0.3]
         self.inference_model = lightgbmInferenceModel(self.model)

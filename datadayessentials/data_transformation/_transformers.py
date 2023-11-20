@@ -467,3 +467,121 @@ class DataFrameColumnTypeSplitter(IDataFrameTransformer):
         return pd.concat(
             [nums, strings, data[untransformed_columns].reset_index(drop=True)], axis=1
         )
+
+class CatTypeConverter(IDataFrameTransformer):
+    """
+    Converts the type of specified columns to category and the rest to numeric.
+    This worked for speedy card (one column dataframe) and normal card
+    Example Use Case:
+    ```python
+    from datadayessentials.data_transformation import CatTypeConverter
+
+    categorical_columns = ['shape', 'color']
+    cat_converter = CatTypeConverter(categorical_columns)
+
+    input_df = pd.DataFrame({
+        'shape': ['square', 'circle', 'oval'],
+        'color': ['brown', 'brown', 'white'],
+        'size': ['5', '5', '6']
+    })
+    output_df = cat_converter.process(input_df)
+    # output_df will have categorical dtypes for 'shape' and 'color' and 'size' will be converted into float type
+    ```
+
+    """
+
+    def __init__(self, cat_col_names: List[str] = [], date_col_names: List[str] = []):
+        """Instantiate a CatTypeConverter
+
+        Args:
+            cat_col_names (List[str], optional): the column names to be converted to category type. Defaults to [].
+            date_col_names (List[str], optional): The names of the date columns (and not to convert)
+        """
+        self.cat_col_names = cat_col_names
+        self.date_col_names = date_col_names
+
+    def process(
+            self, df: pd.DataFrame, verbose: bool = False, create_copy=False
+    ) -> pd.DataFrame:
+        """Apply the column conversion returning a new dataframe
+
+        Args:
+            df (pd.DataFrame): input dataframe to convert to categorical type
+            verbose (bool, optional): Enable additional logging if enabled. Defaults to False.
+            create_copy (bool, optional): If true, return a copy of the dataframe. Defaults to False.
+
+        Raises:
+            PreprocessingError: Raised if there is any issue during applying the processing
+
+        Returns:
+            pd.DataFrame: Converted dataframe
+
+        """
+        try:
+            if create_copy:
+                if not is_data_size_small(df):
+                    print(
+                        "Data Size is too large to copy. Applying transformation on original dataframe"
+                    )
+                    df_out = df
+                else:
+                    df_out = copy.deepcopy(df)
+            else:
+                df_out = df
+
+            # We still want the function to complete in the case when no categorical columns are passed.
+            if len(self.cat_col_names) == 0:
+                if "0" in df_out.columns:
+                    df_out["0"] = pd.to_numeric(df_out["0"], errors="coerce")
+                else:
+                    df_out = df_out.apply(pd.to_numeric, errors="coerce")
+                return df_out
+
+            if set(self.cat_col_names).issubset(set(df_out.index)):
+                df_cat = copy.deepcopy(df_out.loc[self.cat_col_names])
+                df_cat.fillna("NaN", inplace=True)
+                df_cat["0"] = df_cat["0"].astype("str")
+                df_cat["0"] = df_cat["0"].astype("category")
+
+                df_dates = df_out.loc[self.date_col_names]
+
+                df_out.drop(self.cat_col_names, inplace=True)
+                df_out.drop(self.date_col_names, inplace=True)
+
+                df_out["0"] = pd.to_numeric(df_out["0"], errors="coerce")
+
+                df_out = pd.concat([df_out.T, df_cat.T, df_dates.T], axis=1)
+
+                if verbose:
+                    print(
+                        "{} out of {} features changed to category type and other {} to numeric".format(
+                            len(df_cat.index), len(df.index), len(df_out.index)
+                        )
+                    )
+            elif set(self.cat_col_names).issubset(set(df_out.columns)):
+                df_cat = copy.deepcopy(df_out[self.cat_col_names])
+                df_cat.fillna("NaN", inplace=True)
+                df_cat = df_cat.astype("str")
+                df_cat = df_cat.astype("category")
+                df_out.drop(columns=self.cat_col_names, inplace=True)
+                numeric_cols = [
+                    col for col in df_out.columns if col not in self.date_col_names
+                ]
+                df_out[numeric_cols] = df_out[numeric_cols].apply(
+                    lambda x: pd.to_numeric(x, errors="coerce")
+                    if x.name not in self.cat_col_names
+                    else x
+                )
+                df_out = pd.concat([df_out, df_cat], axis=1)
+                if verbose:
+                    print(
+                        "{} out of {} features changed to category type and other {} to numeric".format(
+                            len(df_cat.columns), len(df.columns), len(df_out.columns)
+                        )
+                    )
+            else:
+                msg = "some of the requested feature names are not included in the dataframe"
+                raise PreprocessingError(type(self).__name__, msg)
+        except Exception as err:
+            raise PreprocessingError(type(self).__name__, err)
+        return df_out

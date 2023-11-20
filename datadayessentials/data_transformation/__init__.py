@@ -25,6 +25,7 @@ from ._transformers import (
     GranularColumnDropper,
     CategoricalColumnSplitter,
     DataFrameColumnTypeSplitter,
+    CatTypeConverter
 )
 
 from ._data_pipe import (
@@ -35,6 +36,7 @@ from ._base import IDataFrameTransformer, IDataFramePipe
 
 
 __all__ = [
+    "CatTypeConverter",
     "DataFrameTimeSlicer",
     "DataFramePipe",
     "ValueReplacer",

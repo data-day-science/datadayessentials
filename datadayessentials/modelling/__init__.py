@@ -9,8 +9,10 @@ from .experiment_manager import ExperimentManager
 from .utils import DataSplitter, get_workspace
 from .model_manager import ModelManager
 from .model_evaluator import ModelEvaluator
+from .models import SklearnModel
 
 __all__ = [
+    "SklearnModel",
     "ModelManager",
     "DataSplitter",
     "ModelEvaluator",

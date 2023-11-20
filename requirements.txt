@@ -18,4 +18,5 @@ azure-ai-ml
 IPython
 coverage
 genbadge
+flaml
 azure-appconfiguration

@@ -11,6 +11,9 @@ azure-identity
 azure-keyvault
 azure-keyvault-secrets
 pyyaml
+catboost
+lightgbm
+
 azure-ai-ml
 IPython
 coverage

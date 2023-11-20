@@ -15,6 +15,7 @@ from .models import SklearnModel, ModelFactory
 __all__ = [
     "SklearnModel",
     "ModelManager",
+    "ModelFactory",
     "DataSplitter",
     "ModelEvaluator",
     "ExperimentManager",

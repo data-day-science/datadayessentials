@@ -1,6 +1,5 @@
 from typing import List
 from ._base import IDataFrameValidator
-from ..data_transformation import DataFrameCaster
 import pandas as pd
 import numpy as np
 import logging

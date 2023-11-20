@@ -20,11 +20,7 @@ from ._base import (
     IPickleLoader,
     IParquetLoader,
 )
-import copy
-from datadayessentials.data_transformation._transformers import (
-    DataFrameCaster,
-    DataFrameTimeSlicer,
-)
+
 from ._validate_data import DataFrameValidator
 from ._uri_generators import URIGenerator
 import pandas as pd
@@ -33,11 +29,9 @@ import logging
 from ..config._config import Config
 from azure.storage.filedatalake import (
     DataLakeServiceClient,
-    FileSystemProperties,
-    FileSystemClient,
 )
-from azure.storage.blob import StorageStreamDownloader, BlobServiceClient, BlobClient
-from datetime import datetime, date
+from azure.storage.blob import BlobServiceClient, BlobClient
+from datetime import datetime
 from ._save_data import BlobLocation
 import os
 from pathlib import Path
@@ -45,8 +39,6 @@ import re
 import hashlib, base64
 from azure.core.exceptions import ResourceNotFoundError
 import json, pickle
-
-from datadayessentials import authentications
 
 from azure.core.exceptions import HttpResponseError
 
@@ -420,7 +412,6 @@ class DataFrameTap(IDataFrameTap):
         """
         self.data_loader = data
         self.validator: DataFrameValidator = DataFrameValidator(data_schema)
-        self.caster: DataFrameCaster = DataFrameCaster(target_schema)
 
     def run(self) -> pd.DataFrame:
         """Runs the Tap (load, validate, cast) and returns a pandas dataframe
@@ -430,8 +421,8 @@ class DataFrameTap(IDataFrameTap):
         """
         data = self.data_loader.load()
         validated_data = self.validator.validate(data)
-        type_transformed_data = self.caster.process(validated_data)
-        return type_transformed_data
+
+        return validated_data
 
 
 class AzureBlobLoader(IAzureBlobLoader):

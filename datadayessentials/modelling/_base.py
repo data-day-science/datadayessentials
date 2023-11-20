@@ -3,9 +3,7 @@ from typing import Union
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from mlflow.models.model import ModelInfo
 from typing import Union, Tuple, List
-from datadayessentials.modelling.models._base import IModelSavingLoadingAttribute
 
 
 class ICatboostMetric(ABC):
@@ -38,7 +36,7 @@ class IExperimentManager(ABC):
         experiment_description: str,
         model_metrics: dict,
         versioning_meta_data: dict,
-        model: IModelSavingLoadingAttribute,
+        model,
     ) -> str:
         pass
 
@@ -167,3 +165,5 @@ class IModelEvaluator(ABC):
             dict: returns a dictionary of the figure object and the dictionary of metrics
         """
         pass
+
+    

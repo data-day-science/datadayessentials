@@ -13,7 +13,7 @@ from .._load_data import (
     DataCacher,
     DataLakeJsonLoader,
     DataLakePickleLoader,
-    DataLakeParquetLoader
+    DataLakeParquetLoader,
 )
 from .._save_data import BlobLocation
 import pandas as pd
@@ -43,9 +43,11 @@ class FakeURIGenerator(IURIGenerator):
             BlobLocation("storate_acc", "container_name", "filepath", "filename")
         ] * self.n
 
+
 class content_settings:
-    def __init__(self,content_type):
+    def __init__(self, content_type):
         self.content_type = content_type
+
 
 class TestTableLoader(unittest.TestCase):
     @mock.patch("pandas.read_sql")
@@ -58,7 +60,9 @@ class TestTableLoader(unittest.TestCase):
             return_value={"USERNAME": "username", "PASSWORD": "password"}
         )
         sql_statement = "I AM AN SQL STATEMENT"
-        table_loader = TableLoader(sql_statement, use_cache=False, authentication=authentication)
+        table_loader = TableLoader(
+            sql_statement, use_cache=False, authentication=authentication
+        )
         df = table_loader.load()
         logger.debug(f"SQL statement called: {pyodbc_mock.call_args.args[0]}")
         assert pyodbc_mock.called
@@ -160,47 +164,97 @@ class TestDataLakeJsonLoader(unittest.TestCase):
         # Evaluate
         self.assertDictEqual(expected_dict, output_dict)
 
+
 class TestDataLakeParquetLoader(unittest.TestCase):
-    #This class should test
-    #1. That the parquet loader can load a parquet file
-    #2. That the parquet loader wont load a file if it isnt a parquet file
-    #3. That the parquet Loader will throw an error if the file doesnt exist
+    # This class should test
+    # 1. That the parquet loader can load a parquet file
+    # 2. That the parquet loader wont load a file if it isnt a parquet file
+    # 3. That the parquet Loader will throw an error if the file doesnt exist
 
-    #each test should create the required  test files and then delete at the end using set up and tear down methods
+    # each test should create the required  test files and then delete at the end using set up and tear down methods
 
-    #set up method
+    # set up method
     def setUp(self):
-        #if a test parquet file doesnt exist in the test_data folder, generate a test parquet file to add to the test_data folder
-        if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_data", "test_parquet.parquet")):
+        # if a test parquet file doesnt exist in the test_data folder, generate a test parquet file to add to the test_data folder
+        if not os.path.exists(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "test_data",
+                "test_parquet.parquet",
+            )
+        ):
             parquet_file = pd.DataFrame({"col1": [1, 2, 3], "col2": [1, 2, 3]})
-            parquet_file.to_parquet(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_data", "test_parquet.parquet"))
+            parquet_file.to_parquet(
+                os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)),
+                    "test_data",
+                    "test_parquet.parquet",
+                )
+            )
 
-        #if a test csv file called wrong_file_format.csv does not exist in the test_data folder, generate a test csv file to add to the test_data folder
-        if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_data", "wrong_file_format.csv")):
+        # if a test csv file called wrong_file_format.csv does not exist in the test_data folder, generate a test csv file to add to the test_data folder
+        if not os.path.exists(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "test_data",
+                "wrong_file_format.csv",
+            )
+        ):
             csv_file = pd.DataFrame({"col1": [1, 2, 3], "col2": [1, 2, 3]})
-            csv_file.to_csv(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_data", "wrong_file_format.csv"))
+            csv_file.to_csv(
+                os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)),
+                    "test_data",
+                    "wrong_file_format.csv",
+                )
+            )
 
-        
-        
-
-    #tear down method
+    # tear down method
     def tearDown(self):
-        #if a test parquet file exists in the test_data folder, delete it
-        if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_data", "test_parquet.parquet")):
-            os.remove(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_data", "test_parquet.parquet"))
+        # if a test parquet file exists in the test_data folder, delete it
+        if os.path.exists(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "test_data",
+                "test_parquet.parquet",
+            )
+        ):
+            os.remove(
+                os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)),
+                    "test_data",
+                    "test_parquet.parquet",
+                )
+            )
 
-        #if a test csv file called wrong_file_format.csv exists in the test_data folder, delete it
-        if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_data", "wrong_file_format.csv")):
-            os.remove(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_data", "wrong_file_format.csv"))
-            
+        # if a test csv file called wrong_file_format.csv exists in the test_data folder, delete it
+        if os.path.exists(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "test_data",
+                "wrong_file_format.csv",
+            )
+        ):
+            os.remove(
+                os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)),
+                    "test_data",
+                    "wrong_file_format.csv",
+                )
+            )
 
     @mock.patch("azure.storage.filedatalake.DataLakeFileClient.download_file")
     @mock.patch("azure.storage.filedatalake.DataLakeFileClient.exists")
     @mock.patch(
         "azure.storage.filedatalake.DataLakeFileClient.get_file_properties",
-        return_value=SimpleNamespace(last_modified=datetime(2022, 1, 1),content_settings= content_settings(content_type="application/octet-stream")),
+        return_value=SimpleNamespace(
+            last_modified=datetime(2022, 1, 1),
+            content_settings=content_settings(content_type="application/octet-stream"),
+        ),
     )
-    def test_load_file(self, mock_file_properties, mock_file_exists, mock_download_file):
+    def test_load_file(
+        self, mock_file_properties, mock_file_exists, mock_download_file
+    ):
         # Prepare
         authentication = mock.MagicMock()
         authentication.get_credentials = mock.MagicMock(
@@ -228,15 +282,19 @@ class TestDataLakeParquetLoader(unittest.TestCase):
         # Evaluate
         assert output_df.equals(expected_df)
 
-    #test 2
+    # test 2
     @mock.patch("azure.storage.filedatalake.DataLakeFileClient.download_file")
     @mock.patch("azure.storage.filedatalake.DataLakeFileClient.exists")
     @mock.patch(
         "azure.storage.filedatalake.DataLakeFileClient.get_file_properties",
-        return_value=SimpleNamespace(last_modified=datetime(2022, 1, 1),content_settings= content_settings(content_type="not_a_csv")),
+        return_value=SimpleNamespace(
+            last_modified=datetime(2022, 1, 1),
+            content_settings=content_settings(content_type="not_a_csv"),
+        ),
     )
-
-    def test_load_non_parquet_file(self, mock_file_properties, mock_file_exists, mock_download_file):
+    def test_load_non_parquet_file(
+        self, mock_file_properties, mock_file_exists, mock_download_file
+    ):
         # Prepare
 
         authentication = mock.MagicMock()
@@ -261,18 +319,23 @@ class TestDataLakeParquetLoader(unittest.TestCase):
         # Test
         parquet_loader = DataLakeParquetLoader(authentication)
         with pytest.raises(ValueError):
-            output_df = parquet_loader.load(BlobLocation("dsafs", "asd", "sadfa", "fasdf"))
+            output_df = parquet_loader.load(
+                BlobLocation("dsafs", "asd", "sadfa", "fasdf")
+            )
 
     @mock.patch("azure.storage.filedatalake.DataLakeFileClient.download_file")
     @mock.patch("azure.storage.filedatalake.DataLakeFileClient.exists")
     @mock.patch(
         "azure.storage.filedatalake.DataLakeFileClient.get_file_properties",
-        return_value=SimpleNamespace(last_modified=datetime(2022, 1, 1),content_settings= content_settings(content_type="application/octet-stream")),
+        return_value=SimpleNamespace(
+            last_modified=datetime(2022, 1, 1),
+            content_settings=content_settings(content_type="application/octet-stream"),
+        ),
     )
-    def test_load_non_existent_file(self, mock_file_properties, mock_file_exists, mock_download_file):
+    def test_load_non_existent_file(
+        self, mock_file_properties, mock_file_exists, mock_download_file
+    ):
         # Prepare
-        
-        
 
         authentication = mock.MagicMock()
         authentication.get_credentials = mock.MagicMock(
@@ -284,7 +347,9 @@ class TestDataLakeParquetLoader(unittest.TestCase):
         # Test
         parquet_loader = DataLakeParquetLoader(authentication)
         with pytest.raises(FileNotFoundError):
-            output_df = parquet_loader.load(BlobLocation("dsafs", "asd", "sadfa", "fasdf"))
+            output_df = parquet_loader.load(
+                BlobLocation("dsafs", "asd", "sadfa", "fasdf")
+            )
 
     def test_load_folder(self):
         # Prepare
@@ -296,15 +361,16 @@ class TestDataLakeParquetLoader(unittest.TestCase):
         # create a BlobLocation object with a folder path but no filename
         blob_location = BlobLocation("dsafs", "asd", "sadfa", None)
 
-        #assert that the _load_folder method is called to handle a folder path
-        with mock.patch.object(DataLakeParquetLoader, "_load_folder") as mock_load_folder:
+        # assert that the _load_folder method is called to handle a folder path
+        with mock.patch.object(
+            DataLakeParquetLoader, "_load_folder"
+        ) as mock_load_folder:
             parquet_loader = DataLakeParquetLoader(authentication)
             parquet_loader.load(blob_location)
             mock_load_folder.assert_called_once_with(blob_location)
 
     def test_load_folder_creates_subfolder_in_cache(self):
-
-         # Prepare
+        # Prepare
         authentication = mock.MagicMock()
         authentication.get_credentials = mock.MagicMock(
             return_value={"USERNAME": "username", "PASSWORD": "password"}
@@ -314,26 +380,25 @@ class TestDataLakeParquetLoader(unittest.TestCase):
         blob_location = BlobLocation("dsafs", "asd", "sadfa", None)
 
         # mock DataLakeParquetLoader._load_file and DataLakeParquetLoader._get_available_files method to return a list of objects with a name attribute that holds a string
-        with mock.patch.object(DataLakeParquetLoader, "_load_file") as mock_load_file, mock.patch.object(DataLakeParquetLoader, "_get_available_files") as mock_get_available_files:
-            mock_load_file.return_value = pd.DataFrame({"col1": [1, 2, 3], "col2": [1, 2, 3]})
-            mock_get_available_files.return_value = [SimpleNamespace(name="test_file.parquet")]
+        with mock.patch.object(
+            DataLakeParquetLoader, "_load_file"
+        ) as mock_load_file, mock.patch.object(
+            DataLakeParquetLoader, "_get_available_files"
+        ) as mock_get_available_files:
+            mock_load_file.return_value = pd.DataFrame(
+                {"col1": [1, 2, 3], "col2": [1, 2, 3]}
+            )
+            mock_get_available_files.return_value = [
+                SimpleNamespace(name="test_file.parquet")
+            ]
             parquet_loader = DataLakeParquetLoader(authentication)
             parquet_loader.load(blob_location)
 
-            #assert that the _load_file method is called with the correct BlobLocation object
-            mock_load_file.assert_called_once_with(BlobLocation("dsafs", "asd", "sadfa", "test_file.parquet"),cache_subfolder="sadfa")
-            
-        
-
-
-
-
-
-
-
-
-        
-    
+            # assert that the _load_file method is called with the correct BlobLocation object
+            mock_load_file.assert_called_once_with(
+                BlobLocation("dsafs", "asd", "sadfa", "test_file.parquet"),
+                cache_subfolder="sadfa",
+            )
 
 
 class MockStorageStreamDownloader:
@@ -342,6 +407,7 @@ class MockStorageStreamDownloader:
 
     def readall(self):
         return self.bytes
+
 
 class TestDataLakePickleLoader(unittest.TestCase):
     @mock.patch("azure.storage.filedatalake.DataLakeFileClient.download_file")
@@ -355,7 +421,7 @@ class TestDataLakePickleLoader(unittest.TestCase):
         obj = pickle.dumps("Hello World!")
         obj_buf = MockStorageStreamDownloader(obj)
         obj_io = BytesIO(obj)
-        obj_io.seek(0) 
+        obj_io.seek(0)
         expected_obj = pickle.load(obj_io)
         mock_download_file.side_effect = [copy.deepcopy(obj_buf)]
 
@@ -410,12 +476,11 @@ class TestDataTap:
         return_value=1,
     )
     @mock.patch.object(IDataFrameLoader, "__abstractmethods__", set())
-    @mock.patch("datadayessentials.data_transformation.DataFrameCaster.process")
     @mock.patch(
         "datadayessentials.data_retrieval._validate_data.DataFrameValidator.validate",
         return_value=2,
     )
-    def test_run2(self, mock_validate, mock_process, mock_load):
+    def test_run2(self, mock_validate, mock_load):
         # data = Mock()
         # data.load.return_value = 1
         data = IDataFrameLoader()
@@ -423,4 +488,3 @@ class TestDataTap:
         data_tap = DataFrameTap(data, DEFAULT, DEFAULT)
         results = data_tap.run()
         mock_validate.assert_called_once_with(1)
-        mock_process.assert_called_once_with(2)

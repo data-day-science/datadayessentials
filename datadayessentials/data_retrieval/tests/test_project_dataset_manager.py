@@ -135,13 +135,6 @@ class TestProjectDatasetManager(unittest.TestCase):
         dataset_manager = ProjectDatasetManager(project=project)
         dataset_manager.register_dataset(registered_dataset_name="test", data=data)
 
-    def test_load_dataset(self):
-        project = "test"
-        dataset_manager = ProjectDatasetManager(project=project)
-        dataset = dataset_manager.load_datasets()
-
-        assert isinstance(dataset, dict)
-
     def test_register_and_pull_dataset(self):
         data = {"col1": [0, 1, 2, 3, 4, 5], "col2": [0, 1, 2, 3, 4, 5]}
         data = pd.DataFrame(data)

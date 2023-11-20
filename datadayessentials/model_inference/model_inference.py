@@ -24,7 +24,7 @@ class lightgbmInferenceModel(IInferenceModel):
             np.array: array of predictions for the given input data
         """
         return self.model.predict(X)
-    
+
     def predict_proba(self, X: pd.DataFrame) -> np.array:
         """Predicts the class probabilities for the given input data
 
@@ -37,18 +37,17 @@ class lightgbmInferenceModel(IInferenceModel):
         return self.model.predict_proba(X)
 
 
-
-
-class InferenceModel(IInferenceModel):
+class InferenceModel:
     """
     Class for inference model
     """
 
-    def __init__(self, model):
-        
+    def __init__(self, model: IInferenceModel):
         if not model.model:
-            raise ValueError("Model has not been fit.  Only a trained model should be passed to this class")
-        
+            raise ValueError(
+                "Model has not been fit.  Only a trained model should be passed to this class"
+            )
+
         self.model = model.model
         self.feature_names_ = model.feature_names_
         self.feature_importances_ = model.feature_importances_
@@ -63,7 +62,7 @@ class InferenceModel(IInferenceModel):
             np.array: array of predictions for the given input data
         """
         return self.model.predict(X)
-    
+
     def predict_proba(self, X: pd.DataFrame) -> np.array:
         """Predicts the class probabilities for the given input data
 
@@ -74,4 +73,3 @@ class InferenceModel(IInferenceModel):
             np.array: array of class probabilities for the given input data
         """
         return self.model.predict_proba(X)
-        

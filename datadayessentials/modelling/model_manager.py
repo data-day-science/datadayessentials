@@ -61,9 +61,6 @@ class ModelManager(IModelManager):
         Args:
             run_id (str): Run id of the model
             folder_to_save_model (str): Folder to save the model files
-
-        Examples:
-            mlflow_manager.workspace.get_run("2cf2751a-e2b8-44a7-bad0-a3f2d923cb2e").download_files(output_directory="/tmp/model")
         """
 
         folder_to_save_model = (

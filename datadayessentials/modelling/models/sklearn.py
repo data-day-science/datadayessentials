@@ -17,6 +17,13 @@ class SklearnModel(IModel, IModelSavingLoadingAttribute):
     
     def predict_proba(self, X, *args, **kwargs):
         return self.model.predict_proba(X, *args, **kwargs)
+    
+    def get_categorical_features_names(self):
+        features = self.model.get_feature_names()
+        categorical_features = [x for x in features if x.endswith("_num")]
+        
+        categorical_features = [x[:-4] for x in categorical_features]
+        return categorical_features
 
     def _save_model_to_folder(
         self, model_save_path: str, input_example: object = None

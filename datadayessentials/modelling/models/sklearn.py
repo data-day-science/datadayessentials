@@ -44,7 +44,7 @@ class SklearnModel(IModel, IModelSavingLoadingAttribute):
             meta_data = mlflow.sklearn.save_model(
                 self.model, model_save_path, 
             )
-        self.save_categorical_features(model_save_path)
+        self._save_categorical_features(model_save_path)
         return meta_data
     
     def _save_categorical_features(self, save_path: str):
@@ -59,5 +59,5 @@ class SklearnModel(IModel, IModelSavingLoadingAttribute):
     @classmethod
     def load_model_from_folder(cls, model_folder):
         model = mlflow.sklearn.load_model(model_folder)
-        categorical_features = cls.load_categorical_features(model_folder)
+        categorical_features = cls._load_categorical_features(model_folder)
         return cls(model=model, categorical_features=categorical_features)

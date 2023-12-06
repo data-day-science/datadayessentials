@@ -46,13 +46,13 @@ class SklearnModel(IModel, IModelSavingLoadingAttribute):
         self.save_categorical_features(model_save_path)
         return meta_data
     
-    def save_categorical_features(self, model_save_path: str):
-        with open(f"{model_save_path}/categorical_features.txt", "w") as f:
+    def _save_categorical_features(self, save_path: str):
+        with open(f"{save_path}/categorical_features.txt", "w") as f:
             f.write("\n".join(self.categorical_features))
 
     @staticmethod
-    def load_categorical_features(model_save_path: str):
-        with open(f"{model_save_path}/categorical_features.txt", "r") as f:
+    def _load_categorical_features(load_path: str):
+        with open(f"{load_path}/categorical_features.txt", "r") as f:
             return f.read().split("\n")
 
     @classmethod

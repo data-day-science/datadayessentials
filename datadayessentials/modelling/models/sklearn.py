@@ -5,6 +5,7 @@ import mlflow
 
 
 class SklearnModel(IModel, IModelSavingLoadingAttribute):
+    categorical_features: List[str] = None
     def __init__(self, model: IModel, categorical_features: List[str] = None):
         self.model = model
         self.categorical_features = categorical_features

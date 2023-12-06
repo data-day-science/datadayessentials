@@ -5,8 +5,9 @@ import mlflow
 
 
 class SklearnModel(IModel, IModelSavingLoadingAttribute):
-    def __init__(self, model: IModel):
+    def __init__(self, model: IModel, categorical_features: List[str] = None):
         self.model = model
+        self.categorical_features = categorical_features
     
     def fit(self, X, y, *args, **kwargs):
         self.model.fit(X, y, *args, **kwargs)
@@ -42,9 +43,20 @@ class SklearnModel(IModel, IModelSavingLoadingAttribute):
             meta_data = mlflow.sklearn.save_model(
                 self.model, model_save_path, 
             )
+        self.save_categorical_features(model_save_path)
         return meta_data
+    
+    def _save_categorical_features(self, save_path: str):
+        with open(f"{save_path}/categorical_features.txt", "w") as f:
+            f.write("\n".join(self.categorical_features))
+
+    @staticmethod
+    def _load_categorical_features(load_path: str):
+        with open(f"{load_path}/categorical_features.txt", "r") as f:
+            return f.read().split("\n")
 
     @classmethod
     def load_model_from_folder(cls, model_folder):
         model = mlflow.sklearn.load_model(model_folder)
-        return cls(model=model)
+        categorical_features = cls.load_categorical_features(model_folder)
+        return cls(model=model, categorical_features=categorical_features)

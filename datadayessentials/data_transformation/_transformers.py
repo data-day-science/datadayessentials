@@ -437,6 +437,69 @@ class CategoricalColumnSplitter(IDataFrameTransformer):
         df_in = pd.concat([df_in, pd.DataFrame(num_dict)], axis=1)
         return df_in
 
+
+class InferenceSpeedCategoricalColumnSplitter(IDataFrameTransformer):
+    def __init__(self, categorical_columns_to_split: list):
+        self.categorical_columns_to_split = categorical_columns_to_split
+
+    def _inference_split_categorical_column(self, col_series: pd.Series, force_numeric: bool = True) -> tuple[
+        pd.Series, pd.Series]:
+
+        """
+        Splits a sereis into two series, one containing numerical values and the other containing categorical values.
+        The numerical series is inferred from the categorical series.
+        The values benig replaced are as follows:
+        0, 1, 2 - These contribute to the numerical field.
+        Where the number is 3 or greater,
+          the value of 'D' is set in the categorical field as we consider 3 missed payments a default
+
+        Where the character is A, D, R, V, the value of NaN is set in the numerical field.
+        S is set to 0 in the numerical field.
+
+
+        Args:
+            col_series (pd.Series): A series containing a mix of numerical and categorical values
+            force_numeric (bool): If True, force the numerical series to be numeric
+        Returns:
+            Tuple[pd.Series, pd.Series]: A tuple containing the numerical and categorical series
+
+
+        """
+        # [0-2] matches any digit between 0 and 2 (inclusive)
+        # [3-6] matches any digit between 3 and 6 (inclusive)
+        numerical_series = col_series.replace({"D": 5, "R": 6, "V": 6, "S": 0, "A": 2}, regex=True)
+        if force_numeric:
+            numerical_series = pd.to_numeric(numerical_series, errors="coerce")
+
+        # [0-2] matches any digit between 0 and 2 (inclusive)
+        # [3-6] matches any digit between 3 and 6 (inclusive)
+        cat_series = col_series.replace({"[0-2]": np.nan, "[3-6]": "D"}, regex=True)
+
+        return cat_series, numerical_series
+
+    def process(self, df_in: pd.DataFrame) -> pd.DataFrame:
+        # Identify columns to be processed.
+        # TODO: Should this be removed ?
+        # Seems redundant
+        num_columns = [col for col in self.categorical_columns_to_split if "QCB" in col]
+
+        # Use DataFrame.apply to apply the transformation to each relevant column
+        transformed_columns = df_in[num_columns].apply(self._inference_split_categorical_column)
+
+        # Unpack the result of apply into separate DataFrames
+        cat_series, num_series = zip(*transformed_columns)
+
+        # Create a dictionary for numerical columns to be added
+        num_dict = {col + "_num": series for col, series in zip(num_columns, num_series)}
+
+        # Concatenate all DataFrames at once:
+        # - Collect categorical and numerical columns in lists during the loop
+        # - Perform concatenation after the loop to reduce redundant operations
+        df_out = pd.concat([df_in, pd.DataFrame(num_dict), pd.concat(cat_series, axis=1)], axis=1)
+
+        return df_out
+
+
 class DataFrameColumnTypeSplitter(IDataFrameTransformer):
     def __init__(self, only_process_columns: list = None):
         self.columns_to_process = None

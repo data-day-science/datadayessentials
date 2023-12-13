@@ -20,7 +20,7 @@ class PreprocessingError(Exception):
     """
 
     def __init__(
-        self, step_name: str = "preprocessing", message: str = "preprocessing error"
+            self, step_name: str = "preprocessing", message: str = "preprocessing error"
     ):
         """Instantiates a preprocessing error, based on the step that it occurred and the error message
 
@@ -84,11 +84,11 @@ class DataFrameTimeSlicer(IDataFrameTransformer):
 
     # date range inclusive (>=, <=)
     def __init__(
-        self,
-        col_name_for_time: str,
-        min_time: datetime,
-        max_time: datetime,
-        convert_to_datetime_format: str = "",
+            self,
+            col_name_for_time: str,
+            min_time: datetime,
+            max_time: datetime,
+            convert_to_datetime_format: str = "",
     ):
         """Instantiate a DataFrameTimeSlicer
 
@@ -151,7 +151,7 @@ class DataFrameTimeSlicer(IDataFrameTransformer):
         return data[
             (data[self.col_name_for_time] >= self.min_time)
             & (data[self.col_name_for_time] <= self.max_time)
-        ]
+            ]
 
 
 class ValueReplacer(IDataFrameTransformer):
@@ -169,35 +169,35 @@ class ValueReplacer(IDataFrameTransformer):
     """
 
     def __init__(
-        self,
-        unwanted_values: List = [
-            "M",
-            "C",
-            "{ND}",
-            "ND",
-            "OB",
-            "Not Found",
-            "{OB}",
-            "T",
-            "__",
-            -999997,
-            -999999,
-            999999,
-            999997,
-            -999997.0,
-            -999999.0,
-            999999.0,
-            999997.0,
-            "-999997",
-            "-999999",
-            "999999",
-            "999997",
-            "-999997.0",
-            "-999999.0",
-            "999999.0",
-            "999997.0",
-        ],
-        replacement_value: Any = np.nan,
+            self,
+            unwanted_values: List = [
+                "M",
+                "C",
+                "{ND}",
+                "ND",
+                "OB",
+                "Not Found",
+                "{OB}",
+                "T",
+                "__",
+                -999997,
+                -999999,
+                999999,
+                999997,
+                -999997.0,
+                -999999.0,
+                999999.0,
+                999997.0,
+                "-999997",
+                "-999999",
+                "999999",
+                "999997",
+                "-999997.0",
+                "-999999.0",
+                "999999.0",
+                "999997.0",
+            ],
+            replacement_value: Any = np.nan,
     ):
         """Instantiate the ValueReplacer
 
@@ -283,8 +283,8 @@ class DominatedColumnDropper(IDataFrameTransformer):
                     col_to_remove.append(col)
                     continue
                 if (
-                    df_out[col].value_counts().iloc[0] / df_out.shape[0]
-                    >= self.dominance_threshold
+                        df_out[col].value_counts().iloc[0] / df_out.shape[0]
+                        >= self.dominance_threshold
                 ):
                     col_to_remove.append(col)
 
@@ -385,6 +385,7 @@ class GranularColumnDropper(IDataFrameTransformer):
             print("Some of the columns requested are not in the dataframe")
             logger.warn("Some of the columns requested are not in the dataframe")
 
+
 class CategoricalColumnSplitter(IDataFrameTransformer):
     """
     Converts a QCB categorical field (insight codes) and splits it into a numerical and a categorical column. Seperating out the number of missed payments and other categorical fields.
@@ -442,7 +443,8 @@ class InferenceSpeedCategoricalColumnSplitter(IDataFrameTransformer):
     def __init__(self, categorical_columns_to_split: list):
         self.categorical_columns_to_split = categorical_columns_to_split
 
-    def _inference_split_categorical_column(self, col_series: pd.Series, force_numeric: bool = True) -> tuple[
+    @staticmethod
+    def _inference_split_categorical_column(value: pd.Series, force_numeric: bool = True) -> tuple[
         pd.Series, pd.Series]:
 
         """
@@ -465,39 +467,27 @@ class InferenceSpeedCategoricalColumnSplitter(IDataFrameTransformer):
 
 
         """
-        # [0-2] matches any digit between 0 and 2 (inclusive)
-        # [3-6] matches any digit between 3 and 6 (inclusive)
-        numerical_series = col_series.replace({"D": 5, "R": 6, "V": 6, "S": 0, "A": 2}, regex=True)
+        # Create a mapping for numerical replacement
+        numerical_mapping = {"D": 5, "R": 6, "V": 6, "S": 0, "A": 2}
+
+        # Replace values in both numerical and categorical series
+        numerical_series = value.replace(numerical_mapping)
+        cat_series = value.replace({"[0-2]": np.nan, "[3-6]": "D"}, regex=True)
+
+        # Convert the numerical series to numeric if required
         if force_numeric:
             numerical_series = pd.to_numeric(numerical_series, errors="coerce")
-
-        # [0-2] matches any digit between 0 and 2 (inclusive)
-        # [3-6] matches any digit between 3 and 6 (inclusive)
-        cat_series = col_series.replace({"[0-2]": np.nan, "[3-6]": "D"}, regex=True)
+            numerical_series.name = f"{value.name}_num"
 
         return cat_series, numerical_series
 
     def process(self, df_in: pd.DataFrame) -> pd.DataFrame:
-        # Identify columns to be processed.
-        # TODO: Should this be removed ?
-        # Seems redundant
-        num_columns = [col for col in self.categorical_columns_to_split if "QCB" in col]
-
-        # Use DataFrame.apply to apply the transformation to each relevant column
-        transformed_columns = df_in[num_columns].apply(self._inference_split_categorical_column)
-
-        # Unpack the result of apply into separate DataFrames
-        cat_series, num_series = zip(*transformed_columns)
-
-        # Create a dictionary for numerical columns to be added
-        num_dict = {col + "_num": series for col, series in zip(num_columns, num_series)}
-
-        # Concatenate all DataFrames at once:
-        # - Collect categorical and numerical columns in lists during the loop
-        # - Perform concatenation after the loop to reduce redundant operations
-        df_out = pd.concat([df_in, pd.DataFrame(num_dict), pd.concat(cat_series, axis=1)], axis=1)
-
-        return df_out
+        for column in self.categorical_columns_to_split:
+            if 'QCB' in column and column in df_in.columns:
+                result = self._inference_split_categorical_column(df_in[column])
+                df_in[f"{result[1].name}"] = result[1].values[0]
+                df_in[column] = result[0].values[0]
+        return df_in
 
 
 class DataFrameColumnTypeSplitter(IDataFrameTransformer):
@@ -530,6 +520,7 @@ class DataFrameColumnTypeSplitter(IDataFrameTransformer):
         return pd.concat(
             [nums, strings, data[untransformed_columns].reset_index(drop=True)], axis=1
         )
+
 
 class CatTypeConverter(IDataFrameTransformer):
     """

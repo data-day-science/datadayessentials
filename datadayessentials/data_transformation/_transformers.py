@@ -484,9 +484,19 @@ class InferenceSpeedCategoricalColumnSplitter(IDataFrameTransformer):
     def process(self, df_in: pd.DataFrame) -> pd.DataFrame:
         for column in self.categorical_columns_to_split:
             if 'QCB' in column and column in df_in.columns:
-                result = self._inference_split_categorical_column(df_in[column])
-                df_in[f"{result[1].name}"] = result[1].values[0]
-                df_in[column] = result[0].values[0]
+                cat_column_name = f"{column}"
+                num_column_name = f"{column}_num"
+
+                cat_series, numerical_series = self._inference_split_categorical_column(df_in[column])
+
+                df_in.drop(column, axis=1, inplace=True)
+                # Highlighted change: Use vectorized operations for assignment
+                df_in[cat_column_name] = cat_series
+                df_in[num_column_name] = numerical_series
+
+                # Highlighted change: Drop the original column to avoid duplication
+
+
         return df_in
 
 

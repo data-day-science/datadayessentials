@@ -649,3 +649,40 @@ class CatTypeConverter(IDataFrameTransformer):
         except Exception as err:
             raise PreprocessingError(type(self).__name__, err)
         return df_out
+
+
+class SimpleCatTypeConverter(IDataFrameTransformer):
+    """
+    Takes a list of column names and converts those in a dataframe to a category type.
+    Date columns are not converted to a different type.
+    All other columns are converted to a numeric type.
+    If a categorical column is missed, its values will be converted to Nans.
+    Args:
+        categorical_columns (List[str]): The names of the columns to convert to category type
+        date_columns (List[str]): The names of the date columns (and not to convert)
+    Returns:
+        pd.DataFrame: Converted dataframe
+    """
+
+    def __init__(self, categorical_columns: List[str], date_columns: List[str] = []):
+        self.categorical_columns = categorical_columns
+        self.date_columns = date_columns
+
+    def process(self, df: pd.DataFrame):
+        # Get the list of columns that are in categorical_columns and in the dataframe
+        validated_categorical_columns = list(set(self.categorical_columns).intersection(df.columns))
+
+        df[validated_categorical_columns] = df[validated_categorical_columns].astype("category")
+
+        if self.date_columns:
+            non_categorical_columns = list(
+                set(df.columns) - set(validated_categorical_columns) - set(self.date_columns)
+            )
+        else:
+            non_categorical_columns = list(set(df.columns) - set(validated_categorical_columns))
+
+        df[non_categorical_columns] = df[non_categorical_columns].apply(
+            pd.to_numeric, errors="coerce"
+        )
+
+        return df

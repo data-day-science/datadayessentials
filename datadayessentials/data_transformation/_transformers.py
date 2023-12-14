@@ -444,7 +444,7 @@ class InferenceSpeedCategoricalColumnSplitter(IDataFrameTransformer):
         self.categorical_columns_to_split = categorical_columns_to_split
 
     @staticmethod
-    def _inference_split_categorical_column(value: pd.Series, force_numeric: bool = True) -> tuple[
+    def _inference_split_categorical_column(series: pd.Series, force_numeric: bool = True) -> tuple[
         pd.Series, pd.Series]:
 
         """
@@ -471,13 +471,13 @@ class InferenceSpeedCategoricalColumnSplitter(IDataFrameTransformer):
         numerical_mapping = {"D": 5, "R": 6, "V": 6, "S": 0, "A": 2}
 
         # Replace values in both numerical and categorical series
-        numerical_series = value.replace(numerical_mapping)
-        cat_series = value.replace({"[0-2]": np.nan, "[3-6]": "D"}, regex=True)
+        numerical_series = series.replace(numerical_mapping)
+        cat_series = series.replace({"[0-2]": np.nan, "[3-6]": "D"}, regex=True)
 
         # Convert the numerical series to numeric if required
         if force_numeric:
             numerical_series = pd.to_numeric(numerical_series, errors="coerce")
-            numerical_series.name = f"{value.name}_num"
+            numerical_series.name = f"{series.name}_num"
 
         return cat_series, numerical_series
 

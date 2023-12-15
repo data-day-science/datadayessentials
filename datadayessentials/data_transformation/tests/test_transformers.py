@@ -355,20 +355,19 @@ class TestInferenceSpeedCategoricalColumnSplitter(unittest.TestCase):
             pd.DataFrame(
                 {
                     "QCB.CreditCheckId": [np.nan],
-                    "QCB.MonthsFromEpoch": ["D"],
-                    "QCB.RawResponseId": ["D"],
-                    "QCB.LSC898": ["R"],
-                    "QCB.LSC899": ["R"],
-                    "QCB.HSC415": ["R"],
-                    "QCB.MSC410": [np.nan],
                     "QCB.CreditCheckId_num": [1],
+                    "QCB.MonthsFromEpoch": ["D"],
                     "QCB.MonthsFromEpoch_num": [6],
+                    "QCB.RawResponseId": ["D"],
                     "QCB.RawResponseId_num": [4],
+                    "QCB.LSC898": ["R"],
                     "QCB.LSC898_num": [6],
+                    "QCB.LSC899": ["R"],
                     "QCB.LSC899_num": [6],
+                    "QCB.HSC415": ["R"],
                     "QCB.HSC415_num": [6],
+                    "QCB.MSC410": [np.nan],
                     "QCB.MSC410_num": [0],
-
                 }
             ),
         )

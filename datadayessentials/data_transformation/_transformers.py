@@ -496,7 +496,7 @@ class InferenceSpeedCategoricalColumnSplitter(IDataFrameTransformer):
 
                 # Highlighted change: Drop the original column to avoid duplication
 
-            return df_in
+        return df_in
 
 
 class DataFrameColumnTypeSplitter(IDataFrameTransformer):

@@ -25,7 +25,9 @@ from ._transformers import (
     GranularColumnDropper,
     CategoricalColumnSplitter,
     DataFrameColumnTypeSplitter,
-    CatTypeConverter
+    CatTypeConverter,
+    InferenceSpeedCategoricalColumnSplitter,
+    SimpleCatTypeConverter
 )
 
 from ._data_pipe import (
@@ -47,4 +49,6 @@ __all__ = [
     "run_pipeline_with_multi_threading",
     "CategoricalColumnSplitter",
     "DataFrameColumnTypeSplitter",
+    "InferenceSpeedCategoricalColumnSplitter",
+    "SimpleCatTypeConverter"
 ]

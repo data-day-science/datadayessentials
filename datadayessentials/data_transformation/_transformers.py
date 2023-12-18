@@ -20,7 +20,7 @@ class PreprocessingError(Exception):
     """
 
     def __init__(
-        self, step_name: str = "preprocessing", message: str = "preprocessing error"
+            self, step_name: str = "preprocessing", message: str = "preprocessing error"
     ):
         """Instantiates a preprocessing error, based on the step that it occurred and the error message
 
@@ -84,11 +84,11 @@ class DataFrameTimeSlicer(IDataFrameTransformer):
 
     # date range inclusive (>=, <=)
     def __init__(
-        self,
-        col_name_for_time: str,
-        min_time: datetime,
-        max_time: datetime,
-        convert_to_datetime_format: str = "",
+            self,
+            col_name_for_time: str,
+            min_time: datetime,
+            max_time: datetime,
+            convert_to_datetime_format: str = "",
     ):
         """Instantiate a DataFrameTimeSlicer
 
@@ -151,7 +151,7 @@ class DataFrameTimeSlicer(IDataFrameTransformer):
         return data[
             (data[self.col_name_for_time] >= self.min_time)
             & (data[self.col_name_for_time] <= self.max_time)
-        ]
+            ]
 
 
 class ValueReplacer(IDataFrameTransformer):
@@ -169,35 +169,35 @@ class ValueReplacer(IDataFrameTransformer):
     """
 
     def __init__(
-        self,
-        unwanted_values: List = [
-            "M",
-            "C",
-            "{ND}",
-            "ND",
-            "OB",
-            "Not Found",
-            "{OB}",
-            "T",
-            "__",
-            -999997,
-            -999999,
-            999999,
-            999997,
-            -999997.0,
-            -999999.0,
-            999999.0,
-            999997.0,
-            "-999997",
-            "-999999",
-            "999999",
-            "999997",
-            "-999997.0",
-            "-999999.0",
-            "999999.0",
-            "999997.0",
-        ],
-        replacement_value: Any = np.nan,
+            self,
+            unwanted_values: List = [
+                "M",
+                "C",
+                "{ND}",
+                "ND",
+                "OB",
+                "Not Found",
+                "{OB}",
+                "T",
+                "__",
+                -999997,
+                -999999,
+                999999,
+                999997,
+                -999997.0,
+                -999999.0,
+                999999.0,
+                999997.0,
+                "-999997",
+                "-999999",
+                "999999",
+                "999997",
+                "-999997.0",
+                "-999999.0",
+                "999999.0",
+                "999997.0",
+            ],
+            replacement_value: Any = np.nan,
     ):
         """Instantiate the ValueReplacer
 
@@ -283,8 +283,8 @@ class DominatedColumnDropper(IDataFrameTransformer):
                     col_to_remove.append(col)
                     continue
                 if (
-                    df_out[col].value_counts().iloc[0] / df_out.shape[0]
-                    >= self.dominance_threshold
+                        df_out[col].value_counts().iloc[0] / df_out.shape[0]
+                        >= self.dominance_threshold
                 ):
                     col_to_remove.append(col)
 
@@ -385,6 +385,7 @@ class GranularColumnDropper(IDataFrameTransformer):
             print("Some of the columns requested are not in the dataframe")
             logger.warn("Some of the columns requested are not in the dataframe")
 
+
 class CategoricalColumnSplitter(IDataFrameTransformer):
     """
     Converts a QCB categorical field (insight codes) and splits it into a numerical and a categorical column. Seperating out the number of missed payments and other categorical fields.
@@ -437,6 +438,67 @@ class CategoricalColumnSplitter(IDataFrameTransformer):
         df_in = pd.concat([df_in, pd.DataFrame(num_dict)], axis=1)
         return df_in
 
+
+class InferenceSpeedCategoricalColumnSplitter(IDataFrameTransformer):
+    def __init__(self, categorical_columns_to_split: list):
+        self.categorical_columns_to_split = categorical_columns_to_split
+
+    @staticmethod
+    def _inference_split_categorical_column(series: pd.Series, force_numeric: bool = True) -> tuple[
+        pd.Series, pd.Series]:
+
+        """
+        Splits a sereis into two series, one containing numerical values and the other containing categorical values.
+        The numerical series is inferred from the categorical series.
+        The values benig replaced are as follows:
+        0, 1, 2 - These contribute to the numerical field.
+        Where the number is 3 or greater,
+          the value of 'D' is set in the categorical field as we consider 3 missed payments a default
+
+        Where the character is A, D, R, V, the value of NaN is set in the numerical field.
+        S is set to 0 in the numerical field.
+
+
+        Args:
+            col_series (pd.Series): A series containing a mix of numerical and categorical values
+            force_numeric (bool): If True, force the numerical series to be numeric
+        Returns:
+            Tuple[pd.Series, pd.Series]: A tuple containing the numerical and categorical series
+
+
+        """
+        # Create a mapping for numerical replacement
+        numerical_mapping = {"D": 5, "R": 6, "V": 6, "S": 0, "A": 2}
+
+        # Replace values in both numerical and categorical series
+        numerical_series = series.replace(numerical_mapping)
+        cat_series = series.replace({"[0-2]": np.nan, "[3-6]": "D"}, regex=True)
+
+        # Convert the numerical series to numeric if required
+        if force_numeric:
+            numerical_series = pd.to_numeric(numerical_series, errors="coerce")
+            numerical_series.name = f"{series.name}_num"
+
+        return cat_series, numerical_series
+
+    def process(self, df_in: pd.DataFrame) -> pd.DataFrame:
+        for column in self.categorical_columns_to_split:
+            if 'QCB' in column and column in df_in.columns:
+                cat_column_name = f"{column}"
+                num_column_name = f"{column}_num"
+
+                cat_series, numerical_series = self._inference_split_categorical_column(df_in[column])
+
+                df_in.drop(column, axis=1, inplace=True)
+                # Highlighted change: Use vectorized operations for assignment
+                df_in[cat_column_name] = cat_series
+                df_in[num_column_name] = numerical_series
+
+                # Highlighted change: Drop the original column to avoid duplication
+
+        return df_in
+
+
 class DataFrameColumnTypeSplitter(IDataFrameTransformer):
     def __init__(self, only_process_columns: list = None):
         self.columns_to_process = None
@@ -467,6 +529,7 @@ class DataFrameColumnTypeSplitter(IDataFrameTransformer):
         return pd.concat(
             [nums, strings, data[untransformed_columns].reset_index(drop=True)], axis=1
         )
+
 
 class CatTypeConverter(IDataFrameTransformer):
     """
@@ -585,3 +648,40 @@ class CatTypeConverter(IDataFrameTransformer):
         except Exception as err:
             raise PreprocessingError(type(self).__name__, err)
         return df_out
+
+
+class SimpleCatTypeConverter(IDataFrameTransformer):
+    """
+    Takes a list of column names and converts those in a dataframe to a category type.
+    Date columns are not converted to a different type.
+    All other columns are converted to a numeric type.
+    If a categorical column is missed, its values will be converted to Nans.
+    Args:
+        categorical_columns (List[str]): The names of the columns to convert to category type
+        date_columns (List[str]): The names of the date columns (and not to convert)
+    Returns:
+        pd.DataFrame: Converted dataframe
+    """
+
+    def __init__(self, categorical_columns: List[str], date_columns: List[str] = []):
+        self.categorical_columns = categorical_columns
+        self.date_columns = date_columns
+
+    def process(self, df: pd.DataFrame):
+        # Get the list of columns that are in categorical_columns and in the dataframe
+        validated_categorical_columns = list(set(self.categorical_columns).intersection(df.columns))
+
+        df[validated_categorical_columns] = df[validated_categorical_columns].astype("category")
+
+        if self.date_columns:
+            non_categorical_columns = list(
+                set(df.columns) - set(validated_categorical_columns) - set(self.date_columns)
+            )
+        else:
+            non_categorical_columns = list(set(df.columns) - set(validated_categorical_columns))
+
+        df[non_categorical_columns] = df[non_categorical_columns].apply(
+            pd.to_numeric, errors="coerce"
+        )
+
+        return df

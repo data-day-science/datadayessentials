@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import pandas.api.types as ptypes
 import pytest
+from numpy import float64
 
 from .test_data import test_path
 from .._transformers import (
@@ -16,7 +17,9 @@ from .._transformers import (
     CategoricalColumnSplitter,
     is_data_size_small,
     DataFrameColumnTypeSplitter,
+    InferenceSpeedCategoricalColumnSplitter,
 )
+
 
 def to_datetime(str_datetime):
     return datetime.strptime(str_datetime, "%Y%m%d")
@@ -131,7 +134,6 @@ def payload_init():
     )
     df_payload_flat = payload_tall.T
     return {"test_tall": payload_tall, "test_flat": df_payload_flat}
-
 
 
 def test_is_data_size_small():
@@ -269,29 +271,34 @@ class TestDataFrameColumnTypeSplitter(unittest.TestCase):
 
     def test_process(self):
         data = {
-            'TextColumn1': ['1', 1, "2.25", np.nan, '789ghi'],
-            'TextColumn2': ['1', 1, "2.25", np.nan, '789ghi']
+            "TextColumn1": ["1", 1, "2.25", np.nan, "789ghi"],
+            "TextColumn2": ["1", 1, "2.25", np.nan, "789ghi"],
         }
 
         df = pd.DataFrame(data)
         splitter = DataFrameColumnTypeSplitter()
         result = splitter.process(df)
 
-        expected_columns = ['TextColumn1_num', 'TextColumn2_num','TextColumn1', 'TextColumn2']
+        expected_columns = [
+            "TextColumn1_num",
+            "TextColumn2_num",
+            "TextColumn1",
+            "TextColumn2",
+        ]
         actual_columns = result.columns.tolist()
 
         print(result)
         self.assertListEqual(actual_columns, expected_columns)
 
-        self.assertEqual(result['TextColumn1_num'].values[0], 1)
-        self.assertEqual(result['TextColumn1_num'].values[1], 1)
-        self.assertEqual(result['TextColumn1_num'].values[2], 2.25)
+        self.assertEqual(result["TextColumn1_num"].values[0], 1)
+        self.assertEqual(result["TextColumn1_num"].values[1], 1)
+        self.assertEqual(result["TextColumn1_num"].values[2], 2.25)
         # self.assertEqual(result['TextColumn1_num'].values[3], np.nan)
         # self.assertEqual(result['TextColumn1_num'].values[4], np.nan)
 
-        self.assertEqual(result['TextColumn2_num'].values[0], 1.00)
-        self.assertEqual(result['TextColumn2_num'].values[1], 1.00)
-        self.assertEqual(result['TextColumn2_num'].values[2], 2.25)
+        self.assertEqual(result["TextColumn2_num"].values[0], 1.00)
+        self.assertEqual(result["TextColumn2_num"].values[1], 1.00)
+        self.assertEqual(result["TextColumn2_num"].values[2], 2.25)
         # self.assertEqual(result['TextColumn2_num'].values[3], np.nan)
         # self.assertEqual(result['TextColumn2_num'].values[4], np.nan)
 
@@ -299,22 +306,69 @@ class TestDataFrameColumnTypeSplitter(unittest.TestCase):
         # self.assertEqual(result['TextColumn1'].values[1], np.nan)
         # self.assertEqual(result['TextColumn1'].values[2], np.nan)
         # self.assertEqual(result['TextColumn1_num'].values[3], np.nan)
-        self.assertEqual(result['TextColumn1'].values[4], "789ghi")
+        self.assertEqual(result["TextColumn1"].values[4], "789ghi")
 
         # self.assertEqual(result['TextColumn2'].values[0], np.nan)
         # self.assertEqual(result['TextColumn2'].values[1], np.nan)
         # self.assertEqual(result['TextColumn2'].values[2], np.nan)
         # self.assertEqual(result['TextColumn2'].values[3], np.nan)
-        self.assertEqual(result['TextColumn2'].values[4], "789ghi")
+        self.assertEqual(result["TextColumn2"].values[4], "789ghi")
 
         df = pd.DataFrame(data)
-        splitter2 = DataFrameColumnTypeSplitter(only_process_columns=['TextColumn1'])
+        splitter2 = DataFrameColumnTypeSplitter(only_process_columns=["TextColumn1"])
         result2 = splitter2.process(df)
         print(result2.columns)
 
-
         # Check if the DataFrame has the expected columns
-        expected_columns = ['TextColumn1_num', 'TextColumn1', 'TextColumn2']
+        expected_columns = ["TextColumn1_num", "TextColumn1", "TextColumn2"]
         self.assertListEqual(result2.columns.tolist(), expected_columns)
 
+
+class TestInferenceSpeedCategoricalColumnSplitter(unittest.TestCase):
+    def test_end_to_end_inference_speed(self):
+
+        data = {
+            "QCB.CreditCheckId": "1",
+            "QCB.MonthsFromEpoch": "6",
+            "QCB.RawResponseId": "4",
+            "QCB.LSC898": "R",
+            "QCB.LSC899": "R",
+            "QCB.HSC415": "R",
+            "QCB.MSC410": "0",
+        }
+
+        df = pd.DataFrame.from_dict(data, orient="index").T
+        splitter = InferenceSpeedCategoricalColumnSplitter(
+            categorical_columns_to_split=[
+                "QCB.CreditCheckId",
+                "QCB.MonthsFromEpoch",
+                "QCB.RawResponseId",
+                "QCB.LSC898",
+                "QCB.LSC899",
+                "QCB.HSC415",
+                "QCB.MSC410",
+            ]
+        )
+        output_df = splitter.process(df)
+        pd.testing.assert_frame_equal(
+            output_df,
+            pd.DataFrame(
+                {
+                    "QCB.CreditCheckId": [np.nan],
+                    "QCB.CreditCheckId_num": [1],
+                    "QCB.MonthsFromEpoch": ["D"],
+                    "QCB.MonthsFromEpoch_num": [6],
+                    "QCB.RawResponseId": ["D"],
+                    "QCB.RawResponseId_num": [4],
+                    "QCB.LSC898": ["R"],
+                    "QCB.LSC898_num": [6],
+                    "QCB.LSC899": ["R"],
+                    "QCB.LSC899_num": [6],
+                    "QCB.HSC415": ["R"],
+                    "QCB.HSC415_num": [6],
+                    "QCB.MSC410": [np.nan],
+                    "QCB.MSC410_num": [0],
+                }
+            ),
+        )
 

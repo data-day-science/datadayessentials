@@ -472,7 +472,7 @@ class InferenceSpeedCategoricalColumnSplitter(IDataFrameTransformer):
 
         # Replace values in both numerical and categorical series
         numerical_series = series.replace(numerical_mapping)
-        cat_series = series.replace({"[0-2]": "np.nan", "[3-6]": "D", "[7-999999]": "np.nan"}, regex=True)
+        cat_series = series.replace({"[0-2]": np.nan, "[3-6]": "D", "[7-999999]": np.nan}, regex=True)
 
         # Convert the numerical series to numeric if required
         if force_numeric:
@@ -487,6 +487,7 @@ class InferenceSpeedCategoricalColumnSplitter(IDataFrameTransformer):
                 cat_column_name = f"{column}"
                 num_column_name = f"{column}_num"
 
+                print(f"Splitting column column name:{column}, column value = {df_in[column].values}")
                 cat_series, numerical_series = self._inference_split_categorical_column(df_in[column])
 
                 df_in.drop(column, axis=1, inplace=True)

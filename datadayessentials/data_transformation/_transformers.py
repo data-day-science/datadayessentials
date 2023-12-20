@@ -487,7 +487,6 @@ class InferenceSpeedCategoricalColumnSplitter(IDataFrameTransformer):
                 cat_column_name = f"{column}"
                 num_column_name = f"{column}_num"
 
-                print(f"Splitting column column name:{column}, column value = {df_in[column].values}")
                 cat_series, numerical_series = self._inference_split_categorical_column(df_in[column])
 
                 df_in.drop(column, axis=1, inplace=True)

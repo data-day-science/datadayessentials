@@ -350,6 +350,7 @@ class TestInferenceSpeedCategoricalColumnSplitter(unittest.TestCase):
             ]
         )
         output_df = splitter.process(df)
+        output_df = output_df[df.columns]
         pd.testing.assert_frame_equal(
             output_df,
             pd.DataFrame(

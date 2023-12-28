@@ -439,62 +439,34 @@ class CategoricalColumnSplitter(IDataFrameTransformer):
         return df_in
 
 
-class InferenceSpeedCategoricalColumnSplitter(IDataFrameTransformer):
+class InferenceSpeedCategoricalColumnSplitter:
     def __init__(self, categorical_columns_to_split: list):
         self.categorical_columns_to_split = categorical_columns_to_split
 
     @staticmethod
-    def _inference_split_categorical_column(series: pd.Series, force_numeric: bool = True) -> tuple[
-        pd.Series, pd.Series]:
-
-        """
-        Splits a sereis into two series, one containing numerical values and the other containing categorical values.
-        The numerical series is inferred from the categorical series.
-        The values benig replaced are as follows:
-        0, 1, 2 - These contribute to the numerical field.
-        Where the number is 3 or greater,
-          the value of 'D' is set in the categorical field as we consider 3 missed payments a default
-
-        Where the character is A, D, R, V, the value of NaN is set in the numerical field.
-        S is set to 0 in the numerical field.
-
-
-        Args:
-            col_series (pd.Series): A series containing a mix of numerical and categorical values
-            force_numeric (bool): If True, force the numerical series to be numeric
-        Returns:
-            Tuple[pd.Series, pd.Series]: A tuple containing the numerical and categorical series
-
-
-        """
-        # Create a mapping for numerical replacement
+    def _inference_split_categorical_column(series: pd.Series, force_numeric: bool = True) -> tuple[pd.Series, pd.Series]:
+        # Mapping for numerical and categorical transformations
         numerical_mapping = {"D": 5, "R": 6, "V": 6, "S": 0, "A": 2}
+        cat_mapping = {0: np.nan, 1: np.nan, 2: np.nan, 3: "D", 4: "D", 5: "D", 6: "D"}
 
-        # Replace values in both numerical and categorical series
-        numerical_series = series.replace(numerical_mapping)
-        cat_series = series.replace({"[0-2]": np.nan, "[3-6]": "D", "[7-999999]": np.nan}, regex=True)
+        # Apply transformations
+        numerical_series = series.map(numerical_mapping).fillna(series)
+        cat_series = series.map(cat_mapping).fillna(series)
 
         # Convert the numerical series to numeric if required
         if force_numeric:
-            numerical_series = pd.to_numeric(numerical_series, errors="coerce")
-            numerical_series.name = f"{series.name}_num"
+            numerical_series = pd.to_numeric(numerical_series, errors='coerce')
 
         return cat_series, numerical_series
 
     def process(self, df_in: pd.DataFrame) -> pd.DataFrame:
         for column in self.categorical_columns_to_split:
             if 'QCB' in column and column in df_in.columns:
-                cat_column_name = f"{column}"
-                num_column_name = f"{column}_num"
-
                 cat_series, numerical_series = self._inference_split_categorical_column(df_in[column])
 
-                df_in.drop(column, axis=1, inplace=True)
-                # Highlighted change: Use vectorized operations for assignment
-                df_in[cat_column_name] = cat_series
-                df_in[num_column_name] = numerical_series
-
-                # Highlighted change: Drop the original column to avoid duplication
+                # Update DataFrame in place
+                df_in[f"{column}"] = cat_series
+                df_in[f"{column}_num"] = numerical_series
 
         return df_in
 
@@ -650,38 +622,25 @@ class CatTypeConverter(IDataFrameTransformer):
         return df_out
 
 
-class SimpleCatTypeConverter(IDataFrameTransformer):
-    """
-    Takes a list of column names and converts those in a dataframe to a category type.
-    Date columns are not converted to a different type.
-    All other columns are converted to a numeric type.
-    If a categorical column is missed, its values will be converted to Nans.
-    Args:
-        categorical_columns (List[str]): The names of the columns to convert to category type
-        date_columns (List[str]): The names of the date columns (and not to convert)
-    Returns:
-        pd.DataFrame: Converted dataframe
-    """
-
-    def __init__(self, categorical_columns: List[str], date_columns: List[str] = []):
+class SimpleCatTypeConverter:
+    def __init__(self, categorical_columns, date_columns=[]):
         self.categorical_columns = categorical_columns
         self.date_columns = date_columns
 
-    def process(self, df: pd.DataFrame):
-        # Get the list of columns that are in categorical_columns and in the dataframe
-        validated_categorical_columns = list(set(self.categorical_columns).intersection(df.columns))
+    def process(self, df):
+        # Filter columns present in the DataFrame
+        validated_categorical_columns = [col for col in self.categorical_columns if col in df.columns]
+        validated_date_columns = [col for col in self.date_columns if col in df.columns]
 
-        df[validated_categorical_columns] = df[validated_categorical_columns].astype("category")
+        # Convert to categorical
+        for col in validated_categorical_columns:
+            if df[col].dtype != 'category':
+                df[col] = df[col].astype('category')
 
-        if self.date_columns:
-            non_categorical_columns = list(
-                set(df.columns) - set(validated_categorical_columns) - set(self.date_columns)
-            )
-        else:
-            non_categorical_columns = list(set(df.columns) - set(validated_categorical_columns))
-
-        df[non_categorical_columns] = df[non_categorical_columns].apply(
-            pd.to_numeric, errors="coerce"
-        )
+        # Convert non-date and non-categorical columns to numeric
+        non_categorical_columns = df.columns.difference(validated_categorical_columns + validated_date_columns)
+        for col in non_categorical_columns:
+            if not pd.api.types.is_numeric_dtype(df[col]):
+                df[col] = pd.to_numeric(df[col], errors='coerce')
 
         return df

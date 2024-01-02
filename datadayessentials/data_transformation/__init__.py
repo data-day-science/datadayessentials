@@ -26,7 +26,6 @@ from ._transformers import (
     CategoricalColumnSplitter,
     DataFrameColumnTypeSplitter,
     CatTypeConverter,
-    InferenceSpeedCategoricalColumnSplitter,
     SimpleCatTypeConverter
 )
 

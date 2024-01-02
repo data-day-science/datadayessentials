@@ -386,89 +386,69 @@ class GranularColumnDropper(IDataFrameTransformer):
             logger.warn("Some of the columns requested are not in the dataframe")
 
 
+
 class CategoricalColumnSplitter(IDataFrameTransformer):
-    """
-    Converts a QCB categorical field (insight codes) and splits it into a numerical and a categorical column. Seperating out the number of missed payments and other categorical fields.
-    """  # noqa: E501
-
-    def __init__(self, categorical_columns_to_split):
-        self.categorical_columns_to_split = categorical_columns_to_split
-
-    def _split_categorical_column(self, col_series: pd.Series, force_numeric=True):
-        """
-        For each insight code the following logic applies:
-
-        0, 1, 2, 3, 4, 5, 6 - These contribute to the numerical field. Where the number is 3 or greater, a value of 'D' is set in the categorical field as we consider 3 missed payments a default
-        'D' - This contributes to the categorical field, and a value of 5 is set in the numerical field as 5 is a clear default (a few missed payments higher than the minimum)
-        'R', 'V' - This contributes to the categorical field, and a value of 6 is set in the numerical field as there has been a reposession this means they have missed the worst amount of payments
-        'S' - This contributes to the categorical field, and a value of 0 is set in the numerical field, indicating that they have an account (or just had an account, and it is settled)
-        'A' - This contributes to the categorical field, and a value of 2 is set in the numerical field as it indicates between 1 and 3 missed payments
-        'C', 'M', 'T', 'U', 'N', 'Q', 'Z', '.', 'I' (and any others unseen) - These contribute to the categorical field, and a value of NaN is set in the numerical field
-
-        Args:
-        col_series (pd.Series): A series containing a mix of numerical and categorical values
-
-        Returns:
-        Tuple[pd.Series, pd.Series]: A tuple containing the numerical and categorical series
-        """  # noqa: E501
-
-        # Create a numerical series because one col will be numeric and one will be categorical
-        numerical_series = col_series.copy()
-        numerical_series = numerical_series.replace(
-            ["D", "R", "V", "S", "A"], [5, 6, 6, 0, 2]
-        )
-        if force_numeric:
-            numerical_series = pd.to_numeric(numerical_series, errors="coerce")
-
-        # Create a categorical series. Removed copy for memory efficiency
-        cat_series = col_series.replace(["0", "1", "2"], [np.nan, np.nan, np.nan])
-        cat_series = cat_series.replace(["3", "4", "5", "6"], ["D", "D", "D", "D"])
-
-        return cat_series, numerical_series
-
-    def process(self, df_in: pd.DataFrame):
-        num_dict = {}
-        for col in self.categorical_columns_to_split:
-            if "QCB" in col:
-                cat_series, numerical_series = self._split_categorical_column(
-                    df_in[col]
-                )
-                num_dict[col + "_num"] = numerical_series
-                df_in[col] = cat_series
-        df_in = pd.concat([df_in, pd.DataFrame(num_dict)], axis=1)
-        return df_in
-
-
-class InferenceSpeedCategoricalColumnSplitter:
+    numerical_mapping = {"D": 5, "R": 6, "V": 6, "S": 0, "A": 2}
+    cat_mapping = {0: np.nan, 1: np.nan, 2: np.nan, 3: "D", 4: "D", 5: "D", 6: "D", '0': np.nan, '1': np.nan, '2': np.nan, '3': "D", '4': "D", '5': "D", '6': "D"}
     def __init__(self, categorical_columns_to_split: list):
         self.categorical_columns_to_split = categorical_columns_to_split
 
-    @staticmethod
-    def _inference_split_categorical_column(series: pd.Series, force_numeric: bool = True) -> tuple[pd.Series, pd.Series]:
-        # Mapping for numerical and categorical transformations
-        numerical_mapping = {"D": 5, "R": 6, "V": 6, "S": 0, "A": 2}
-        cat_mapping = {0: np.nan, 1: np.nan, 2: np.nan, 3: "D", 4: "D", 5: "D", 6: "D"}
+    def process(self, data: Union[pd.DataFrame, pd.Series]):
+        if isinstance(data, pd.DataFrame):
+            return self.process_df(data)
+        elif isinstance(data, pd.Series):
+            return self.process_series(data)
+        else:
+            raise TypeError(f"Expected DataFrame or Series, got {type(data)}")
 
+    def _inference_split_categorical_column(self, series: pd.Series) -> tuple[pd.Series, pd.Series]:
         # Apply transformations
-        numerical_series = series.map(numerical_mapping).fillna(series)
-        cat_series = series.map(cat_mapping).fillna(series)
+        numerical_series = series.map(self.numerical_mapping).fillna(series).astype('float64')
 
-        # Convert the numerical series to numeric if required
-        if force_numeric:
-            numerical_series = pd.to_numeric(numerical_series, errors='coerce')
+        cat_series = series.copy(deep=True).replace(self.cat_mapping)
+        cat_mask = pd.to_numeric(cat_series, errors='coerce').isna()
+        cat_series[~cat_mask] = np.nan
+        cat_series = cat_series.replace(self.cat_mapping).astype('object')
+    
 
         return cat_series, numerical_series
 
-    def process(self, df_in: pd.DataFrame) -> pd.DataFrame:
+    def process_df(self, df_in: pd.DataFrame) -> pd.DataFrame:
         for column in self.categorical_columns_to_split:
-            if 'QCB' in column and column in df_in.columns:
+            if ('QCB' in column) and (column in df_in.columns):
                 cat_series, numerical_series = self._inference_split_categorical_column(df_in[column])
 
                 # Update DataFrame in place
                 df_in[f"{column}"] = cat_series
                 df_in[f"{column}_num"] = numerical_series
-
         return df_in
+    
+    def create_numeric_columns(self, series):
+        series_copy = series.copy(deep=True)[self.categorical_columns_to_split]
+        series_copy = series_copy.map(self.numerical_mapping).astype('float64')
+        series_copy.index = series_copy.index + "_num"
+        return series_copy
+    
+
+    def create_categorical_columns(self, series):
+        series_copy = series.copy(deep=True)[self.categorical_columns_to_split]
+        series_copy = series_copy.map(self.cat_mapping)
+        return series_copy
+    
+    def process_series(self, series_to_split: pd.Series) -> pd.Series:
+        # Filter out the non-categorical series
+        non_categorical_series = series_to_split.drop(self.categorical_columns_to_split, errors='ignore')
+
+        # Apply categorical mapping to the relevant subset
+        categorical_series = series_to_split[self.categorical_columns_to_split].replace(self.cat_mapping)
+        # Apply numerical mapping to the same subset and adjust index
+        numerical_series = pd.to_numeric(series_to_split[self.categorical_columns_to_split].replace(self.numerical_mapping), errors='coerce')
+        numerical_series.index = [f"{idx}_num" for idx in numerical_series.index]
+
+        # Concatenate all series
+        output_series = pd.concat([non_categorical_series, categorical_series, numerical_series])
+        return output_series
+
 
 
 class DataFrameColumnTypeSplitter(IDataFrameTransformer):
@@ -627,7 +607,15 @@ class SimpleCatTypeConverter:
         self.categorical_columns = categorical_columns
         self.date_columns = date_columns
 
-    def process(self, df):
+    def process(self, data: Union[pd.DataFrame, pd.Series]):
+        if isinstance(data, pd.DataFrame):
+            return self.process_df(data)
+        elif isinstance(data, pd.Series):
+            return self.process_series(data)
+        else:
+            raise TypeError(f"Expected DataFrame or Series, got {type(data)}")
+        
+    def process_df(self, df):
         # Filter columns present in the DataFrame
         validated_categorical_columns = [col for col in self.categorical_columns if col in df.columns]
         validated_date_columns = [col for col in self.date_columns if col in df.columns]
@@ -644,3 +632,16 @@ class SimpleCatTypeConverter:
                 df[col] = pd.to_numeric(df[col], errors='coerce')
 
         return df
+
+    def process_series(self, series):
+        # Process a single transposed row (Pandas Series)
+        for col in series.index:
+            # Convert to categorical if in categorical_columns
+            if col in self.categorical_columns and not pd.api.types.is_categorical_dtype(series[col]):
+                series[col] = pd.Categorical([series[col]])
+
+            # Convert to numeric if not in categorical_columns or date_columns
+            elif col not in self.date_columns and not pd.api.types.is_numeric_dtype(series[col]):
+                series[col] = pd.to_numeric(series[col], errors='coerce')
+
+        return series

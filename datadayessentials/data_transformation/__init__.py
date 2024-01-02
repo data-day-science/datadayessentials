@@ -48,6 +48,5 @@ __all__ = [
     "run_pipeline_with_multi_threading",
     "CategoricalColumnSplitter",
     "DataFrameColumnTypeSplitter",
-    "InferenceSpeedCategoricalColumnSplitter",
     "SimpleCatTypeConverter",
 ]

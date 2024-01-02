@@ -103,7 +103,7 @@ class SchemaFetcher(ISchemaFetcher):
             List[str]: List of schema filenames
         """
         schema_manager = ProjectDatasetManager("datadayessentials_schemas")
-        return schema_manager.list_datasets() 
+        return schema_manager.list_datasets()
 
     def _validate_schema(self, schema: dict):
         """Validates the schema to ensure all the required fields are present

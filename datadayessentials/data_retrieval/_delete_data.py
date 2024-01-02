@@ -29,7 +29,5 @@ class DataLakeDirectoryDeleter(IDataLakeDirectoryDeleter):
         datalake_service = DataLakeServiceClient(
             account_url=account_url, credential=self.credentials
         )
-        directory_client = datalake_service.get_directory_client(
-            container, directory
-        )
+        directory_client = datalake_service.get_directory_client(container, directory)
         directory_client.delete_directory()

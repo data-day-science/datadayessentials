@@ -13,7 +13,10 @@ from pathlib import Path
 
 from datadayessentials.config import Config
 from datadayessentials.data_retrieval import SchemaFetcher
-from datadayessentials.modelling.models._base import IModel, IModelSavingLoadingAttribute
+from datadayessentials.modelling.models._base import (
+    IModel,
+    IModelSavingLoadingAttribute,
+)
 from datadayessentials.modelling._base import IModelEvaluator
 
 
@@ -369,7 +372,8 @@ class CatBoostClassifierPipeline(IModel, IModelSavingLoadingAttribute):
             )
         else:
             meta_data = mlflow.catboost.save_model(
-                self.model, model_save_path, 
+                self.model,
+                model_save_path,
             )
         return meta_data
 
@@ -377,4 +381,3 @@ class CatBoostClassifierPipeline(IModel, IModelSavingLoadingAttribute):
     def load_model_from_folder(cls, model_folder):
         model = mlflow.catboost.load_model(model_folder)
         return cls(model=model)
-

@@ -20,7 +20,7 @@ class PreprocessingError(Exception):
     """
 
     def __init__(
-            self, step_name: str = "preprocessing", message: str = "preprocessing error"
+        self, step_name: str = "preprocessing", message: str = "preprocessing error"
     ):
         """Instantiates a preprocessing error, based on the step that it occurred and the error message
 
@@ -84,11 +84,11 @@ class DataFrameTimeSlicer(IDataFrameTransformer):
 
     # date range inclusive (>=, <=)
     def __init__(
-            self,
-            col_name_for_time: str,
-            min_time: datetime,
-            max_time: datetime,
-            convert_to_datetime_format: str = "",
+        self,
+        col_name_for_time: str,
+        min_time: datetime,
+        max_time: datetime,
+        convert_to_datetime_format: str = "",
     ):
         """Instantiate a DataFrameTimeSlicer
 
@@ -151,7 +151,7 @@ class DataFrameTimeSlicer(IDataFrameTransformer):
         return data[
             (data[self.col_name_for_time] >= self.min_time)
             & (data[self.col_name_for_time] <= self.max_time)
-            ]
+        ]
 
 
 class ValueReplacer(IDataFrameTransformer):
@@ -169,35 +169,35 @@ class ValueReplacer(IDataFrameTransformer):
     """
 
     def __init__(
-            self,
-            unwanted_values: List = [
-                "M",
-                "C",
-                "{ND}",
-                "ND",
-                "OB",
-                "Not Found",
-                "{OB}",
-                "T",
-                "__",
-                -999997,
-                -999999,
-                999999,
-                999997,
-                -999997.0,
-                -999999.0,
-                999999.0,
-                999997.0,
-                "-999997",
-                "-999999",
-                "999999",
-                "999997",
-                "-999997.0",
-                "-999999.0",
-                "999999.0",
-                "999997.0",
-            ],
-            replacement_value: Any = np.nan,
+        self,
+        unwanted_values: List = [
+            "M",
+            "C",
+            "{ND}",
+            "ND",
+            "OB",
+            "Not Found",
+            "{OB}",
+            "T",
+            "__",
+            -999997,
+            -999999,
+            999999,
+            999997,
+            -999997.0,
+            -999999.0,
+            999999.0,
+            999997.0,
+            "-999997",
+            "-999999",
+            "999999",
+            "999997",
+            "-999997.0",
+            "-999999.0",
+            "999999.0",
+            "999997.0",
+        ],
+        replacement_value: Any = np.nan,
     ):
         """Instantiate the ValueReplacer
 
@@ -283,8 +283,8 @@ class DominatedColumnDropper(IDataFrameTransformer):
                     col_to_remove.append(col)
                     continue
                 if (
-                        df_out[col].value_counts().iloc[0] / df_out.shape[0]
-                        >= self.dominance_threshold
+                    df_out[col].value_counts().iloc[0] / df_out.shape[0]
+                    >= self.dominance_threshold
                 ):
                     col_to_remove.append(col)
 
@@ -386,10 +386,25 @@ class GranularColumnDropper(IDataFrameTransformer):
             logger.warn("Some of the columns requested are not in the dataframe")
 
 
-
 class CategoricalColumnSplitter(IDataFrameTransformer):
     numerical_mapping = {"D": 5, "R": 6, "V": 6, "S": 0, "A": 2}
-    cat_mapping = {0: np.nan, 1: np.nan, 2: np.nan, 3: "D", 4: "D", 5: "D", 6: "D", '0': np.nan, '1': np.nan, '2': np.nan, '3': "D", '4': "D", '5': "D", '6': "D"}
+    cat_mapping = {
+        0: np.nan,
+        1: np.nan,
+        2: np.nan,
+        3: "D",
+        4: "D",
+        5: "D",
+        6: "D",
+        "0": np.nan,
+        "1": np.nan,
+        "2": np.nan,
+        "3": "D",
+        "4": "D",
+        "5": "D",
+        "6": "D",
+    }
+
     def __init__(self, categorical_columns_to_split: list):
         self.categorical_columns_to_split = categorical_columns_to_split
 
@@ -401,54 +416,68 @@ class CategoricalColumnSplitter(IDataFrameTransformer):
         else:
             raise TypeError(f"Expected DataFrame or Series, got {type(data)}")
 
-    def _inference_split_categorical_column(self, series: pd.Series) -> tuple[pd.Series, pd.Series]:
+    def _inference_split_categorical_column(
+        self, series: pd.Series
+    ) -> tuple[pd.Series, pd.Series]:
         # Apply transformations
-        numerical_series = series.map(self.numerical_mapping).fillna(series).astype('float64')
+        numerical_series = (
+            series.map(self.numerical_mapping).fillna(series).astype("float64")
+        )
 
         cat_series = series.copy(deep=True).replace(self.cat_mapping)
-        cat_mask = pd.to_numeric(cat_series, errors='coerce').isna()
+        cat_mask = pd.to_numeric(cat_series, errors="coerce").isna()
         cat_series[~cat_mask] = np.nan
-        cat_series = cat_series.replace(self.cat_mapping).astype('object')
-    
+        cat_series = cat_series.replace(self.cat_mapping).astype("object")
 
         return cat_series, numerical_series
 
     def process_df(self, df_in: pd.DataFrame) -> pd.DataFrame:
         for column in self.categorical_columns_to_split:
-            if ('QCB' in column) and (column in df_in.columns):
-                cat_series, numerical_series = self._inference_split_categorical_column(df_in[column])
+            if column in df_in.columns:
+                cat_series, numerical_series = self._inference_split_categorical_column(
+                    df_in[column]
+                )
 
                 # Update DataFrame in place
                 df_in[f"{column}"] = cat_series
                 df_in[f"{column}_num"] = numerical_series
         return df_in
-    
+
     def create_numeric_columns(self, series):
         series_copy = series.copy(deep=True)[self.categorical_columns_to_split]
-        series_copy = series_copy.map(self.numerical_mapping).astype('float64')
+        series_copy = series_copy.map(self.numerical_mapping).astype("float64")
         series_copy.index = series_copy.index + "_num"
         return series_copy
-    
 
     def create_categorical_columns(self, series):
         series_copy = series.copy(deep=True)[self.categorical_columns_to_split]
         series_copy = series_copy.map(self.cat_mapping)
         return series_copy
-    
+
     def process_series(self, series_to_split: pd.Series) -> pd.Series:
         # Filter out the non-categorical series
-        non_categorical_series = series_to_split.drop(self.categorical_columns_to_split, errors='ignore')
+        non_categorical_series = series_to_split.drop(
+            self.categorical_columns_to_split, errors="ignore"
+        )
 
         # Apply categorical mapping to the relevant subset
-        categorical_series = series_to_split[self.categorical_columns_to_split].replace(self.cat_mapping)
+        categorical_series = series_to_split[self.categorical_columns_to_split].replace(
+            self.cat_mapping
+        )
         # Apply numerical mapping to the same subset and adjust index
-        numerical_series = pd.to_numeric(series_to_split[self.categorical_columns_to_split].replace(self.numerical_mapping), errors='coerce')
+        numerical_series = pd.to_numeric(
+            series_to_split[self.categorical_columns_to_split].replace(
+                self.numerical_mapping
+            ),
+            errors="coerce",
+        )
         numerical_series.index = [f"{idx}_num" for idx in numerical_series.index]
 
         # Concatenate all series
-        output_series = pd.concat([non_categorical_series, categorical_series, numerical_series])
+        output_series = pd.concat(
+            [non_categorical_series, categorical_series, numerical_series]
+        )
         return output_series
-
 
 
 class DataFrameColumnTypeSplitter(IDataFrameTransformer):
@@ -516,7 +545,7 @@ class CatTypeConverter(IDataFrameTransformer):
         self.date_col_names = date_col_names
 
     def process(
-            self, df: pd.DataFrame, verbose: bool = False, create_copy=False
+        self, df: pd.DataFrame, verbose: bool = False, create_copy=False
     ) -> pd.DataFrame:
         """Apply the column conversion returning a new dataframe
 
@@ -614,22 +643,26 @@ class SimpleCatTypeConverter:
             return self.process_series(data)
         else:
             raise TypeError(f"Expected DataFrame or Series, got {type(data)}")
-        
+
     def process_df(self, df):
         # Filter columns present in the DataFrame
-        validated_categorical_columns = [col for col in self.categorical_columns if col in df.columns]
+        validated_categorical_columns = [
+            col for col in self.categorical_columns if col in df.columns
+        ]
         validated_date_columns = [col for col in self.date_columns if col in df.columns]
 
         # Convert to categorical
         for col in validated_categorical_columns:
-            if df[col].dtype != 'category':
-                df[col] = df[col].astype('category')
+            if df[col].dtype != "category":
+                df[col] = df[col].astype("category")
 
         # Convert non-date and non-categorical columns to numeric
-        non_categorical_columns = df.columns.difference(validated_categorical_columns + validated_date_columns)
+        non_categorical_columns = df.columns.difference(
+            validated_categorical_columns + validated_date_columns
+        )
         for col in non_categorical_columns:
             if not pd.api.types.is_numeric_dtype(df[col]):
-                df[col] = pd.to_numeric(df[col], errors='coerce')
+                df[col] = pd.to_numeric(df[col], errors="coerce")
 
         return df
 
@@ -637,11 +670,16 @@ class SimpleCatTypeConverter:
         # Process a single transposed row (Pandas Series)
         for col in series.index:
             # Convert to categorical if in categorical_columns
-            if col in self.categorical_columns and not pd.api.types.is_categorical_dtype(series[col]):
+            if (
+                col in self.categorical_columns
+                and not pd.api.types.is_categorical_dtype(series[col])
+            ):
                 series[col] = pd.Categorical([series[col]])
 
             # Convert to numeric if not in categorical_columns or date_columns
-            elif col not in self.date_columns and not pd.api.types.is_numeric_dtype(series[col]):
-                series[col] = pd.to_numeric(series[col], errors='coerce')
+            elif col not in self.date_columns and not pd.api.types.is_numeric_dtype(
+                series[col]
+            ):
+                series[col] = pd.to_numeric(series[col], errors="coerce")
 
         return series

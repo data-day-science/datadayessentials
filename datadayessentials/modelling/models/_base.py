@@ -9,8 +9,7 @@ from typing import Type
 class IModelSavingLoadingAttribute(ABC):
     @abstractmethod
     def _save_model_to_folder(self) -> ModelInfo:
-        """Save the model to a local folder
-        """
+        """Save the model to a local folder"""
         pass
 
     @abstractmethod
@@ -18,9 +17,10 @@ class IModelSavingLoadingAttribute(ABC):
         """Loads the model from mlflow
 
         Args:
-            model_folder (str): path to the model folder        
+            model_folder (str): path to the model folder
         """
         pass
+
 
 class IModelFactory(ABC):
     def __init__(self, model_class: Type[IModelSavingLoadingAttribute]) -> None:
@@ -34,9 +34,11 @@ class IModelFactory(ABC):
             run_id ([type]): unique run id
         """
         pass
-    
+
     @abstractmethod
-    def create_from_registered_model(self, model_name: str, model_version: int = None) -> IModelSavingLoadingAttribute:
+    def create_from_registered_model(
+        self, model_name: str, model_version: int = None
+    ) -> IModelSavingLoadingAttribute:
         """Creates a model from a registered model
 
         Args:
@@ -45,8 +47,11 @@ class IModelFactory(ABC):
         """
         pass
 
+
 class IModel(ABC):
-    def fit(self, X: pd.DataFrame, y: Union[List, pd.Series], *args, **kwargs) -> object:
+    def fit(
+        self, X: pd.DataFrame, y: Union[List, pd.Series], *args, **kwargs
+    ) -> object:
         """Function to fit the model
 
         Args:
@@ -79,4 +84,3 @@ class IModel(ABC):
             pd.DataFrame: predicted probabilities
         """
         pass
-

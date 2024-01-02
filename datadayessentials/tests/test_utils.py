@@ -8,7 +8,6 @@ import datadayessentials
 
 
 class TestCoreCacheManager(unittest.TestCase):
-
     @patch("pathlib.Path.home", return_value=Path("C:/Users/test_user"))
     def test_cache_directory(self, mock_pathlib):
         assert mock_pathlib() == Path("C:/Users/test_user")
@@ -28,14 +27,16 @@ class TestCoreCacheManager(unittest.TestCase):
         self.assertTrue(cache_manager.cache_directory.exists())
         self.assertTrue(cache_manager.cache_directory.is_dir())
 
-    @patch("datadayessentials.utils.ConfigCacheReader.get_value_from_config", return_value="key_value")
+    @patch(
+        "datadayessentials.utils.ConfigCacheReader.get_value_from_config",
+        return_value="key_value",
+    )
     def test_get_value_from_config(self, mocked_get_value_from_config):
         cache_manager = datadayessentials.utils.CoreCacheManager()
         self.assertEqual(cache_manager.get_value_from_config("test_key"), "key_value")
 
 
 class TestConfigCacheWriter(unittest.TestCase):
-
     def test_add_key_value_to_config(self):
         cache_manager = datadayessentials.utils.CoreCacheManager()
         cache_writer = datadayessentials.utils.ConfigCacheWriter()
@@ -56,7 +57,6 @@ class TestConfigCacheWriter(unittest.TestCase):
 
 
 class TestConfigReader(unittest.TestCase):
-
     def test_get_value_from_config(self):
         cache_writer = datadayessentials.utils.ConfigCacheWriter()
         cache_writer.add_key_value_to_config("test_key", "test_value")

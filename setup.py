@@ -6,7 +6,6 @@ def read_requirements(file):
         return f.read().splitlines()
 
 
-
 def read_file(file):
     with open(file) as f:
         return f.read()

@@ -1,28 +1,30 @@
 from typing import List, Union
 import pandas as pd
-from datadayessentials.modelling.models._base import IModel, IModelSavingLoadingAttribute
+from datadayessentials.modelling.models._base import (
+    IModel,
+    IModelSavingLoadingAttribute,
+)
 import mlflow
 
 
 class SklearnModel(IModel, IModelSavingLoadingAttribute):
     categorical_features: List[str] = None
+
     def __init__(self, model: IModel, categorical_features: List[str] = None):
         self.model = model
         self.categorical_features = categorical_features
-    
+
     def fit(self, X, y, *args, **kwargs):
         self.model.fit(X, y, *args, **kwargs)
         return self
-    
+
     def predict(self, X, *args, **kwargs):
         return self.model.predict(X, *args, **kwargs)
-    
+
     def predict_proba(self, X, *args, **kwargs):
         return self.model.predict_proba(X, *args, **kwargs)
 
-    def _save_model_to_folder(
-        self, model_save_path: str, input_example: object = None
-    ):
+    def _save_model_to_folder(self, model_save_path: str, input_example: object = None):
         """Logs the model to the MLFlow server, if an input example is passed then infer the model signature.
 
         Args:
@@ -42,11 +44,12 @@ class SklearnModel(IModel, IModelSavingLoadingAttribute):
             )
         else:
             meta_data = mlflow.sklearn.save_model(
-                self.model, model_save_path, 
+                self.model,
+                model_save_path,
             )
         self._save_categorical_features(model_save_path)
         return meta_data
-    
+
     def _save_categorical_features(self, save_path: str):
         with open(f"{save_path}/categorical_features.txt", "w") as f:
             f.write("\n".join(self.categorical_features))

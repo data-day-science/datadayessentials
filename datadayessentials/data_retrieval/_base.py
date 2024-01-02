@@ -11,6 +11,7 @@ class ISchemaFetcher(ABC):
     @abstractmethod
     def get_schema(self, name: str, model_version: str) -> dict:
         pass
+
     @abstractmethod
     def add_schema(self, schema_name: str, schema: dict) -> None:
         pass
@@ -65,7 +66,7 @@ class ISQLQueryFormatter(ABC):
     @abstractmethod
     def get_query(self) -> str:
         pass
-    
+
     @abstractmethod
     def _load_query(self, query_name: str) -> str:
         pass
@@ -146,6 +147,7 @@ class IPickleLoader(IDataFrameLoader):
     @abstractmethod
     def load(self) -> Any:
         pass
+
 
 class IParquetLoader(IDataFrameLoader):
     def __init__(self, authentication: IAuthentication):

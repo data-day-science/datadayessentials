@@ -147,7 +147,6 @@ def test_is_data_size_small_false():
     assert is_data_size_small(df) is False
 
 
-
 class TestDataFrameColumnTypeSplitter(unittest.TestCase):
     def test_initialization(self):
         splitter = DataFrameColumnTypeSplitter()
@@ -210,23 +209,24 @@ class TestDataFrameColumnTypeSplitter(unittest.TestCase):
 
 class TestCategoricalColumnSplitter(unittest.TestCase):
     data = {
-            "QCB.CreditCheckId": "1",
-            "QCB.MonthsFromEpoch": "6",
-            "QCB.RawResponseId": "4",
-            "QCB.LSC898": "R",
-            "QCB.LSC899": "R",
-            "QCB.HSC415": "R",
-            "QCB.MSC410": "0",
-        }
+        "QCB.CreditCheckId": "1",
+        "QCB.MonthsFromEpoch": "6",
+        "QCB.RawResponseId": "4",
+        "QCB.LSC898": "R",
+        "QCB.LSC899": "R",
+        "QCB.HSC415": "R",
+        "QCB.MSC410": "0",
+    }
     columns_to_split = [
-                "QCB.CreditCheckId",
-                "QCB.MonthsFromEpoch",
-                "QCB.RawResponseId",
-                "QCB.LSC898",
-                "QCB.LSC899",
-                "QCB.HSC415",
-                "QCB.MSC410",
-            ]
+        "QCB.CreditCheckId",
+        "QCB.MonthsFromEpoch",
+        "QCB.RawResponseId",
+        "QCB.LSC898",
+        "QCB.LSC899",
+        "QCB.HSC415",
+        "QCB.MSC410",
+    ]
+
     def test_process_df(self):
         df = pd.DataFrame.from_dict(self.data, orient="index").T
         splitter = CategoricalColumnSplitter(
@@ -251,17 +251,23 @@ class TestCategoricalColumnSplitter(unittest.TestCase):
                 "QCB.MSC410_num": [0],
             }
         )
-        expected_output_df['QCB.CreditCheckId'] = expected_output_df['QCB.CreditCheckId'].astype('object')
-        expected_output_df['QCB.MSC410'] = expected_output_df['QCB.MSC410'].astype('object')
-        num_columns = [col for col in expected_output_df.columns if col.endswith('_num')]
+        expected_output_df["QCB.CreditCheckId"] = expected_output_df[
+            "QCB.CreditCheckId"
+        ].astype("object")
+        expected_output_df["QCB.MSC410"] = expected_output_df["QCB.MSC410"].astype(
+            "object"
+        )
+        num_columns = [
+            col for col in expected_output_df.columns if col.endswith("_num")
+        ]
         for col in num_columns:
-            expected_output_df[col] = expected_output_df[col].astype('float64')
+            expected_output_df[col] = expected_output_df[col].astype("float64")
         output_df = output_df[expected_output_df.columns]
         pd.testing.assert_frame_equal(
             output_df,
             expected_output_df,
         )
-    
+
     def test_process_series(self):
         series = pd.Series(self.data)
         splitter = CategoricalColumnSplitter(
@@ -294,7 +300,7 @@ class TestCategoricalColumnSplitter(unittest.TestCase):
                 self.assertTrue(np.isnan(output_series[key]))
             else:
                 self.assertEqual(output_series[key], expected_series[key])
-      
+
     def test_series_and_df_same_output(self):
         df = pd.DataFrame.from_dict(self.data, orient="index").T
         series = pd.Series(self.data)
@@ -309,4 +315,6 @@ class TestCategoricalColumnSplitter(unittest.TestCase):
                 self.assertTrue(np.isnan(output_df[key].values[0]))
                 self.assertTrue(np.isnan(output_series_df[key].values[0]))
             else:
-                self.assertEqual(output_df[key].values[0], output_series_df[key].values[0])
+                self.assertEqual(
+                    output_df[key].values[0], output_series_df[key].values[0]
+                )

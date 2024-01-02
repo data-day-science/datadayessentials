@@ -11,7 +11,10 @@ from sklearn.inspection import permutation_importance
 import numpy as np
 import xgboost as xgb
 from datadayessentials.modelling._base import IModelEvaluator
-from datadayessentials.modelling.models._base import IModel, IModelSavingLoadingAttribute
+from datadayessentials.modelling.models._base import (
+    IModel,
+    IModelSavingLoadingAttribute,
+)
 
 
 class XGBoostClassifierPipeline(IModel, IModelSavingLoadingAttribute):
@@ -21,11 +24,9 @@ class XGBoostClassifierPipeline(IModel, IModelSavingLoadingAttribute):
     """
 
     model: xgb.Booster
+
     def __init__(
-        self,
-        evaluator: IModelEvaluator = None,
-        model: xgb.Booster = None,
-        **kw
+        self, evaluator: IModelEvaluator = None, model: xgb.Booster = None, **kw
     ):
         self.evaluator = evaluator
         if model is not None:
@@ -79,7 +80,11 @@ class XGBoostClassifierPipeline(IModel, IModelSavingLoadingAttribute):
         raise NotImplementedError("This has not yet been implemented for this class.")
 
     def evaluate_model(
-        self, X: pd.DataFrame, y_true: pd.Series, title:str ="Model Performance", verbose: bool = True
+        self,
+        X: pd.DataFrame,
+        y_true: pd.Series,
+        title: str = "Model Performance",
+        verbose: bool = True,
     ) -> dict:
         """runs the model evaluator class
 
@@ -96,7 +101,7 @@ class XGBoostClassifierPipeline(IModel, IModelSavingLoadingAttribute):
         """
         if self.evaluator:
             self.evaluator.set_model(model=self)
-            return self.evaluator.run(X, y_true, title=title,verbose=verbose)
+            return self.evaluator.run(X, y_true, title=title, verbose=verbose)
         else:
             raise AttributeError("No DSModelEvaluator set for this class")
 
@@ -138,11 +143,19 @@ class XGBoostClassifierPipeline(IModel, IModelSavingLoadingAttribute):
         raise NotImplementedError(
             "This functionality is not yet implemented for this class"
         )
-    
-    def _save_model_to_folder(self, mlflow: ModuleType, model: object, model_name: str, input_example: object = None) -> ModelInfo:
-        raise NotImplementedError("This functionality is not yet implemented for this class")
-    
-    def load_model_from_folder(self, run_name: str) -> object:
-        raise NotImplementedError("This functionality is not yet implemented for this class")
 
-    
+    def _save_model_to_folder(
+        self,
+        mlflow: ModuleType,
+        model: object,
+        model_name: str,
+        input_example: object = None,
+    ) -> ModelInfo:
+        raise NotImplementedError(
+            "This functionality is not yet implemented for this class"
+        )
+
+    def load_model_from_folder(self, run_name: str) -> object:
+        raise NotImplementedError(
+            "This functionality is not yet implemented for this class"
+        )

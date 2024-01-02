@@ -18,7 +18,6 @@ class IDataFramePipe(ABC):
         pass
 
 
-
 class IPreProcessor(ABC):
     def __init__(self):
         pass

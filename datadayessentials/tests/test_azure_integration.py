@@ -34,7 +34,10 @@ class TestAzureIntegration(unittest.TestCase):
 
         test_df = pd.DataFrame({"col2": [2, 3, 4, 5], "col2": [1, 2, 3, 4]})
         blob_location = BlobLocation(
-            Config().get_environment_variable("data_lake"), "test", "folder1", "test.csv"
+            Config().get_environment_variable("data_lake"),
+            "test",
+            "folder1",
+            "test.csv",
         )
         uri_generator = FakeURIGenerator(blob_location)
         saver.save(blob_location, test_df)
@@ -42,5 +45,3 @@ class TestAzureIntegration(unittest.TestCase):
         returned_df = loader.load_from_uri_generator(uri_generator)
         logger.debug(f"The returned_df is {returned_df}")
         logger.debug(f"The expected_df is {test_df}")
-
-

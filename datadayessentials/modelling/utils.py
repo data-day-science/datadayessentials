@@ -26,7 +26,6 @@ from azureml.core import Workspace
 import sys
 
 
-
 def get_workspace() -> Workspace:
     """
     Initialises the Azure ML workspace
@@ -36,7 +35,9 @@ def get_workspace() -> Workspace:
         auth = ServicePrincipalAuthentication(
             tenant_id=Config().get_environment_variable("tenant_id"),
             service_principal_id=Config().get_environment_variable("client_id"),
-            service_principal_password=Config().get_environment_variable("client_secret"),
+            service_principal_password=Config().get_environment_variable(
+                "client_secret"
+            ),
         )
     except KeyError:
         # Only try this locally
@@ -47,16 +48,12 @@ def get_workspace() -> Workspace:
                 "You must set the following environment variables: AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET"
             )
 
-    
     return Workspace.get(
         name=Config().get_environment_variable("machine_learning_workspace"),
         subscription_id=Config().get_environment_variable("subscription_id"),
         resource_group=Config().get_environment_variable("resource_group"),
         auth=auth,
     )
-
-            
- 
 
 
 class DataSplitter:
@@ -307,5 +304,3 @@ class DataSplitter:
             y_test = pd.Series()
 
         return X_train, X_val, X_test, y_train, y_val, y_test
-
-

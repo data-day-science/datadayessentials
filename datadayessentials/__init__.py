@@ -96,4 +96,4 @@ from datadayessentials.config._config_setup import ConfigSetup
 
 set_global_loggers_to_warning()
 
-initialise_core_config= ConfigSetup.initialise_core_config
+initialise_core_config = ConfigSetup.initialise_core_config

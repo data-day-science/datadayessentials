@@ -13,8 +13,12 @@ import matplotlib.pyplot as plt
 import mlflow
 
 from azureml.core import Workspace
-from azureml.core.authentication import ServicePrincipalAuthentication, InteractiveLoginAuthentication
+from azureml.core.authentication import (
+    ServicePrincipalAuthentication,
+    InteractiveLoginAuthentication,
+)
 from datadayessentials.config import Config
+
 
 @pytest.fixture
 def model_params():
@@ -83,5 +87,3 @@ class TestCatBoostClassifierPipeline:
         assert set(list(evaluation.keys())) == set(
             ["model_metrics", "model_performance_figure"]
         )
-        
-        

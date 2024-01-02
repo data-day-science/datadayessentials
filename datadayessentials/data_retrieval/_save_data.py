@@ -21,7 +21,7 @@ class BlobLocation(IBlobLocation):
     blob
     Example Use Case:
     ```python
-    from datadayessentials.data_retrieval import BlobLocation 
+    from datadayessentials.data_retrieval import BlobLocation
 
     storage_acc = 'account_name'
     container = 'container_name'
@@ -282,7 +282,9 @@ class DataLakeJsonSaver(IJsonSaver):
         )
         logger.debug("created client")
 
-        file_client.upload_data(json.dumps(data), overwrite=True, timeout=10000, chunk_size=10 * 1024 * 1024)
+        file_client.upload_data(
+            json.dumps(data), overwrite=True, timeout=10000, chunk_size=10 * 1024 * 1024
+        )
         logger.debug("created file")
 
 
@@ -325,5 +327,10 @@ class DataLakePickleSaver(IPickleSaver):
         )
         logger.debug("created client")
 
-        file_client.upload_data(pickle.dumps(data), overwrite=True, timeout=10000, chunk_size=10 * 1024 * 1024)
+        file_client.upload_data(
+            pickle.dumps(data),
+            overwrite=True,
+            timeout=10000,
+            chunk_size=10 * 1024 * 1024,
+        )
         logger.debug("created file")

@@ -2,7 +2,10 @@ import dataclasses
 from typing import Union
 from azure.appconfiguration import AzureAppConfigurationClient
 import os
-from ._execution_environment_manager import ExecutionEnvironmentManager, ExecutionEnvironment
+from ._execution_environment_manager import (
+    ExecutionEnvironmentManager,
+    ExecutionEnvironment,
+)
 from ..utils import CoreCacheManager
 import json
 
@@ -16,19 +19,20 @@ from azure.identity import (
 def get_azure_credentials():
     environment_credentials = EnvironmentCredential()
 
-    tenant_id = os.environ.get('AZURE_TENANT_ID')
+    tenant_id = os.environ.get("AZURE_TENANT_ID")
 
-    interactive_credentials = InteractiveBrowserCredential(
-        tenant_id=tenant_id
-    )
+    interactive_credentials = InteractiveBrowserCredential(tenant_id=tenant_id)
     credential_chain = ChainedTokenCredential(
         environment_credentials, interactive_credentials
     )
     return credential_chain
 
+
 class AzureConfigManager:
     def __init__(self):
-        self.execution_environment = ExecutionEnvironmentManager.get_execution_environment()
+        self.execution_environment = (
+            ExecutionEnvironmentManager.get_execution_environment()
+        )
         if self.execution_environment == ExecutionEnvironment.PROD:
             self.label = self.execution_environment.value
             self.client = self.get_client_from_connection_string()
@@ -36,7 +40,7 @@ class AzureConfigManager:
             self.label = self.execution_environment.value
             self.client = self.get_client_from_connection_string()
         elif self.execution_environment == ExecutionEnvironment.LOCAL:
-            self.label = 'dev'
+            self.label = "dev"
             self.client = self.get_client_via_authenticator()
         else:
             raise ValueError(f"Environment {self.execution_environment} not recognised")
@@ -48,33 +52,38 @@ class AzureConfigManager:
         raise NotImplementedError("Local config not implemented yet")
 
     def get_config_variable_from_cloud(self, key: str):
-        variable_value = self.client.get_configuration_setting(key=key, label=self.label)
+        variable_value = self.client.get_configuration_setting(
+            key=key, label=self.label
+        )
         return variable_value.value
 
     def get_client_via_authenticator(self):
-        client = AzureAppConfigurationClient(base_url=CoreCacheManager.get_value_from_config("base_url"),
-            credential=get_azure_credentials())
+        client = AzureAppConfigurationClient(
+            base_url=CoreCacheManager.get_value_from_config("base_url"),
+            credential=get_azure_credentials(),
+        )
         return client
 
     @staticmethod
     def get_client_from_connection_string():
         client = AzureAppConfigurationClient.from_connection_string(
-            connection_string=os.getenv("AZURE_APP_CONFIG_CONNECTION_STRING"))
+            connection_string=os.getenv("AZURE_APP_CONFIG_CONNECTION_STRING")
+        )
         return client
 
 
 @dataclasses.dataclass
 class AzureAppConfigValues:
     __dataclass_fields__ = None
-    client_id: str = "",
-    client_secret: str = "",
-    data_lake: str = "",
-    key_vault: str = "",
-    machine_learning_workspace: str = "",
-    project_dataset_container: str = "",
-    resource_group: str = "",
-    subscription_id: str = "",
-    tenant_id: str = "",
+    client_id: str = ("",)
+    client_secret: str = ("",)
+    data_lake: str = ("",)
+    key_vault: str = ("",)
+    machine_learning_workspace: str = ("",)
+    project_dataset_container: str = ("",)
+    resource_group: str = ("",)
+    subscription_id: str = ("",)
+    tenant_id: str = ("",)
 
 
 class Config:
@@ -94,8 +103,10 @@ class Config:
         self.execution_env = ExecutionEnvironmentManager.get_execution_environment()
         self.validate_local_config()
         if self.execution_env == ExecutionEnvironment.LOCAL:
-            os.environ["AZURE_TENANT_ID"] = CoreCacheManager.get_value_from_config("tenant_id")  
-            os.environ["BASE_URL"] = CoreCacheManager.get_value_from_config("base_url")  
+            os.environ["AZURE_TENANT_ID"] = CoreCacheManager.get_value_from_config(
+                "tenant_id"
+            )
+            os.environ["BASE_URL"] = CoreCacheManager.get_value_from_config("base_url")
         self.azure_config_manager = AzureConfigManager()
         self.set_default_variables()
 
@@ -110,11 +121,15 @@ class Config:
         """
         available_environment_variables = os.environ.keys()
         if self.execution_env == ExecutionEnvironment.LOCAL:
-            tenant_id = CoreCacheManager.get_value_from_config("tenant_id")  
+            tenant_id = CoreCacheManager.get_value_from_config("tenant_id")
             base_url = CoreCacheManager.get_value_from_config("base_url")
             if (tenant_id is None) or (base_url is None):
                 raise EnvironmentError(msg)
-        elif self.execution_env in [ExecutionEnvironment.DEV, ExecutionEnvironment.PROD, ExecutionEnvironment.STAGING]:
+        elif self.execution_env in [
+            ExecutionEnvironment.DEV,
+            ExecutionEnvironment.PROD,
+            ExecutionEnvironment.STAGING,
+        ]:
             if "AZURE_APP_CONFIG_CONNECTION_STRING" not in os.environ.keys():
                 raise EnvironmentError(
                     "'AZURE_APP_CONFIG_CONNECTION_STRING' environment variable not set for remote access to Azure Application Configuration"
@@ -126,7 +141,7 @@ class Config:
 
         Args:
             variable_name (str): The name of the environment variable to retrieve.
-   
+
         Returns:
             str: The value of the requested environment variable.
 
@@ -142,20 +157,22 @@ class Config:
             except:
                 return os.getenv(env_variable_name)
         else:
-            variable_value = self.azure_config_manager.get_config_variable(variable_name)
+            variable_value = self.azure_config_manager.get_config_variable(
+                variable_name
+            )
             os.environ[env_variable_name] = variable_value
             try:
                 return json.loads(variable_value)
             except:
                 return variable_value
-        
-    def set_default_variables(self, list_of_variables: list = AzureAppConfigValues.__dataclass_fields__.keys()):
+
+    def set_default_variables(
+        self, list_of_variables: list = AzureAppConfigValues.__dataclass_fields__.keys()
+    ):
         list(map(self.get_environment_variable, list_of_variables))
-        
 
     # def set_default_variables(self, variables : AzureAppConfigValues)-> AzureAppConfigValues:
     #     if not self.check_environent_available():
-
 
     #         fields = variables.__annotations__
     #         updated_fields = {field_name: self.get_environment_variable(getattr(variables, field_name)) for field_name in fields.keys()}

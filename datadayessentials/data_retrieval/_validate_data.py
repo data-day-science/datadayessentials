@@ -54,7 +54,7 @@ class DataFrameValidator(IDataFrameValidator):
             "dtype": "str"
             }
         }
-        
+
     validator = DataFrameValidator(example_schema)
 
     input_df = pd.DataFrame({'col1': ['M', 'C', '25', '144', '1001'']})

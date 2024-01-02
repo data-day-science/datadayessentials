@@ -35,7 +35,6 @@ class TestBlobLocation(unittest.TestCase):
 class TestDataLakeCSVSaver:
     @mock.patch("azure.storage.filedatalake.DataLakeFileClient.upload_data")
     def test_save(self, mock_save_file):
-
         mock_authentication = DataLakeAuthentication()
         mock_authentication.get_azure_credentials = mock.MagicMock()
 
@@ -57,10 +56,9 @@ class TestDataLakeCSVSaver:
 class TestDataLakeJsonSaver:
     @mock.patch("azure.storage.filedatalake.DataLakeFileClient.upload_data")
     def test_save(self, mock_save_file):
-
         mock_authentication = DataLakeAuthentication()
         mock_authentication.get_azure_credentials = mock.MagicMock()
-        
+
         blob_location = BlobLocation(
             account=Config().get_environment_variable("data_lake"),
             container="test",
@@ -79,7 +77,6 @@ class TestDataLakeJsonSaver:
 class TestDataLakePickleSaver:
     @mock.patch("azure.storage.filedatalake.DataLakeFileClient.upload_data")
     def test_save(self, mock_save_file):
-
         mock_authentication = DataLakeAuthentication()
         mock_authentication.get_azure_credentials = mock.MagicMock()
         blob_location = BlobLocation(

@@ -165,5 +165,3 @@ class IModelEvaluator(ABC):
             dict: returns a dictionary of the figure object and the dictionary of metrics
         """
         pass
-
-    

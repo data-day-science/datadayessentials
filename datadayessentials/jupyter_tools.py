@@ -75,11 +75,12 @@ class TableScan:
         use_cache (bool): Whether or not to utilize caching. Defaults to True.
     """
 
-    def __init__(self,
-                 string_to_search,
-                 server_name: str = "readable-secondary",
-                 use_cache: bool = True):
-
+    def __init__(
+        self,
+        string_to_search,
+        server_name: str = "readable-secondary",
+        use_cache: bool = True,
+    ):
         table_loader = TableLoader(
             authentication=DatabaseAuthentication(),
             sql_statement=self.format_string_to_table_scan_query(string_to_search),
@@ -92,5 +93,7 @@ class TableScan:
 
     @staticmethod
     def format_string_to_table_scan_query(string_to_search):
-        return f"SELECT DISTINCT TABLE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE COLUMN_NAME LIKE" \
-               f" '%{string_to_search}%'"
+        return (
+            f"SELECT DISTINCT TABLE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE COLUMN_NAME LIKE"
+            f" '%{string_to_search}%'"
+        )

@@ -24,6 +24,7 @@ class ModelCacher:
             ... download model to /tmp/model
             model_cacher.copy_model_from_cache("/tmp/model")
     """
+
     def __init__(self, model_name: str, model_version: int, cache_location):
         self.model_name = model_name
         self.model_version = model_version
@@ -31,15 +32,16 @@ class ModelCacher:
 
     def is_model_cached(self):
         return self._get_model_cache_path().exists()
-    
+
     def _get_model_cache_path(self):
         return self.cache_location / f"{self.model_name}-{self.model_version}"
-    
+
     def copy_model_folder_to_cache(self, model_path: str):
         shutil.copytree(model_path, self._get_model_cache_path())
 
     def copy_model_folder_from_cache(self, model_path: str):
         shutil.copytree(self._get_model_cache_path(), model_path)
+
 
 class ModelManager(IModelManager):
     """
@@ -93,11 +95,11 @@ class ModelManager(IModelManager):
         """
 
         if not model_version:
-            model_version = Model.list(
-                self.workspace, name=model_name, latest=True
-            )[0].version
+            model_version = Model.list(self.workspace, name=model_name, latest=True)[
+                0
+            ].version
         print(f"Downloading model {model_name} version {model_version}")
-        
+
         folder_to_save_model = (
             f"{model_name}-{model_version}"
             if folder_to_save_model is None
@@ -108,7 +110,10 @@ class ModelManager(IModelManager):
             shutil.rmtree(folder_to_save_model)
 
         model = Model(self.workspace, model_name, version=model_version)
-        cache_location = os.path.join(os.path.expanduser("~"),Config().get_environment_variable("local_cache_dir"))
+        cache_location = os.path.join(
+            os.path.expanduser("~"),
+            Config().get_environment_variable("local_cache_dir"),
+        )
 
         model_cacher = ModelCacher(model_name, model_version, cache_location)
         if model_cacher.is_model_cached():
@@ -231,7 +236,13 @@ class ModelManager(IModelManager):
             properties=properties,
         )
 
-    def register_ensemble_model_from_run_ids(self, run_ids: Dict[str, str], ensemble_model_name: str, properties: dict = None, tags: dict = {}):
+    def register_ensemble_model_from_run_ids(
+        self,
+        run_ids: Dict[str, str],
+        ensemble_model_name: str,
+        properties: dict = None,
+        tags: dict = {},
+    ):
         """From the run ids provided, downloads all the run ids to a local temporary folder and uploads them all as a single model to the model registry.
 
         Args:
@@ -247,5 +258,7 @@ class ModelManager(IModelManager):
         for model_name, run_id in run_ids.items():
             model_folder_name = ensemble_model_folder + "/" + model_name
             self.get_model_files_from_run(run_id, model_folder_name)
-        self.register_model_from_local_folder(ensemble_model_name, ensemble_model_folder, properties=properties, tags=tags)
+        self.register_model_from_local_folder(
+            ensemble_model_name, ensemble_model_folder, properties=properties, tags=tags
+        )
         shutil.rmtree(ensemble_model_folder)

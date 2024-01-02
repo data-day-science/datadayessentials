@@ -1,6 +1,9 @@
 from azure.core.exceptions import ResourceNotFoundError
 from azureml.core import Workspace
-from azureml.core.authentication import ServicePrincipalAuthentication, InteractiveLoginAuthentication
+from azureml.core.authentication import (
+    ServicePrincipalAuthentication,
+    InteractiveLoginAuthentication,
+)
 
 from ._load_data import DataLakeCSVLoader, DataLakePickleLoader, DataLakeJsonLoader
 from ._base import IBlobLocation, IURIGenerator, ICSVLoader
@@ -32,7 +35,6 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 
-
 class DatalakeProjectAssetsHelper:
     """A class for interacting with resources in the Data lake.  This class is a helper for
     the ProjectDatasetManager and is not intended to be used as a standalone class
@@ -60,7 +62,6 @@ class DatalakeProjectAssetsHelper:
         )
 
         self.project = project
-      
 
     def _get_project_assets(self) -> list:
         """for the specified project, identifies what datasets are available in the datalake that are associated with this project.
@@ -79,10 +80,9 @@ class DatalakeProjectAssetsHelper:
         )
         # If the container does not exist then try to create it
         containers = self.datalake_service.list_file_systems()
-        
+
         if container_name not in [container.name for container in containers]:
             self._create_container(container_name)
-
 
         file_system_client = self.datalake_service.get_file_system_client(
             file_system=blob.get_container()
@@ -106,10 +106,9 @@ class DatalakeProjectAssetsHelper:
         )
         project_assets.remove("Datasets")
         return project_assets
-    
+
     def _create_container(self, container_name):
         self.datalake_service.create_file_system(file_system=container_name)
-        
 
     def pull_project_datasets(self, uri_blob_locations: list, skip_datasets=[]) -> dict:
         """Returns all datasets associated with the supplied project name.
@@ -190,9 +189,11 @@ class MLStudioProjectDatasetsHelper:
 
         self.ml_client = MLClient(
             credential=self.credential.get_azure_credentials(),
-            subscription_id=Config().get_environment_variable("subscription_id"), 
+            subscription_id=Config().get_environment_variable("subscription_id"),
             resource_group_name=Config().get_environment_variable("resource_group"),
-            workspace_name=Config().get_environment_variable("machine_learning_workspace"),
+            workspace_name=Config().get_environment_variable(
+                "machine_learning_workspace"
+            ),
         )
 
     def _get_asset_overview(self, project_assets: List[str], version=None) -> Dict:
@@ -220,7 +221,7 @@ class MLStudioProjectDatasetsHelper:
         return outputs
 
     def _get_path_to_registered_dataset(
-            self, project_assets: List[str], versions: Dict[str, str]
+        self, project_assets: List[str], versions: Dict[str, str]
     ) -> List:
         """Returns a list of paths to data assets in MLStudio.  The function will get one path per asset
         based on the requested version.  This path will correspond to a location in the datalake where the
@@ -323,7 +324,7 @@ class MLStudioProjectDatasetsHelper:
             raise ValueError("uri must be either https format or abfss format")
 
     def get_path_to_dataset(
-            self, project_assets: list, versions: Dict[str, str]
+        self, project_assets: list, versions: Dict[str, str]
     ) -> List[BlobLocation]:
         """Gets the bloblocation objects for each supplied project dataset
 
@@ -340,7 +341,7 @@ class MLStudioProjectDatasetsHelper:
         return self._convert_asset_paths_to_bloblocations(azure_dataset_uris)
 
     def generate_dataset_path(
-            self, registered_dataset_name: str, project: str
+        self, registered_dataset_name: str, project: str
     ) -> BlobLocation:
         """Generates a BlobLocation object with uuid file name for a dataframe to be registered in Azure
 
@@ -450,9 +451,8 @@ class ProjectDatasetManager(IProjectDataset):
         except ResourceNotFoundError as e:
             print("There are no datasets for this project. ResourceNotFoundError: ", e)
 
-
     def list_dataset_descriptions(
-            self, datasets: List = [], version: Dict[str, str] = {}
+        self, datasets: List = [], version: Dict[str, str] = {}
     ) -> Dict:
         """Lists the descriptions of each dataset, version number and its tags
 
@@ -475,10 +475,10 @@ class ProjectDatasetManager(IProjectDataset):
         )
 
     def load_datasets(
-            self,
-            get_these_datasets: list = None,
-            versions: Dict[str, str] = {},
-            skip_datasets: list = [],
+        self,
+        get_these_datasets: list = None,
+        versions: Dict[str, str] = {},
+        skip_datasets: list = [],
     ) -> dict:
         """Loads the registered dataset for the project from Azure
 
@@ -506,12 +506,12 @@ class ProjectDatasetManager(IProjectDataset):
         )
 
     def register_dataset(
-            self,
-            registered_dataset_name: str,
-            data: Any,
-            description: str = None,
-            tags: dict = {},
-            register_as_pickle: bool = True
+        self,
+        registered_dataset_name: str,
+        data: Any,
+        description: str = None,
+        tags: dict = {},
+        register_as_pickle: bool = True,
     ):
         """Saves the supplied data in the data lake under the registered dataset name and registers as a data asset in ML Studio.
 
@@ -530,10 +530,11 @@ class ProjectDatasetManager(IProjectDataset):
         if data is None:
             raise TypeError("You need to pass something to register")
 
-        tags["data_type"], save_blob = self._register_dataset_based_on_datatype(data,
-                                                                                registered_dataset_name,
-                                                                                register_as_pickle,
-                                                                                )
+        tags["data_type"], save_blob = self._register_dataset_based_on_datatype(
+            data,
+            registered_dataset_name,
+            register_as_pickle,
+        )
 
         dataset = Data(
             path=save_blob,
@@ -544,25 +545,24 @@ class ProjectDatasetManager(IProjectDataset):
         )
         self.MLStudio_asset_helper.register_dataset(dataset)
 
-    def _register_dataset_based_on_datatype(self,
-                                            data: Any,
-                                            registered_dataset_name: str,
-                                            register_as_pickle: bool):
-
+    def _register_dataset_based_on_datatype(
+        self, data: Any, registered_dataset_name: str, register_as_pickle: bool
+    ):
         """Calculates and applies the logical workflow required by the register_dataset function.
 
-                    :param registered_dataset_name: The name of the registered dataset, which will appear as a subdirectory in
-                     the Datalake "../projects/<PROJECT>/Datasets" folder, and as the registered asset name in ML Studio.
-                    :type registered_dataset_name: str
-                    :param data: The data to register. This can be a Pandas DataFrame or a path to a blob.
-                    :type data: [pd.DataFrame, str, dict, list]
-                    :param register_as_pickle: Whether to register the data as a pickle file or not. Defaults to True.
-                    :type register_as_pickle: bool
+        :param registered_dataset_name: The name of the registered dataset, which will appear as a subdirectory in
+         the Datalake "../projects/<PROJECT>/Datasets" folder, and as the registered asset name in ML Studio.
+        :type registered_dataset_name: str
+        :param data: The data to register. This can be a Pandas DataFrame or a path to a blob.
+        :type data: [pd.DataFrame, str, dict, list]
+        :param register_as_pickle: Whether to register the data as a pickle file or not. Defaults to True.
+        :type register_as_pickle: bool
 
-                """
-        # 
+        """
+        #
         save_blob = self.MLStudio_asset_helper.generate_dataset_path(
-            registered_dataset_name=registered_dataset_name, project=self.project)
+            registered_dataset_name=registered_dataset_name, project=self.project
+        )
 
         if register_as_pickle:
             data_lake_saver = DataLakePickleSaver(self.credential)
@@ -622,5 +622,3 @@ class ProjectDatasetManager(IProjectDataset):
             print(
                 "No file staged for deletion.  Run ProjectDatasetManager.remove_dataset() first"
             )
-
-

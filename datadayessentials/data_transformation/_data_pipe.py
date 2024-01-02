@@ -42,17 +42,16 @@ class DataFramePipe(IDataFramePipe):
         return df
 
 
-
-
-
-def run_pipeline_with_multi_threading(pre_processor,
-                                      data_frame: pd.DataFrame,
-                                      unwanted_features: list,
-                                      required_features: list,
-                                      categorical_features: list,
-                                      target_feature: str,
-                                      n_processes: int,
-                                      n_splits: int):
+def run_pipeline_with_multi_threading(
+    pre_processor,
+    data_frame: pd.DataFrame,
+    unwanted_features: list,
+    required_features: list,
+    categorical_features: list,
+    target_feature: str,
+    n_processes: int,
+    n_splits: int,
+):
     """
     Runs a preprocessor via multithreading on a dataframe.
     Takes a dataframe and splits it into n_splits slices. Each slice is then run through the preprocessor in parallel.
@@ -72,20 +71,30 @@ def run_pipeline_with_multi_threading(pre_processor,
         dataframe: processed dataframe
     """
 
-    feature_combinations = _get_nth_columns_at_increasing_indexes(dataframe=data_frame, n_splits=n_splits)
-    feature_combinations_with_target = _append_target_in_each_list_without_it(feature_combinations,
-                                                                              target=target_feature)
-    dataframe_slices = [data_frame[feature_combination] for feature_combination in feature_combinations_with_target]
+    feature_combinations = _get_nth_columns_at_increasing_indexes(
+        dataframe=data_frame, n_splits=n_splits
+    )
+    feature_combinations_with_target = _append_target_in_each_list_without_it(
+        feature_combinations, target=target_feature
+    )
+    dataframe_slices = [
+        data_frame[feature_combination]
+        for feature_combination in feature_combinations_with_target
+    ]
     del data_frame
 
-    flexible_pre_processor = partial(pre_processor.run,
-                                     unwanted_features=unwanted_features,
-                                     required_features=required_features,
-                                     categorical_features=categorical_features,
-                                     target=target_feature,
-                                     verbose=False)
+    flexible_pre_processor = partial(
+        pre_processor.run,
+        unwanted_features=unwanted_features,
+        required_features=required_features,
+        categorical_features=categorical_features,
+        target=target_feature,
+        verbose=False,
+    )
 
-    processed_data = _perform_computation(flexible_pre_processor, dataframe_slices, n_processes)
+    processed_data = _perform_computation(
+        flexible_pre_processor, dataframe_slices, n_processes
+    )
 
     return _clean_up_processed_data(processed_data, target_feature)
 
@@ -109,7 +118,9 @@ def _clean_up_processed_data(processed_data, target: str = None):
     return results
 
 
-def _get_nth_columns_at_increasing_indexes(dataframe: pd.DataFrame, n_splits: int) -> list:
+def _get_nth_columns_at_increasing_indexes(
+    dataframe: pd.DataFrame, n_splits: int
+) -> list:
     """
     Returns a list of lists of columns at increasing indexes.  This is used to split up the dataframe into
     n_splits number of chunks for parallel processing.
@@ -154,7 +165,9 @@ def _get_nth_columns_at_increasing_indexes(dataframe: pd.DataFrame, n_splits: in
     return [column_names[index::n_splits] for index in range(n_splits)]
 
 
-def _append_target_in_each_list_without_it(columns: List[List[any]], target: str) -> List[List[any]]:
+def _append_target_in_each_list_without_it(
+    columns: List[List[any]], target: str
+) -> List[List[any]]:
     """
     Update the columns by adding the target element if it is not already present.
 

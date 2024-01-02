@@ -15,7 +15,6 @@ from datadayessentials.config import Config, ExecutionEnvironmentManager
 from datadayessentials.modelling.tests.utils import trigger_test_run
 
 
-
 class TestExperimentManager(unittest.TestCase):
     def test_submit_run(self):
         run_id, run = trigger_test_run()

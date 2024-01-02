@@ -12,8 +12,8 @@ import logging
 
 
 __all__ = [
-    'IAuthentication',
-    'DataLakeAuthentication',
-    'DatabaseAuthentication',
-    'SQLServerConnection',
+    "IAuthentication",
+    "DataLakeAuthentication",
+    "DatabaseAuthentication",
+    "SQLServerConnection",
 ]

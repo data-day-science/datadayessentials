@@ -17,7 +17,6 @@ from .._transformers import (
     CategoricalColumnSplitter,
     is_data_size_small,
     DataFrameColumnTypeSplitter,
-    InferenceSpeedCategoricalColumnSplitter,
 )
 
 
@@ -148,122 +147,6 @@ def test_is_data_size_small_false():
     assert is_data_size_small(df) is False
 
 
-class TestDataTransformer:
-    def test_split_categorical_column(self):
-        data_transformer = CategoricalColumnSplitter(
-            categorical_columns_to_split=["QCB1", "QCB2"]
-        )
-        df = pd.DataFrame(
-            {
-                "QCB1": ["0", "1", "2", "3", "4", "5", "6", "D", "R", "V", "S", "A"],
-                "QCB2": ["D", "R", "V", "S", "A", "0", "1", "2", "3", "4", "5", "6"],
-            }
-        )
-        df_out = data_transformer.process(df)
-        ["D", "R", "V", "S", "A"], [5, 6, 6, 0, 2]
-        assert df_out["QCB1_num"].equals(
-            pd.Series([0, 1, 2, 3, 4, 5, 6, 5, 6, 6, 0, 2])
-        )
-        assert df_out["QCB2_num"].equals(
-            pd.Series([5, 6, 6, 0, 2, 0, 1, 2, 3, 4, 5, 6])
-        )
-        assert df_out["QCB1"].equals(
-            pd.Series(
-                [np.nan, np.nan, np.nan, "D", "D", "D", "D", "D", "R", "V", "S", "A"]
-            )
-        )
-        assert df_out["QCB2"].equals(
-            pd.Series(
-                ["D", "R", "V", "S", "A", np.nan, np.nan, np.nan, "D", "D", "D", "D"]
-            )
-        )
-
-    def test_split_categorical_column_with_nan(self):
-        data_transformer = CategoricalColumnSplitter(
-            categorical_columns_to_split=["QCB1", "QCB2"]
-        )
-        df = pd.DataFrame(
-            {
-                "QCB1": [
-                    "0",
-                    "1",
-                    "2",
-                    "3",
-                    "4",
-                    "5",
-                    "6",
-                    "D",
-                    "R",
-                    "V",
-                    "S",
-                    "A",
-                    np.nan,
-                ],
-                "QCB2": [
-                    "D",
-                    "R",
-                    "V",
-                    "S",
-                    "A",
-                    "0",
-                    "1",
-                    "2",
-                    "3",
-                    "4",
-                    "5",
-                    "6",
-                    np.nan,
-                ],
-            }
-        )
-        df_out = data_transformer.process(df)
-
-        assert df_out["QCB1_num"].equals(
-            pd.Series([0, 1, 2, 3, 4, 5, 6, 5, 6, 6, 0, 2, np.nan])
-        )
-        assert df_out["QCB2_num"].equals(
-            pd.Series([5, 6, 6, 0, 2, 0, 1, 2, 3, 4, 5, 6, np.nan])
-        )
-        assert df_out["QCB1"].equals(
-            pd.Series(
-                [
-                    np.nan,
-                    np.nan,
-                    np.nan,
-                    "D",
-                    "D",
-                    "D",
-                    "D",
-                    "D",
-                    "R",
-                    "V",
-                    "S",
-                    "A",
-                    np.nan,
-                ]
-            )
-        )
-        assert df_out["QCB2"].equals(
-            pd.Series(
-                [
-                    "D",
-                    "R",
-                    "V",
-                    "S",
-                    "A",
-                    np.nan,
-                    np.nan,
-                    np.nan,
-                    "D",
-                    "D",
-                    "D",
-                    "D",
-                    np.nan,
-                ]
-            )
-        )
-
-
 class TestDataFrameColumnTypeSplitter(unittest.TestCase):
     def test_initialization(self):
         splitter = DataFrameColumnTypeSplitter()
@@ -324,30 +207,30 @@ class TestDataFrameColumnTypeSplitter(unittest.TestCase):
         self.assertListEqual(result2.columns.tolist(), expected_columns)
 
 
-class TestInferenceSpeedCategoricalColumnSplitter(unittest.TestCase):
-    def test_end_to_end_inference_speed(self):
+class TestCategoricalColumnSplitter(unittest.TestCase):
+    data = {
+        "QCB.CreditCheckId": "1",
+        "QCB.MonthsFromEpoch": "6",
+        "QCB.RawResponseId": "4",
+        "QCB.LSC898": "R",
+        "QCB.LSC899": "R",
+        "QCB.HSC415": "R",
+        "QCB.MSC410": "0",
+    }
+    columns_to_split = [
+        "QCB.CreditCheckId",
+        "QCB.MonthsFromEpoch",
+        "QCB.RawResponseId",
+        "QCB.LSC898",
+        "QCB.LSC899",
+        "QCB.HSC415",
+        "QCB.MSC410",
+    ]
 
-        data = {
-            "QCB.CreditCheckId": "1",
-            "QCB.MonthsFromEpoch": "6",
-            "QCB.RawResponseId": "4",
-            "QCB.LSC898": "R",
-            "QCB.LSC899": "R",
-            "QCB.HSC415": "R",
-            "QCB.MSC410": "0",
-        }
-
-        df = pd.DataFrame.from_dict(data, orient="index").T
-        splitter = InferenceSpeedCategoricalColumnSplitter(
-            categorical_columns_to_split=[
-                "QCB.CreditCheckId",
-                "QCB.MonthsFromEpoch",
-                "QCB.RawResponseId",
-                "QCB.LSC898",
-                "QCB.LSC899",
-                "QCB.HSC415",
-                "QCB.MSC410",
-            ]
+    def test_process_df(self):
+        df = pd.DataFrame.from_dict(self.data, orient="index").T
+        splitter = CategoricalColumnSplitter(
+            categorical_columns_to_split=self.columns_to_split
         )
         output_df = splitter.process(df)
         expected_output_df = pd.DataFrame(
@@ -368,9 +251,70 @@ class TestInferenceSpeedCategoricalColumnSplitter(unittest.TestCase):
                 "QCB.MSC410_num": [0],
             }
         )
+        expected_output_df["QCB.CreditCheckId"] = expected_output_df[
+            "QCB.CreditCheckId"
+        ].astype("object")
+        expected_output_df["QCB.MSC410"] = expected_output_df["QCB.MSC410"].astype(
+            "object"
+        )
+        num_columns = [
+            col for col in expected_output_df.columns if col.endswith("_num")
+        ]
+        for col in num_columns:
+            expected_output_df[col] = expected_output_df[col].astype("float64")
         output_df = output_df[expected_output_df.columns]
         pd.testing.assert_frame_equal(
             output_df,
             expected_output_df,
         )
 
+    def test_process_series(self):
+        series = pd.Series(self.data)
+        splitter = CategoricalColumnSplitter(
+            categorical_columns_to_split=self.columns_to_split
+        )
+        output_series = splitter.process(series)
+        expected_series = pd.Series(
+            {
+                "QCB.CreditCheckId": np.nan,
+                "QCB.CreditCheckId_num": 1,
+                "QCB.MonthsFromEpoch": "D",
+                "QCB.MonthsFromEpoch_num": 6,
+                "QCB.RawResponseId": "D",
+                "QCB.RawResponseId_num": 4,
+                "QCB.LSC898": "R",
+                "QCB.LSC898_num": 6,
+                "QCB.LSC899": "R",
+                "QCB.LSC899_num": 6,
+                "QCB.HSC415": "R",
+                "QCB.HSC415_num": 6,
+                "QCB.MSC410": np.nan,
+                "QCB.MSC410_num": 0,
+            }
+        )
+        output_series = output_series[expected_series.index]
+        for key in expected_series.index:
+            if isinstance(expected_series[key], float64):
+                self.assertTrue(isclose(output_series[key], expected_series[key]))
+            elif expected_series[key] is np.nan:
+                self.assertTrue(np.isnan(output_series[key]))
+            else:
+                self.assertEqual(output_series[key], expected_series[key])
+
+    def test_series_and_df_same_output(self):
+        df = pd.DataFrame.from_dict(self.data, orient="index").T
+        series = pd.Series(self.data)
+        splitter = CategoricalColumnSplitter(
+            categorical_columns_to_split=self.columns_to_split
+        )
+        output_df = splitter.process(df)
+        output_series = splitter.process(series)
+        output_series_df = pd.DataFrame(output_series).T
+        for key in self.data.keys():
+            if output_df[key].isna().values[0]:
+                self.assertTrue(np.isnan(output_df[key].values[0]))
+                self.assertTrue(np.isnan(output_series_df[key].values[0]))
+            else:
+                self.assertEqual(
+                    output_df[key].values[0], output_series_df[key].values[0]
+                )

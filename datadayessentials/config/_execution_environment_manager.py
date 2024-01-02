@@ -13,8 +13,12 @@ class ExecutionEnvironment(enum.Enum):
 class ExecutionEnvironmentManager:
     @staticmethod
     def get_execution_environment() -> ExecutionEnvironment:
-        if platform.system() == 'Windows':
+        if platform.system() == "Windows":
             return ExecutionEnvironment.LOCAL
         if os.getenv("AZURE_ENVIRONMENT_NAME") is None:
             raise EnvironmentError("AZURE_ENVIRONMENT_NAME not set")
-        return ExecutionEnvironment.PROD if os.getenv("AZURE_ENVIRONMENT_NAME") == "prod" else ExecutionEnvironment.DEV
+        return (
+            ExecutionEnvironment.PROD
+            if os.getenv("AZURE_ENVIRONMENT_NAME") == "prod"
+            else ExecutionEnvironment.DEV
+        )

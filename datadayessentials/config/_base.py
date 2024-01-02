@@ -32,7 +32,6 @@ class IGlobalConfig(IConfig):
     pass
 
 
-
 class IConfigManager:
     @abstractmethod
     def add_database(self, server, database, credentials_name):
@@ -58,6 +57,3 @@ class IConfigManager:
 
     def register_new_config(self):
         pass
-
-
-

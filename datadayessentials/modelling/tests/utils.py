@@ -4,11 +4,11 @@ from datadayessentials.modelling.models.catboost import CatBoostClassifierPipeli
 
 from ..experiment_manager import ExperimentManager
 
+
 def setup_experiment_manager():
-    manager = ExperimentManager(
-        experiment_name="test_datadayessentials"
-    )
+    manager = ExperimentManager(experiment_name="test_datadayessentials")
     return manager
+
 
 def trigger_test_run():
     experiment_manager = setup_experiment_manager()
@@ -25,9 +25,7 @@ def trigger_test_run():
             },
         },
     }
-    params = {
-        'iterations': 1
-    }
+    params = {"iterations": 1}
 
     X = pd.DataFrame(
         {
@@ -39,24 +37,22 @@ def trigger_test_run():
         }
     )
     y = X.pop("Target")
-    
+
     versioned_meta_data = {"test_data": 2}
 
-    test_model = CatBoostClassifierPipeline(cat_features=['col4'], **params)
+    test_model = CatBoostClassifierPipeline(cat_features=["col4"], **params)
     test_model.fit(X, y)
     run_id, run_name = experiment_manager.submit_run(
         versioned_meta_data,
         test_model,
-        run_name='test_run_name',
-        train_model_metrics=model_metrics['metrics']['train'],
-        validate_model_metrics=model_metrics['metrics']['validate'],
-        test_model_metrics=model_metrics['metrics']['test'],
-        params=params
+        run_name="test_run_name",
+        train_model_metrics=model_metrics["metrics"]["train"],
+        validate_model_metrics=model_metrics["metrics"]["validate"],
+        test_model_metrics=model_metrics["metrics"]["test"],
+        params=params,
     )
 
     ws = experiment_manager.workspace
 
     run = ws.get_run(run_id)
     return run_id, run
-
-    

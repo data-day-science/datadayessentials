@@ -12,6 +12,7 @@ from .utils import trigger_test_run
 import sys
 import os
 
+
 def remove_test_folder(folder_to_delete: str = None):
     folder_to_delete = pathlib.Path(folder_to_delete)
     if folder_to_delete.exists() and folder_to_delete.is_dir():
@@ -26,7 +27,6 @@ class TestModelManager(unittest.TestCase):
     def setUp(self):
         self.model_manager = ModelManager()
         self.run_id, self.run_instance = trigger_test_run()
-        
 
     def test_get_model_files_from_run(self):
         # Download the files
@@ -46,15 +46,19 @@ class TestModelManager(unittest.TestCase):
         directory_name = "test_download_folder"
 
         # Download the files
-        self.model_manager.get_model_files_from_registered_model(model_to_get, folder_to_save_model=directory_name)
+        self.model_manager.get_model_files_from_registered_model(
+            model_to_get, folder_to_save_model=directory_name
+        )
         assert self.model_manager.workspace is not None
 
         # Verify that the downloaded folder exists
         print(pathlib.Path.cwd())
-        downloaded_folder = pathlib.Path.cwd() / pathlib.Path(directory_name) / pathlib.Path("model")
+        downloaded_folder = (
+            pathlib.Path.cwd() / pathlib.Path(directory_name) / pathlib.Path("model")
+        )
 
         self.assertTrue(downloaded_folder.exists())
-        #delete the test_download_folder at the end of the test
+        # delete the test_download_folder at the end of the test
         remove_test_folder(directory_name)
 
     def test_register_model(self):
@@ -66,16 +70,19 @@ class TestModelManager(unittest.TestCase):
         assert model_name in [model for model in self.model_manager.workspace.models]
 
         Model(workspace=self.model_manager.workspace, name=model_name).delete()
-        assert model_name not in [model for model in self.model_manager.workspace.models]
-        
+        assert model_name not in [
+            model for model in self.model_manager.workspace.models
+        ]
+
     def test_register_ensemble_model_from_run_ids(self):
-        run_ids = {'model_1': self.run_id, 'model_2': self.run_id}
+        run_ids = {"model_1": self.run_id, "model_2": self.run_id}
         model_name = "test_ensemble_model_1"
         self.model_manager.register_ensemble_model_from_run_ids(run_ids, model_name)
         assert model_name in [model for model in self.model_manager.workspace.models]
         Model(workspace=self.model_manager.workspace, name=model_name).delete()
-        assert model_name not in [model for model in self.model_manager.workspace.models]
-        
+        assert model_name not in [
+            model for model in self.model_manager.workspace.models
+        ]
 
 
 class TestModelCacher(unittest.TestCase):
@@ -83,26 +90,31 @@ class TestModelCacher(unittest.TestCase):
         self.model_name = "model"
         self.model_version = 1
         if sys.platform != "win32":
-            home_dir = Path('/tmp/')
+            home_dir = Path("/tmp/")
         else:
             home_dir = Path.home()
         self.cache_directory = home_dir / "cache"
         self.model_path = home_dir / "model"
-        self.model_cache_path = self.cache_directory / f"{self.model_name}-{self.model_version}"
-        self.model_cacher = ModelCacher(self.model_name, self.model_version, self.cache_directory)
+        self.model_cache_path = (
+            self.cache_directory / f"{self.model_name}-{self.model_version}"
+        )
+        self.model_cacher = ModelCacher(
+            self.model_name, self.model_version, self.cache_directory
+        )
         self._clean_up()
 
     def tearDown(self) -> None:
         return self._clean_up()
 
     def test_get_model_cache_path(self):
-        self.assertEqual(self.model_cache_path, self.model_cacher._get_model_cache_path())
+        self.assertEqual(
+            self.model_cache_path, self.model_cacher._get_model_cache_path()
+        )
 
     def test_is_model_cached(self):
         self.assertFalse(self.model_cacher.is_model_cached())
         os.makedirs(self.model_cache_path)
         self.assertTrue(self.model_cacher.is_model_cached())
-    
 
     def test_copy_model_to_cache(self):
         self.model_path.mkdir()

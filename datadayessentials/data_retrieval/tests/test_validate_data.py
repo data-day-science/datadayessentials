@@ -16,7 +16,6 @@ def schema():
 
 class TestDataFrameValidator:
     def test_column_validator_float_case(self):
-
         schema_for_one_column = {
             "description": "All cards Number of Cards Supplying New Fields in Last 3 Months",
             "unique_categories": [],

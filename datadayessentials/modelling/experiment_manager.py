@@ -71,7 +71,7 @@ class ExperimentManager(IExperimentManager):
     ) -> Tuple[str, str]:
         """
         Submits a run to the Azure Experiment
-        
+
         Args:
             datasets_used (dict): dictionary of datasets used in the run, where the key is the name of the registered dataset and the value is the version of the dataset
             model (IModelSavingLoadingAttribute): model to be saved
@@ -83,7 +83,7 @@ class ExperimentManager(IExperimentManager):
             tags (dict): dictionary of tags
             params (dict): dictionary of parameters used to train the model
             artifacts_folder (str): path to the artifacts folder containing any images or other artifacts to be logged
-        
+
         Returns:
             Tuple[str, str]: tuple of the run id and run name
         """
@@ -103,7 +103,7 @@ class ExperimentManager(IExperimentManager):
                 tags,
                 params,
                 train_model_metrics,
-                validate_model_metrics, 
+                validate_model_metrics,
                 test_model_metrics,
                 other_model_metrics,
                 artifacts_folder,
@@ -158,7 +158,7 @@ class ExperimentManager(IExperimentManager):
             print("test metrics found,... submitting")
             for key, val in test_model_metrics.items():
                 azure_run.log("test_" + key, val)
-        
+
         if other_model_metrics:
             print("other metrics found,... submitting")
             for key, val in other_model_metrics.items():
@@ -169,7 +169,7 @@ class ExperimentManager(IExperimentManager):
             azure_run.upload_folder(name="artifacts", path=artifacts_folder)
 
         azure_run.add_properties({"datasets_used": versioning_meta_data})
-        
+
         print("versioning_meta_data found,... submitting")
 
     def _add_model_to_run(self, azure_run: Run, model: IModelSavingLoadingAttribute):

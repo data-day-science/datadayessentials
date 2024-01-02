@@ -26,8 +26,7 @@ from ._transformers import (
     CategoricalColumnSplitter,
     DataFrameColumnTypeSplitter,
     CatTypeConverter,
-    InferenceSpeedCategoricalColumnSplitter,
-    SimpleCatTypeConverter
+    SimpleCatTypeConverter,
 )
 
 from ._data_pipe import (
@@ -50,5 +49,5 @@ __all__ = [
     "CategoricalColumnSplitter",
     "DataFrameColumnTypeSplitter",
     "InferenceSpeedCategoricalColumnSplitter",
-    "SimpleCatTypeConverter"
+    "SimpleCatTypeConverter",
 ]

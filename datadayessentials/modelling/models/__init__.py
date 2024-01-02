@@ -17,5 +17,5 @@ __all__ = [
     "CatBoostClassifierPipeline",
     "lightgbmClassifierPipeline",
     "ModelFactory",
-    "PatchedAutoML"
+    "PatchedAutoML",
 ]

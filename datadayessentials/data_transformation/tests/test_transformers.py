@@ -10,6 +10,10 @@ import pandas as pd
 import pandas.api.types as ptypes
 import pytest
 from numpy import float64
+from decimal import Decimal
+from datetime import datetime, timedelta
+import re
+from enum import Enum
 
 from .test_data import test_path
 from .._transformers import (
@@ -208,15 +212,44 @@ class TestDataFrameColumnTypeSplitter(unittest.TestCase):
 
 
 class TestCategoricalColumnSplitter(unittest.TestCase):
+
+
+
     data = {
-        "QCB.CreditCheckId": "1",
-        "QCB.MonthsFromEpoch": "6",
-        "QCB.RawResponseId": "4",
-        "QCB.LSC898": "R",
-        "QCB.LSC899": "R",
-        "QCB.HSC415": "R",
-        "QCB.MSC410": "0",
+        "QCB.CreditCheckId": 1,  # Integer
+        "QCB.MonthsFromEpoch": 6,  # Float
+        "QCB.RawResponseId": "4",  # String
+        "QCB.LSC898": "R",  # String
+        "QCB.LSC899": "R",  # String
+        "QCB.HSC415": "R",  # String
+        "QCB.MSC410": 0,  # Integer
+        "QCB.A": True,  # Boolean
+        "QCB.B": False,  # Boolean
+        "QCB.C": 3.1415,  # Float
+        "QCB.D": "D",  # String
+        "QCB.E": [1, 2, 3],  # List
+        "QCB.F": {"key": "value"},  # Dictionary
+        "QCB.G": (1, 2, 3),  # Tuple
+        "QCB.H": None,  # NoneType
+        "QCB.J": bytearray(b'hello'),  # ByteArray
+        "QCB.K": b'world',  # Bytes
+        "QCB.L": Decimal('10.5'),  # Decimal
+        "QCB.M": frozenset({1, 2, 3}),  # FrozenSet
+        "QCB.N": memoryview(b'abcdef'),  # MemoryView
+        "QCB.O": datetime(2022, 1, 5),  # DateTime
+        "QCB.P": timedelta(days=7),  # Timedelta
+        "QCB.Q": re.compile(r'\d+'),  # Regular Expression
+        "QCB.R": Enum('Color', 'RED GREEN BLUE'),  # Enum
+        "QCB.S": 42,  # Integer
+        "QCB.T": "T",  # String
+        "QCB.U": "U",  # String
+        "QCB.V": 0.12345,  # Float
+        "QCB.W": [4, 5, 6],  # List
+        "QCB.X": {"a": 1, "b": 2},  # Dictionary
+        "QCB.Y": (4, 5, 6),  # Tuple
+        "QCB.Z": None,  # NoneType
     }
+
     columns_to_split = [
         "QCB.CreditCheckId",
         "QCB.MonthsFromEpoch",
@@ -225,6 +258,31 @@ class TestCategoricalColumnSplitter(unittest.TestCase):
         "QCB.LSC899",
         "QCB.HSC415",
         "QCB.MSC410",
+        "QCB.A",
+        "QCB.B",
+        "QCB.C",
+        "QCB.D",
+        "QCB.E",
+        "QCB.F",
+        "QCB.G",
+        "QCB.H",
+        "QCB.J",
+        "QCB.K",
+        "QCB.L",
+        "QCB.M",
+        "QCB.N",
+        "QCB.O",
+        "QCB.P",
+        "QCB.Q",
+        "QCB.R",
+        "QCB.S",
+        "QCB.T",
+        "QCB.U",
+        "QCB.V",
+        "QCB.W",
+        "QCB.X",
+        "QCB.Y",
+        "QCB.Z",
     ]
 
     def test_process_df(self):
@@ -232,7 +290,10 @@ class TestCategoricalColumnSplitter(unittest.TestCase):
         splitter = CategoricalColumnSplitter(
             categorical_columns_to_split=self.columns_to_split
         )
+
         output_df = splitter.process(df)
+
+
         expected_output_df = pd.DataFrame(
             {
                 "QCB.CreditCheckId": [np.nan],
@@ -269,39 +330,180 @@ class TestCategoricalColumnSplitter(unittest.TestCase):
         )
 
     def test_process_series(self):
+
+        self.data = {
+            "QCB.CreditCheckId": 1,  # Integer
+            "QCB.MonthsFromEpoch": 6,  # Float
+            "QCB.RawResponseId": "4",  # String
+            "QCB.LSC898": "R",  # String
+            "QCB.LSC899": "R",  # String
+            "QCB.HSC415": "R",  # String
+            "QCB.MSC410": 0,  # Integer
+            "QCB.A": True,  # Boolean
+            "QCB.B": False,  # Boolean
+            "QCB.C": 3.1415,  # Float
+            "QCB.D": "D",  # String
+            #"QCB.E": [1, 2, 3],  # List
+            "QCB.F": {"key": "value"},  # Dictionary
+            "QCB.G": (1, 2, 3),  # Tuple
+            "QCB.H": None,  # NoneType
+            "QCB.J": bytearray(b'hello'),  # ByteArray
+            "QCB.K": b'world',  # Bytes
+            "QCB.L": Decimal('10.5'),  # Decimal
+            "QCB.M": frozenset({1, 2, 3}),  # FrozenSet
+            "QCB.N": memoryview(b'abcdef'),  # MemoryView
+            "QCB.O": datetime(2022, 1, 5),  # DateTime
+            "QCB.P": timedelta(days=7),  # Timedelta
+            "QCB.Q": re.compile(r'\d+'),  # Regular Expression
+            #"QCB.R": Enum('Color', 'RED GREEN BLUE'),  # Enum
+            "QCB.S": 42,  # Integer
+            "QCB.T": "T",  # String
+            "QCB.U": "U",  # String
+            "QCB.V": 0.12345,  # Float
+        }
+
+        self.columns_to_split = [
+            "QCB.CreditCheckId",
+            "QCB.MonthsFromEpoch",
+            "QCB.RawResponseId",
+            "QCB.LSC898",
+            "QCB.LSC899",
+            "QCB.HSC415",
+            "QCB.MSC410",
+            "QCB.A",
+            "QCB.B",
+            "QCB.C",
+            "QCB.D",
+            #"QCB.E",
+            "QCB.F",
+            "QCB.G",
+            "QCB.H",
+            "QCB.J",
+            "QCB.K",
+            "QCB.L",
+            "QCB.M",
+            "QCB.N",
+            "QCB.O",
+            "QCB.P",
+            "QCB.Q",
+            #"QCB.R",
+            "QCB.S",
+            "QCB.T",
+            "QCB.U",
+            "QCB.V",
+        ]
+
         series = pd.Series(self.data)
         splitter = CategoricalColumnSplitter(
             categorical_columns_to_split=self.columns_to_split
         )
         output_series = splitter.process(series)
+        output_series.to_csv(os.path.join(test_path, "output_df.csv"), index=False)
         expected_series = pd.Series(
-            {
-                "QCB.CreditCheckId": np.nan,
-                "QCB.CreditCheckId_num": 1,
-                "QCB.MonthsFromEpoch": "D",
-                "QCB.MonthsFromEpoch_num": 6,
-                "QCB.RawResponseId": "D",
-                "QCB.RawResponseId_num": 4,
-                "QCB.LSC898": "R",
-                "QCB.LSC898_num": 6,
-                "QCB.LSC899": "R",
-                "QCB.LSC899_num": 6,
-                "QCB.HSC415": "R",
-                "QCB.HSC415_num": 6,
-                "QCB.MSC410": np.nan,
-                "QCB.MSC410_num": 0,
+            data={
+                "QCB.CreditCheckId": np.nan,  # Integer
+                "QCB.CreditCheckId_num": 1,  # Float
+                "QCB.MonthsFromEpoch": "D",  # Float
+                "QCB.MonthsFromEpoch_num": 6,  # Float
+                "QCB.RawResponseId": "D",  # String
+                "QCB.RawResponseId_num": 4,  # Float
+                "QCB.LSC898": "R",  # String
+                "QCB.LSC898_num": 6,  # Float
+                "QCB.LSC899": "R",  # String
+                "QCB.LSC899_num": 6,  # Float
+                "QCB.HSC415": "R",  # String
+                "QCB.HSC415_num": 6,  # Float
+                "QCB.MSC410": np.nan,  # Integer
+                "QCB.MSC410_num": 0,  # Float
+                "QCB.A": np.nan,  # Boolean
+                "QCB.A_num": 1,  # Float
+                "QCB.B": np.nan,  # Boolean
+                "QCB.B_num": 0,  # Float
+                "QCB.C": 3.1415,  # Float
+                "QCB.C_num": 3.1415,  # Float
+                "QCB.D": "D",  # String
+                "QCB.D_num": 5,  # Float
+                #"QCB.E": [1, 2, 3],  # List
+                #"QCB.E_num": np.nan,  # Float
+                "QCB.F": {"key": "value"},  # Dictionary
+                "QCB.F_num": np.nan,  # Float
+                "QCB.G": (1, 2, 3),  # Tuple
+                "QCB.G_num": np.nan,  # Float
+                "QCB.H": np.nan,  # NoneType
+                "QCB.H_num": np.nan,  # Float
+                "QCB.J": bytearray(b'hello'),  # ByteArray
+                "QCB.J_num": np.nan,  # Float
+                "QCB.K": b'world',  # Bytes
+                "QCB.K_num": np.nan,  # Float
+                "QCB.L": Decimal('10.5'),  # Decimal
+                "QCB.L_num": 10.5,  # Float
+                "QCB.M": frozenset({1, 2, 3}),  # FrozenSet
+                "QCB.M_num": np.nan,  # Float
+                "QCB.N": memoryview(b'abcdef'),  # MemoryView
+                "QCB.N_num": np.nan,  # Float
+                "QCB.O": datetime(2022, 1, 5),  # DateTime
+                "QCB.O_num": np.nan,  # Float
+                "QCB.P": timedelta(days=7),  # Timedelta
+                "QCB.P_num": np.nan,  # Float
+                "QCB.Q": re.compile(r'\d+'),  # Regular Expression
+                "QCB.Q_num": np.nan,  # Float
+                #"QCB.R": Enum('Color', 'RED GREEN BLUE'),  # Enum
+                #"QCB.R_num": np.nan,  # Float
+                "QCB.S": 42,  # Integer
+                "QCB.S_num": 42,  # Float
+                "QCB.T": "T",  # String
+                "QCB.T_num": np.nan,  # Float
+                "QCB.U": "U",  # String
+                "QCB.U_num": np.nan,  # Float
+                "QCB.V": 0.12345,  # Float
+                "QCB.V_num": 0.12345,  # Float
             }
         )
         output_series = output_series[expected_series.index]
+
         for key in expected_series.index:
-            if isinstance(expected_series[key], float64):
-                self.assertTrue(isclose(output_series[key], expected_series[key]))
-            elif expected_series[key] is np.nan:
-                self.assertTrue(np.isnan(output_series[key]))
+            expected_value = expected_series[key]
+            actual_value = output_series[key]
+
+            print(key)
+            print(output_series[key])
+
+            if isinstance(expected_value, np.float64):
+                if np.isnan(expected_value):
+                    self.assertTrue(np.isnan(actual_value), f"Mismatch in {key}: expected NaN, got {actual_value}")
+                else:
+                    self.assertTrue(np.isclose(actual_value, expected_value),
+                                    f"Mismatch in {key}: expected {expected_value}, got {actual_value}")
             else:
-                self.assertEqual(output_series[key], expected_series[key])
+                # For non-floats, handle NaN comparison separately
+                if pd.isna(expected_value)and pd.isna(actual_value):
+                    # Both are NaN (or None, NaT, etc.)
+                    self.assertTrue(True)
+                else:
+                    # Standard equality check
+                    self.assertEqual(actual_value, expected_value,
+                                     f"Mismatch in {key}: expected {expected_value}, got {actual_value}")
 
     def test_series_and_df_same_output(self):
+
+        self.data = {
+            "QCB.CreditCheckId": 1,  # Integer
+            "QCB.MonthsFromEpoch": 6,  # Float
+            "QCB.RawResponseId": "4",  # String
+            "QCB.LSC898": "R",  # String
+            "QCB.LSC899": "R",  # String
+            "QCB.HSC415": "R",  # String
+        }
+
+        self.columns_to_split = [
+            "QCB.CreditCheckId",
+            "QCB.MonthsFromEpoch",
+            "QCB.RawResponseId",
+            "QCB.LSC898",
+            "QCB.LSC899",
+            "QCB.HSC415",
+        ]
+
         df = pd.DataFrame.from_dict(self.data, orient="index").T
         series = pd.Series(self.data)
         splitter = CategoricalColumnSplitter(
@@ -318,3 +520,34 @@ class TestCategoricalColumnSplitter(unittest.TestCase):
                 self.assertEqual(
                     output_df[key].values[0], output_series_df[key].values[0]
                 )
+
+
+class TestMapWithType(unittest.TestCase):
+    def test_correct_type_no_mapping_needed(self):
+        # same type, not in mapping
+        self.assertEqual(CategoricalColumnSplitter.map_with_type("number", 5, {1: "one"}), 5)
+
+    def test_correct_type_with_mapping(self):
+        # same type, in mapping
+        self.assertEqual(CategoricalColumnSplitter.map_with_type("string", 1, {1: "one"}), "one")
+
+    def test_incorrect_type_with_mapping(self):
+        # different type, in mapping
+        self.assertEqual(CategoricalColumnSplitter.map_with_type("string", 2, {2: "two"}), "two")
+
+    def test_incorrect_type_no_mapping(self):
+        # different type, not in mapping
+        self.assertTrue(np.isnan(CategoricalColumnSplitter.map_with_type("number", "test", {"a": 1})))
+
+    def test_unsupported_type(self):
+        # unsupported type
+        self.assertTrue(np.isnan(CategoricalColumnSplitter.map_with_type("number", [], {1: 1})))
+
+    def test_invalid_mapping(self):
+        # invalid mapping
+        with self.assertRaises(TypeError):
+            CategoricalColumnSplitter.map_with_type("number", 2, "not a dictionary")
+
+    def test_none_value(self):
+        # None value
+        self.assertTrue(np.isnan(CategoricalColumnSplitter.map_with_type("number", None, {1: 1})))

@@ -8,7 +8,7 @@ from pandas.api.types import is_datetime64_any_dtype as is_datetime
 import logging
 from datetime import datetime
 import numpy as np
-from typing import List, Any, Union
+from typing import List, Any, Union, Tuple
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -387,7 +387,10 @@ class GranularColumnDropper(IDataFrameTransformer):
 
 
 class CategoricalColumnSplitter(IDataFrameTransformer):
+
+    #The series mapper fails to remove series and remove floats from the categorical columns
     numerical_mapping = {"D": 5, "R": 6, "V": 6, "S": 0, "A": 2}
+
     cat_mapping = {
         0: np.nan,
         1: np.nan,
@@ -405,6 +408,39 @@ class CategoricalColumnSplitter(IDataFrameTransformer):
         "6": "D",
     }
 
+    @staticmethod
+    def map_with_type(wanted_type: Union["number","string"], value: Any, mapping: dict):
+
+        """
+        Convert the given value to the wanted type using a mapping dictionary.
+        If the conversion is not possible, returns np.nan.
+
+        :param wanted_type: The type to which the value should be converted.
+        :param value: The value to be converted.
+        :param mapping: A dictionary for converting the value if direct conversion is not possible.
+        :return: The converted value or np.nan if conversion is not possible.
+        """
+
+        if isinstance(value, (str, int, float)):
+            if wanted_type == "number":
+                try:
+                    value = float(value)
+                    if isinstance(value, (int, float)):
+                        return mapping[value] if value in mapping else value
+                    return mapping.get(value, np.nan)
+                except ValueError:
+                    if isinstance(value, (int, float)):
+                        return mapping[value] if value in mapping else value
+                    return mapping.get(value, np.nan)
+
+            if wanted_type == "string":
+                if isinstance(value, str):
+                    return mapping[value] if value in mapping else value
+                return mapping.get(value, np.nan)
+
+        else:
+            return np.nan
+
     def __init__(self, categorical_columns_to_split: list):
         self.categorical_columns_to_split = categorical_columns_to_split
 
@@ -416,25 +452,26 @@ class CategoricalColumnSplitter(IDataFrameTransformer):
         else:
             raise TypeError(f"Expected DataFrame or Series, got {type(data)}")
 
-    def _inference_split_categorical_column(
+    def dataframe_split_categorical_column(
         self, series: pd.Series
-    ) -> tuple[pd.Series, pd.Series]:
-        # Apply transformations
-        numerical_series = (
-            series.map(self.numerical_mapping).fillna(series).astype("float64")
-        )
+    ) -> Tuple[pd.Series, pd.Series]:
 
-        cat_series = series.copy(deep=True).replace(self.cat_mapping)
-        cat_mask = pd.to_numeric(cat_series, errors="coerce").isna()
-        cat_series[~cat_mask] = np.nan
-        cat_series = cat_series.replace(self.cat_mapping).astype("object")
+        numerical_series = series.map(
+            lambda x: CategoricalColumnSplitter.map_with_type("number", x, self.numerical_mapping)
+        ).astype("float64")
+
+        cat_series = series.copy(deep=True)
+
+        cat_series = cat_series.map(
+            lambda x: CategoricalColumnSplitter.map_with_type("string", x, self.cat_mapping)
+        ).astype("object")
 
         return cat_series, numerical_series
 
     def process_df(self, df_in: pd.DataFrame) -> pd.DataFrame:
         for column in self.categorical_columns_to_split:
             if column in df_in.columns:
-                cat_series, numerical_series = self._inference_split_categorical_column(
+                cat_series, numerical_series = self.dataframe_split_categorical_column(
                     df_in[column]
                 )
 
@@ -460,7 +497,7 @@ class CategoricalColumnSplitter(IDataFrameTransformer):
             self.categorical_columns_to_split, errors="ignore"
         )
 
-        # Apply categorical mapping to the relevant subset
+        # Apply categorical mapping to the relevant subset. Floats are not removed from this
         categorical_series = series_to_split[self.categorical_columns_to_split].replace(
             self.cat_mapping
         )
